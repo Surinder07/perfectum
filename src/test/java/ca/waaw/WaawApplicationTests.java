@@ -1,4 +1,4 @@
-package ca.waaw.server;
+package ca.waaw;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
