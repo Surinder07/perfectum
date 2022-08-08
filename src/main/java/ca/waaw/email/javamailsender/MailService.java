@@ -96,6 +96,7 @@ public class MailService {
          * we have added, then message is an object inside that object and name is a String in message.
          *
          * By setting our images as variables we can use them inside our mail design instead of attachments
+         * inside your html set src="logo.png" th:src="|cid:${logo}|" in you img tag
          */
         context.setVariable(DTO, message);
         context.setVariable("logo", logoImageResource.getFilename());

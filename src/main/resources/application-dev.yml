@@ -4,8 +4,6 @@ spring:
     username: root
     password: Pragra2020
   mail:
-#    userName: akhil@pragra.io
-#    password: AkAmSuHi9594
     userName: pragrashipcarte@gmail.com
     password: Pragra123
 
