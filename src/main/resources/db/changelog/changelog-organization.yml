@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-organization
+      author: AkhilSinghChauhan
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: organization
+      changes:
+        - createTable:
+            tableName: organization
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_of_week
+                  type: VARCHAR(20)
+                  defaultValue: 'MONDAY'
+              - column:
+                  name: subscription_plan
+                  type: VARCHAR(50)
+              - column:
+                  name: trialDays
+                  type: SMALLINT
+                  defaultValue: 14
+              - column:
+                  name: is_trial_used
+                  type: BOOLEAN
+                  valueBoolean: false
+              - column:
+                  name: is_paid_until
+                  type: TIMESTAMP
+              - column:
+                  name: custom_id
+                  type: VARCHAR(25)
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  valueBoolean: false
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  valueBoolean: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: last_modified_by
+                  type: VARCHAR(100)
+              - column:
+                  name: last_modified_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()

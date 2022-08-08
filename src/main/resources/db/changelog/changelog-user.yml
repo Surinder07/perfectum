@@ -1,0 +1,132 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-user
+      author: AkhilSinghChauhan
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: user
+      changes:
+        - createTable:
+            tableName: user
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: username
+                  type: VARCHAR(100)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: ux_username
+              - column:
+                  name: email
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: ux_user_email
+              - column:
+                  name: password_hash
+                  type: VARCHAR(60)
+              - column:
+                  name: first_name
+                  type: VARCHAR(50)
+              - column:
+                  name: last_name
+                  type: VARCHAR(50)
+              - column:
+                  name: country_code
+                  type: VARCHAR(5)
+              - column:
+                  name: mobile
+                  type: VARCHAR(10)
+              - column:
+                  name: employee_id
+                  type: VARCHAR(500)
+              - column:
+                  name: image_url
+                  type: VARCHAR(500)
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: PENDING
+              - column:
+                  name: lang_key
+                  type: VARCHAR(6)
+                  defaultValue: "en"
+              - column:
+                  name: organization_id
+                  type: VARCHAR(100)
+              - column:
+                  name: authority
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: activation_key
+                  type: VARCHAR(20)
+              - column:
+                  name: invite_key
+                  type: VARCHAR(20)
+              - column:
+                  name: reset_key
+                  type: VARCHAR(20)
+              - column:
+                  name: reset_date
+                  type: TIMESTAMP
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  valueBoolean: false
+              - column:
+                  name: email_notification_on
+                  type: BOOLEAN
+                  valueBoolean: false
+              - column:
+                  name: sms_notification_on
+                  type: BOOLEAN
+                  valueBoolean: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: last_modified_by
+                  type: VARCHAR(100)
+              - column:
+                  name: last_modified_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: last_login
+                  type: TIMESTAMP
+        - createIndex:
+            indexName: idx_username
+            tableName: user
+            unique: true
+            column:
+              name: username
+              type: VARCHAR(100)
+        - createIndex:
+            indexName: idx_user_email
+            tableName: user
+            unique: true
+            column:
+              name: email
+              type: VARCHAR(100)
+        - addForeignKeyConstraint:
+            baseTableName: user
+            baseColumnNames: organization_id
+            constraintName: fk_user_org
+            referencedColumnNames: uuid
+            referencedTableName: organization
