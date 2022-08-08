@@ -1,0 +1,83 @@
+spring:
+  profiles:
+    active:
+    default: dev
+  application:
+    name: WAAW
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+  liquibase:
+    enabled: false
+    change-log: classpath:db/changelog/db.changelog-master.yml
+  messages:
+    basename: i18n/messages
+  thymeleaf:
+    mode: HTML5
+    prefix: classpath:/templates/
+    suffix: .html
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+          starttls:
+            enable: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    liquibase: info
+
+springdoc:
+  packagesToScan: ca.waaw.web.rest
+
+#################################################
+#####    Application specific properties    #####
+#################################################
+application:
+  title: WAAW
+  version: 0.0.1
+  validations:
+    regex:
+      # Minimum eight characters, at least one uppercase letter, one lowercase letter,
+      # one number and one special character.
+      password: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
+      # Username consists of alphanumeric characters (a-zA-Z0-9), lowercase or uppercase.
+      # Username allowed of the dot (.), underscore (_), and hyphen (-).
+      # The dot (.), underscore (_), or hyphen (-) must not be the first or last character.
+      # The dot (.), underscore (_), or hyphen (-) does not appear consecutively, e.g., java..regex
+      # The number of characters must be between 5 and 20.
+      username: ^[a-zA-Z0-9]([._-](?![._-])|[a-zA-Z0-9]){3,18}[a-zA-Z0-9]$
+      email: ^[\w-\+]+(\.[\w]+)*@[\w-]+(\.[\w]+)*(\.[a-zA-Z]{2,})$
+  urls:
+    activate-account: /activateUser?key=
+    reset-password: /resetPassword?key=
+    registration: /register
+    login: /login
+  validity:
+    activation-link: 3
+    password-reset: 1
+    user-invite: 2
+  #Admin and support email info
+  mail:
+    ui-url: http://localhost:3000
+    twitter-url:
+    linkedin-url:
+    admin-email: akhil@pragra.io
+    sender-email: akhil@pragra.io
+    sender-name: Pragra
