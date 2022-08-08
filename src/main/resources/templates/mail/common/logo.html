@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" lang="en">
+    <tr th:fragment="logo">
+        <td>
+            <div>
+                <a class="top-logo" href="${dto.websiteUrl}" target="_blank">
+                    <img src="logo.png" th:src="|cid:${logo}|" class="logo" alt='WAAW Logo' />
+                </a>
+                <div class="divider"></div>
+            </div>
+        </td>
+    </tr>
+</html>

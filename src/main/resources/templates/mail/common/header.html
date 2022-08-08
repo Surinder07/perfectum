@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" lang="en">
+
+<head th:fragment="header" >
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Roboto, sans-sarif;
+            font-size: 14px;
+            color: #2d3436;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .container {
+            padding: 10px
+        }
+
+        .team {
+            margin: 45px 0;
+            list-style: none;
+        }
+
+        .contact,
+        .msg {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            background-color: #6c5ce7;
+            color: #fff;
+        }
+
+        .item {
+            padding: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .msg {
+            font-size: 18px;
+            padding: 10px;
+            background: #a29bfe;
+            color: #2d3436;
+        }
+
+        p {
+            padding: 10px;
+            font-size: 0.8 rem;
+            text-align: justify;
+        }
+
+        .team li {
+            margin-bottom: 35px;
+        }
+
+        .divider {
+            padding: 2px;
+            border-bottom: rgb(20, 109, 243) solid 2px;
+            margin-bottom: 5px;
+        }
+
+        img {
+            width: 140px;
+        }
+
+        a:visited {
+            color: blue;
+        }
+
+        h1 {
+            text-align: center;
+            padding: 5px 2px;
+            padding-top: 15px;
+            font-size: 1rem;
+        }
+
+        .content-box {
+            border: #9da2a3 solid 1px;
+            border-radius: 5px;
+            padding-bottom: 15px;
+        }
+
+        .button {
+            min-width: 150px;
+            text-align: center;
+            padding: 15px 30px;
+            border: rgb(20, 109, 243) solid 3px;
+            border-radius: 15px;
+            cursor: pointer;
+            color: rgb(20, 109, 243);
+            font-weight: bold;
+        }
+
+        .top-logo {
+            width: 100%;
+            padding: 2px;
+            padding-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .social .fa {
+            height: 20px;
+            width: 20px;
+            margin: 4px 5px;
+        }
+
+        table {
+            border-spacing: 0;
+        }
+    </style>
+</head>
+</html>

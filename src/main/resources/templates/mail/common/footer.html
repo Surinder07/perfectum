@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" lang="en">
+
+<div th:fragment="footer">
+    <p style="text-align: center;">
+        <a th:text="${dto.actionUrl}" th:href="${dto.actionUrl}">Action Link</a>
+    </p>
+    <p style="text-align: center;">For more info visit
+        <a th:href="${dto.websiteUrl}" th:text="${dto.websiteUrl}" target="_blank">Click Here</a>
+    </p>
+    <div style="margin: auto; width:90%; border-bottom: #9da2a3 solid 1px;"></div>
+    <p style="text-align: center;"> Find us on:</p>
+    <table style="margin: auto;">
+        <tr>
+            <td class="social">
+                <a th:href="${dto.twitterUrl}">
+                    <img class="fa" src="twitter.png" th:src="|cid:${twitter}|" alt='twitter'/>
+                </a>
+                <a th:href="${dto.linkedinUrl}">
+                    <img class="fa" src="twitter.png" th:src="|cid:${linkedin}|" alt='linkedin'/>
+                </a>
+            </td>
+        </tr>
+    </table>
+</div>
+
+</html>
