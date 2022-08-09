@@ -38,6 +38,9 @@ spring:
 
 server:
   port: 8080
+  error:
+    whitelabel:
+      enabled: false
 
 logging:
   level:
@@ -75,9 +78,8 @@ application:
     user-invite: 2
   #Admin and support email info
   mail:
-    ui-url: http://localhost:3000
-    twitter-url:
-    linkedin-url:
+    twitter-url: '#'
+    linkedin-url: '#'
     admin-email: akhil@pragra.io
     sender-email: akhil@pragra.io
     sender-name: Pragra
