@@ -25,6 +25,11 @@ swagger:
   title: WAAW APIs Collection
   version: 1.0.0
   description: WAAW Api reference for developers
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
 
 #################################################
 #####    Application specific properties    #####
@@ -34,4 +39,4 @@ application:
     hosted-ui: http://localhost:3000
     hosted-server: http://localhost:8080
   mail:
-    ui-url: http://localhost:3000
+    ui-url: ${application.urls.hosted-ui}

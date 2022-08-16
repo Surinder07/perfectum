@@ -3,7 +3,7 @@ spring:
     active:
     default: dev
   application:
-    name: WAAW
+    name: ^project.name^
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
@@ -53,8 +53,8 @@ springdoc:
 #####    Application specific properties    #####
 #################################################
 application:
-  title: WAAW
-  version: 0.0.1
+  title: ^project.name^
+  version: ^project.version^
   validations:
     regex:
       # Minimum eight characters, at least one uppercase letter, one lowercase letter,
@@ -68,8 +68,9 @@ application:
       username: ^[a-zA-Z0-9]([._-](?![._-])|[a-zA-Z0-9]){3,18}[a-zA-Z0-9]$
       email: ^[\w-\+]+(\.[\w]+)*@[\w-]+(\.[\w]+)*(\.[a-zA-Z]{2,})$
   urls:
-    activate-account: /activateUser?key=
+    activate-account: /api/v1/unAuth/activateAccount?key=
     reset-password: /resetPassword?key=
+    invite-user: /api/v1/unAuth/acceptInvitation?key=
     registration: /register
     login: /login
   validity:
@@ -78,8 +79,8 @@ application:
     user-invite: 2
   #Admin and support email info
   mail:
-    twitter-url: '#'
-    linkedin-url: '#'
+    twitter-url: https://twitter.com/waaw
+    linkedin-url: https://www.linkedin.com/company/waaw
     admin-email: akhil@pragra.io
     sender-email: akhil@pragra.io
     sender-name: Pragra
