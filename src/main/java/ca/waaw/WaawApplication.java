@@ -44,6 +44,7 @@ public class WaawApplication implements CommandLineRunner {
         String protocol = Optional.ofNullable(env.getProperty("server.ssl.key-store")).map(key -> "https").orElse("http");
         String serverPort = env.getProperty("server.port");
         String contextPath = Optional.ofNullable(env.getProperty("server.servlet.context-path")).filter(StringUtils::isNotBlank).orElse("/");
+        boolean swaggerEnabled = Boolean.parseBoolean(env.getProperty("springdoc.swagger-ui.enabled"));
         String hostAddress;
         try {
             hostAddress = InetAddress.getLocalHost().getHostAddress();
@@ -51,11 +52,22 @@ public class WaawApplication implements CommandLineRunner {
             hostAddress = "localhost";
             log.warn("The host name could not be determined, using `localhost` as fallback");
         }
-        log.info("\n----------------------------------------------------------\n\t" +
-                        "Application '{}' is running! Access URLs:\n\t" + "Local: \t\t{}://localhost:{}{}\n\t"
-                        + "External: \t{}://{}:{}{}\n\t" + "Profile(s): \t{}\n----------------------------------------------------------",
-                env.getProperty("application.title"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles());
+
+        String externalUrl = String.format("%s://%s:%s%s", protocol, hostAddress, serverPort, contextPath);
+        log.info("\n----------------------------------------------------------\n\t"
+                        + "Application '{}' is running! Access URLs:\n\t"
+                        + "Local: \t\t{}://localhost:{}{}\n\t"
+                        + "External: \t{}\n\t"
+                        + "Profile(s): \t{}\n\t"
+                        + (swaggerEnabled ? "Swagger-ui: \t{}\n " : "{}")
+                        + "----------------------------------------------------------",
+                env.getProperty("application.title"),
+                protocol,
+                serverPort,
+                contextPath,
+                externalUrl,
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(),
+                swaggerEnabled ? String.format("%s%s", externalUrl, "swagger-ui.html") : "");
         System.out.println("Application is running on port " + env.getProperty("server.port"));
     }
 
