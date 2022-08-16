@@ -1,4 +1,4 @@
-package ca.waaw.dto;
+package ca.waaw.dto.userdtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

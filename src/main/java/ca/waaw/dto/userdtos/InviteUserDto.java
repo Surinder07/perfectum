@@ -1,4 +1,4 @@
-package ca.waaw.dto;
+package ca.waaw.dto.userdtos;
 
 import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
@@ -33,8 +33,8 @@ public class InviteUserDto {
 
     private String employeeId;
 
-    private String waawRoleId;
-
     private String locationId;
+
+    private String locationRoleId;
 
 }

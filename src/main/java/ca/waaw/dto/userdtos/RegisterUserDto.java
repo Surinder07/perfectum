@@ -1,4 +1,4 @@
-package ca.waaw.dto;
+package ca.waaw.dto.userdtos;
 
 import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
 import ca.waaw.web.rest.utils.customannotations.ToLowercase;

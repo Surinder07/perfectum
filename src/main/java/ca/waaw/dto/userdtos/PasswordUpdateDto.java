@@ -1,4 +1,4 @@
-package ca.waaw.dto;
+package ca.waaw.dto.userdtos;
 
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.ValidatorType;
@@ -12,11 +12,10 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PasswordResetDto {
+public class PasswordUpdateDto {
 
     @NotEmpty
-    @Size(min = 20, max = 20, message = "key is supposed to be 20 characters")
-    private String key;
+    private String oldPassword;
 
     @NotEmpty
     @Size(min = 8, max = 60, message = "password must be more than 8 characters")

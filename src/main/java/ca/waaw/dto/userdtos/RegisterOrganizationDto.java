@@ -1,4 +1,4 @@
-package ca.waaw.dto;
+package ca.waaw.dto.userdtos;
 
 import ca.waaw.enumration.DaysOfWeek;
 import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
@@ -6,6 +6,7 @@ import ca.waaw.web.rest.utils.customannotations.ToLowercase;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
 import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.ValidatorType;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
