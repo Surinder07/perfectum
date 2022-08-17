@@ -15,7 +15,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
   liquibase:
-    enabled: false
+    enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yml
   messages:
     basename: i18n/messages
@@ -84,3 +84,12 @@ application:
     admin-email: akhil@pragra.io
     sender-email: akhil@pragra.io
     sender-name: Pragra
+  super-user:
+    first-name: Super
+    last-name: User
+    email: superuser@localhost.ca
+    username: waaw2020
+    password: Waaw@2020
+    organization: WAAW
+  triggers:
+    location: classpath:db/sqltriggers/

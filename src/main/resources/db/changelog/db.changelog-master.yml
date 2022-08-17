@@ -2,4 +2,10 @@ databaseChangeLog:
   - include:
       file: db/changelog/changelog-organization.yml
   - include:
+      file: db/changelog/changelog-location.yml
+  - include:
+      file: db/changelog/changelog-location_role.yml
+  - include:
       file: db/changelog/changelog-user.yml
+  - include:
+      file: db/changelog/changelog-notification.yml

@@ -1,5 +1,6 @@
 package ca.waaw;
 
+import ca.waaw.service.ApplicationStartupSqlService;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -26,8 +27,12 @@ public class WaawApplication implements CommandLineRunner {
 
     private final Environment env;
 
-    public WaawApplication(Environment env) {
+    private final ApplicationStartupSqlService applicationStartupSqlService;
+
+    public WaawApplication(Environment env,
+                           ApplicationStartupSqlService applicationStartupSqlService) {
         this.env = env;
+        this.applicationStartupSqlService = applicationStartupSqlService;
     }
 
     public static void main(String[] args) {
@@ -37,6 +42,8 @@ public class WaawApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        applicationStartupSqlService.createSqlTriggers();
+        applicationStartupSqlService.checkExistenceAndGenerateSuperUser();
         logApplicationStartup();
     }
 

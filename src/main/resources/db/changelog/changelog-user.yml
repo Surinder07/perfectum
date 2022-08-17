@@ -49,18 +49,23 @@ databaseChangeLog:
                   name: employee_id
                   type: VARCHAR(500)
               - column:
+                  name: waaw_custom_id
+                  type: VARCHAR(25)
+              - column:
                   name: image_url
                   type: VARCHAR(500)
-              - column:
-                  name: status
-                  type: VARCHAR(50)
-                  defaultValue: PENDING
               - column:
                   name: lang_key
                   type: VARCHAR(6)
                   defaultValue: "en"
               - column:
                   name: organization_id
+                  type: VARCHAR(100)
+              - column:
+                  name: location_id
+                  type: VARCHAR(100)
+              - column:
+                  name: location_role_id
                   type: VARCHAR(100)
               - column:
                   name: authority
@@ -74,23 +79,39 @@ databaseChangeLog:
                   name: invite_key
                   type: VARCHAR(20)
               - column:
+                  name: invited_by
+                  type: VARCHAR(100)
+              - column:
                   name: reset_key
                   type: VARCHAR(20)
               - column:
                   name: reset_date
                   type: TIMESTAMP
               - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: PENDING
+              - column:
+                  name: last_login
+                  type: TIMESTAMP
+              - column:
                   name: del_flg
                   type: BOOLEAN
-                  valueBoolean: false
+                  defaultValue: false
+                  constraints:
+                    nullable: false
               - column:
                   name: email_notification_on
                   type: BOOLEAN
-                  valueBoolean: false
+                  defaultValue: false
+                  constraints:
+                    nullable: false
               - column:
                   name: sms_notification_on
                   type: BOOLEAN
-                  valueBoolean: false
+                  defaultValue: false
+                  constraints:
+                    nullable: false
               - column:
                   name: created_by
                   type: VARCHAR(100)
@@ -107,9 +128,6 @@ databaseChangeLog:
                   name: last_modified_date
                   type: TIMESTAMP
                   defaultValueDate: now()
-              - column:
-                  name: last_login
-                  type: TIMESTAMP
         - createIndex:
             indexName: idx_username
             tableName: user
@@ -130,3 +148,21 @@ databaseChangeLog:
             constraintName: fk_user_org
             referencedColumnNames: uuid
             referencedTableName: organization
+        - addForeignKeyConstraint:
+            baseTableName: user
+            baseColumnNames: location_id
+            constraintName: fk_user_location_id
+            referencedColumnNames: uuid
+            referencedTableName: location
+        - addForeignKeyConstraint:
+            baseTableName: user
+            baseColumnNames: location_role_id
+            constraintName: fk_user_location_role_id
+            referencedColumnNames: uuid
+            referencedTableName: location_role
+        - addForeignKeyConstraint:
+            baseTableName: user
+            baseColumnNames: invited_by
+            constraintName: fk_user_invited_by
+            referencedColumnNames: uuid
+            referencedTableName: user

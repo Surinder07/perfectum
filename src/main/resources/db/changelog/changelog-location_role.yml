@@ -1,15 +1,15 @@
 databaseChangeLog:
   - changeSet:
-      id: create-table-organization
+      id: create-table-location_role
       author: AkhilSinghChauhan
       preConditions:
         - onFail: MARK_RAN
           not:
             tableExists:
-              tableName: organization
+              tableName: location_role
       changes:
         - createTable:
-            tableName: organization
+            tableName: location_role
             columns:
               - column:
                   name: uuid
@@ -20,31 +20,36 @@ databaseChangeLog:
               - column:
                   name: name
                   type: VARCHAR(100)
-                  constraints:
-                    nullable: false
               - column:
-                  name: start_of_week
-                  type: VARCHAR(20)
-                  defaultValue: 'MONDAY'
+                  name: organization_id
+                  type: VARCHAR(100)
               - column:
-                  name: subscription_plan
-                  type: VARCHAR(50)
+                  name: location_id
+                  type: VARCHAR(100)
               - column:
-                  name: trial_days
-                  type: SMALLINT
-                  defaultValue: 14
-              - column:
-                  name: is_trial_used
+                  name: is_timeclock_enabled
                   type: BOOLEAN
                   defaultValue: false
                   constraints:
                     nullable: false
               - column:
-                  name: is_paid_until
-                  type: TIMESTAMP
+                  name: is_timeoff_enabled
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
               - column:
-                  name: waaw_custom_id
-                  type: VARCHAR(25)
+                  name: total_hours_per_day_min
+                  type: SMALLINT
+              - column:
+                  name: total_hours_per_day_max
+                  type: SMALLINT
+              - column:
+                  name: min_hours_between_shifts
+                  type: SMALLINT
+              - column:
+                  name: max_consecutive_work_days
+                  type: SMALLINT
               - column:
                   name: status
                   type: VARCHAR(50)
@@ -71,3 +76,15 @@ databaseChangeLog:
                   name: last_modified_date
                   type: TIMESTAMP
                   defaultValueDate: now()
+        - addForeignKeyConstraint:
+            baseTableName: location_role
+            baseColumnNames: location_id
+            constraintName: fk_location_role_location_id
+            referencedColumnNames: uuid
+            referencedTableName: location
+        - addForeignKeyConstraint:
+            baseTableName: location_role
+            baseColumnNames: organization_id
+            constraintName: fk_location_role_organization_id
+            referencedColumnNames: uuid
+            referencedTableName: organization
