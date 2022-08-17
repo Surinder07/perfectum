@@ -1,4 +1,4 @@
-package ca.waaw.web.rest.utils.customannotations;
+package ca.waaw.web.rest.utils.customannotations.swagger;
 
 import ca.waaw.web.rest.errors.ErrorVM;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@ApiResponse(responseCode = "401", description = "Access not allowed", content = {@Content(mediaType = "application/json",
+@ApiResponse(responseCode = "400", description = "Bad Request", content = {@Content(mediaType = "application/json",
         schema = @Schema(implementation = ErrorVM.class))})
-public @interface SwaggerUnauthorized {
+public @interface SwaggerBadRequest {
 }

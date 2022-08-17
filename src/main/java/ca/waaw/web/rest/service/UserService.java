@@ -1,18 +1,19 @@
-package ca.waaw.service;
+package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.Organization;
 import ca.waaw.domain.User;
-import ca.waaw.dto.*;
-import ca.waaw.email.javamailsender.user.UserMailService;
+import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.DaysOfWeek;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.OrganizationRepository;
+import ca.waaw.repository.UserOrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.service.UserMailService;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.errors.exceptions.ExpiredKeyException;
@@ -23,6 +24,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +36,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -43,6 +49,8 @@ public class UserService {
     private final UserRepository userRepository;
 
     private final OrganizationRepository organizationRepository;
+
+    private final UserOrganizationRepository userOrganizationRepository;
 
     private final AppValidityTimeConfig appValidityTimeConfig;
 
@@ -65,6 +73,7 @@ public class UserService {
      *
      * @param userDTO all user related details with invite key
      */
+    @Transactional(rollbackFor = Exception.class)
     public void registerUser(RegisterUserDto userDTO) {
         userRepository.findOneByInviteKey(userDTO.getInviteKey())
                 .filter(user -> user.getCreatedDate().isAfter(Instant.now()
@@ -106,25 +115,20 @@ public class UserService {
         userMailService.sendActivationEmail(user, activationUrl);
     }
 
-//
-//    /**
-//     * Updates the details of current logged-in user
-//     *
-//     * @param userDto all user details to update
-//     */
-//    public Mono<String> updateUserDetails(UserUpdateDTO userDto) {
-//        return SecurityUtils.getCurrentUserLogin()
-//                .switchIfEmpty(Mono.error(Exceptions.EntityNotFoundException("current user login")))
-//                .flatMap(userRepository::findOneByLogin)
-//                .switchIfEmpty(Mono.error(Exceptions.EntityNotFoundException("user")))
-//                .map(user -> {
-//                    UserMapper.updateNonNullValuesInDocument(userDto, user);
-//                    return user;
-//                })
-//                .flatMap(userRepository::save)
-//                .doOnNext(user -> log.debug("Updated Information for User: {}", user))
-//                .thenReturn("");
-//    }
+    /**
+     * Updates the details of current logged-in user
+     *
+     * @param updateUserDto all user details to update
+     */
+    public void updateUserDetails(UpdateUserDto updateUserDto) {
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> {
+                    UserMapper.updateUserDtoToEntity(updateUserDto, user);
+                    return user;
+                }).map(userRepository::save)
+                .ifPresent(user -> log.info("User successfully updated: {}", user));
+    }
 
     /**
      * Updates the password of logged-in user
@@ -154,8 +158,8 @@ public class UserService {
      *
      * @param key activation key received in mail
      */
-    public String activateUser(String key) {
-        log.debug("Activating user for activation key {}", key);
+    public ResponseEntity<String> activateUser(String key) {
+        log.info("Activating user for activation key {}", key);
         userRepository.findOneByActivationKey(key)
                 .map(user -> {
                     user.setStatus(EntityStatus.ACTIVE);
@@ -165,13 +169,33 @@ public class UserService {
                 })
                 .map(userRepository::save)
                 .orElseThrow(() -> new ExpiredKeyException("activation"));
+        String responseTemplate;
         try {
             InputStreamReader stream = new InputStreamReader(new ClassPathResource("templates/mail/SuccessPage.html",
                     this.getClass().getClassLoader()).getInputStream());
-            return IOUtils.toString(stream);
+            responseTemplate = IOUtils.toString(stream);
         } catch (IOException e) {
-            return "<h1>Success</h1>";
+            log.error("Error while loading success page, sending plain Success message");
+            responseTemplate = "<h1>Success</h1><p>Redirecting you to the login page...</p>";
         }
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Refresh", String.format("2;url=%s", appUrlConfig.getLoginUrl()));
+        return new ResponseEntity<>(responseTemplate, httpHeaders, HttpStatus.OK);
+    }
+
+    /**
+     * If a user accepts invite, this method will fetch their details and redirect to registration page
+     *
+     * @param key invite key received in mail
+     */
+    public ResponseEntity<String> acceptInvite(String key) {
+        log.info("Getting details for user with invitation key: {}", key);
+        String registerUrl = userRepository.findOneByInviteKey(key)
+                .map(user -> UserMapper.buildRegisterThroughInviteUrl(user, appUrlConfig.getRegisterUrl()))
+                .orElseThrow(() -> new ExpiredKeyException("invitation"));
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Refresh", String.format("1;url=%s", registerUrl));
+        return new ResponseEntity<>(null, httpHeaders, HttpStatus.OK);
     }
 
     /**
@@ -180,18 +204,20 @@ public class UserService {
      * @param email user email
      */
     public void requestPasswordReset(String email) {
-        userRepository
+        User user = userRepository
                 .findOneByEmailAndDeleteFlag(email, false)
-                .filter(user -> user.getStatus().equals(EntityStatus.ACTIVE))
-                .map(user -> {
-                    user.setResetKey(CommonUtils.Random.generateRandomKey());
-                    user.setResetDate(Instant.now());
-                    user.setLastModifiedBy(user.getId());
-                    return user;
+                .filter(localUser -> localUser.getStatus().equals(EntityStatus.ACTIVE))
+                .map(localUser -> {
+                    localUser.setResetKey(CommonUtils.Random.generateRandomKey());
+                    localUser.setResetDate(Instant.now());
+                    localUser.setLastModifiedBy(localUser.getId());
+                    return localUser;
                 })
                 .map(userRepository::save)
-                // TODO send email
                 .orElseThrow(() -> new EntityNotFoundException("email"));
+        String resetUrl = appUrlConfig.getActivateAccountUrl(user.getActivationKey());
+        userMailService.sendPasswordResetMail(user, resetUrl);
+        log.info("Sent a password rest email to {}", email);
     }
 
     /**
@@ -221,39 +247,34 @@ public class UserService {
     }
 
     /**
-     * Sends an invite to user email
+     * Sends an invitation to user email
      *
      * @param inviteUserDto new user details
      */
     public void inviteNewUsers(InviteUserDto inviteUserDto) {
-        if (!SecurityUtils.isCurrentUserInRole(Authority.ADMIN, Authority.MANAGER)) {
-            throw new UnauthorizedException();
-        }
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         userRepository.findOneByEmailAndDeleteFlag(inviteUserDto.getEmail(), false)
                 .ifPresent(user -> {
                     log.debug("Invited email ({}) is already a member", inviteUserDto.getEmail());
                     throw new EntityAlreadyExistsException("email", inviteUserDto.getEmail());
                 });
-        User user = new User();
-        user.setId(UUID.randomUUID().toString());
-        user.setEmail(inviteUserDto.getEmail());
-        user.setFirstName(inviteUserDto.getFirstName());
-        user.setLastName(inviteUserDto.getLastName());
-        user.setEmployeeId(inviteUserDto.getEmployeeId());
-        user.setAuthority(Authority.valueOf(inviteUserDto.getRole()));
-        user.setStatus(EntityStatus.PENDING);
-        // TODO Add location_id and role_id
-        user.setInviteKey(CommonUtils.Random.generateRandomKey());
-        SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .ifPresent(admin -> {
+        User user = UserMapper.inviteUserDtoToEntity(inviteUserDto);
+        /*
+         * Updating organization id in User object as well as getting the organization name for user invitation mail
+         */
+        String organizationName = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(admin -> {
                     user.setLastModifiedBy(admin.getId());
                     user.setCreatedBy(admin.getId());
-                    user.setOrganizationId(admin.getOrganizationId());
-                });
+                    user.setOrganizationId(admin.getOrganization().getId());
+                    return admin.getOrganization().getName();
+                })
+                .orElseThrow(UnauthorizedException::new);
         userRepository.save(user);
-        log.info("New User added to database (pending for accepting invite: {}", user);
-        // TODO Send invitation mail
+        log.info("New User added to database (pending for accepting invite): {}", user);
+        String inviteUrl = appUrlConfig.getInviteUserUrl(user.getInviteKey());
+        userMailService.sendInvitationEmail(user, inviteUrl, organizationName);
         log.info("Invitation sent to the user");
     }
 
@@ -262,8 +283,26 @@ public class UserService {
      */
     public UserDetailsDto getLoggedInUserAccount() {
         return SecurityUtils.getCurrentUserLogin()
-                .map(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
-                        .map(UserMapper::entityToDto).orElseThrow(EntityNotFoundException::new))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
+                        .map(UserMapper::entityToDto)
+                )
+                .orElseThrow(UnauthorizedException::new);
+    }
+
+    /**
+     * @return all Employees and Admins under logged-in user
+     */
+    public List<UserDetailsForAdminDto> getAllUsers() {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> {
+                    if (user.getAuthority().equals(Authority.ADMIN)) {
+                        return userOrganizationRepository.findAllByOrganizationIdAndDeleteFlag(user.getOrganizationId(), false);
+                    } else {
+                        return userOrganizationRepository.findAllByLocationIdAndDeleteFlag(user.getLocationId(), false);
+                    }
+                }).map(users -> users.stream().map(UserMapper::entityToUserDetailsForAdmin).collect(Collectors.toList()))
                 .orElseThrow(UnauthorizedException::new);
     }
 
@@ -287,7 +326,7 @@ public class UserService {
                     if (existingUser.getStatus().equals(EntityStatus.PENDING)) {
                         userRepository.delete(existingUser);
                     } else {
-                        throw new EntityAlreadyExistsException("username", userDTO.getUsername());
+                        throw new EntityAlreadyExistsException("email", userDTO.getEmail());
                     }
                 });
     }

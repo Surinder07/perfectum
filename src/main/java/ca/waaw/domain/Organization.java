@@ -31,15 +31,12 @@ public class Organization extends AbstractEntity {
     private Integer trialDays;
 
     @Column(name = "is_trial_used")
-    private Boolean isTrialUsed;
+    private boolean isTrialUsed;
 
     @Column(name = "is_paid_until")
     private Instant isPaidUntil;
 
-    @Column(name = "custom_id")
-    private String customId;
-
-    @Column
-    private Boolean active;
+    @Column(name = "waaw_custom_id")
+    private String waawId;
 
 }

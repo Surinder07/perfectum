@@ -39,21 +39,30 @@ public class User extends AbstractEntity {
     @Column(name = "employee_id")
     private String employeeId;
 
+    @Column(name = "waaw_custom_id")
+    private String waawId;
+
     @Column(name = "lang_key")
     private String langKey;
 
     @Column(name = "organization_id")
     private String organizationId;
 
+    @Column(name = "location_id")
+    private String locationId;
+
+    @Column(name = "location_role_id")
+    private String locationRoleId;
+
     @Enumerated(EnumType.STRING)
     @Column
     private Authority authority;
 
     @Column(name = "email_notification_on")
-    private Boolean isEmailNotifications;
+    private boolean isEmailNotifications;
 
     @Column(name = "sms_notification_on")
-    private Boolean isSmsNotifications;
+    private boolean isSmsNotifications;
 
     @Column(name = "reset_key")
     private String resetKey;
@@ -66,6 +75,9 @@ public class User extends AbstractEntity {
 
     @Column(name = "invite_key")
     private String inviteKey;
+
+    @Column(name = "invited_by")
+    private String invitedBy;
 
     @Column(name = "last_login")
     private Instant lastLogin;

@@ -12,10 +12,12 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findOneByEmailAndDeleteFlag(String email, boolean deleteFlag);
-    Optional<User> findOneByUsernameAndDeleteFlag(String email, boolean deleteFlag);
+    Optional<User> findOneByUsernameAndDeleteFlag(String username, boolean deleteFlag);
     Optional<User> findOneByUsernameOrEmail(String username, String email);
     Optional<User> findOneByActivationKey(String key);
     Optional<User> findOneByResetKey(String key);
     Optional<User> findOneByInviteKey(String key);
     Optional<List<User>> findAllByStatusAndCreatedDateBefore(EntityStatus status, Instant date);
+    List<User> findAllByOrganizationIdAndDeleteFlag(String organizationId, boolean deleteFlag);
+    List<User> findAllByLocationIdAndDeleteFlag(String organizationId, boolean deleteFlag);
 }

@@ -44,4 +44,19 @@ public class UserMapper {
         return target;
     }
 
+
+    /**
+     * @param source details for user to be invited
+     * @return entity to be saved in database
+     */
+    public static UserDetailsForAdminDto entityToUserDetailsForAdmin(UserOrganization source) {
+        UserDetailsForAdminDto target = new UserDetailsForAdminDto();
+        BeanUtils.copyProperties(source, target);
+        target.setMobile(source.getCountryCode() + " " + source.getMobile());
+        target.setLocationId(source.getLocation().getId());
+        target.setLocationName(source.getLocation().getName());
+        target.setLocationRoleId(source.getLocationRole().getId());
+        target.setLocationRoleName(source.getLocationRole().getName());
+        return target;
+    }
 }

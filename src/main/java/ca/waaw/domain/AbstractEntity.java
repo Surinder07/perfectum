@@ -33,7 +33,7 @@ public abstract class AbstractEntity implements Serializable {
     private EntityStatus status;
 
     @Column(name = "del_flg")
-    private Boolean deleteFlag;
+    private boolean deleteFlag;
 
     @CreatedBy
     @Column(name = "created_by", nullable = false, length = 50, updatable = false)

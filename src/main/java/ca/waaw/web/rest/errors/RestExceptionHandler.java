@@ -78,6 +78,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorVM(message, "username/email"), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(EntityNotFoundException.class)
+    protected ResponseEntity<ErrorVM> handleEntityNotFoundException(EntityNotFoundException ex) {
+        String entity = ex.getMessage();
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotFoundMessage,
+                null), entity);
+        return new ResponseEntity<>(new ErrorVM(message, entity), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(UserAccountDisabledException.class)
     protected ResponseEntity<ErrorVM> handleUserAccountDisabledException(UserAccountDisabledException ex) {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.disabledAccountMessage, null);
