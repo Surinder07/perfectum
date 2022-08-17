@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" lang="en">
+
+<head th:replace="mail/common/header :: header"></head>
+
+<body>
+<div class="body">
+    <div style="margin:auto; max-width: 600px;">
+        <table style="padding: 10px;">
+            <tr th:replace="mail/common/logo :: logo"></tr>
+            <tr>
+                <td>
+                    <div class="content-box">
+                        <h1 th:text="#{email.invite.accepted.title}"></h1>
+                        <p>
+                            <span th:text="#{email.greeting(${dto.message.adminName})}"></span>
+                            <br/><br/>
+                            <span th:text="#{email.invite.accepted.content.1(${dto.organizationName})}"></span>
+                        </p>
+                        <table class="user-details">
+                            <tr>
+                                <td class="user-details_title">Name:</td>
+                                <td th:text="${dto.message.name}"></td>
+                            </tr>
+                            <tr>
+                                <td class="user-details_title">Email:</td>
+                                <td th:text="${dto.message.userEmail}"></td>
+                            </tr>
+                            <tr>
+                                <td class="user-details_title">Location:</td>
+                                <td th:text="${dto.message.location}"></td>
+                            </tr>
+                            <tr>
+                                <td class="user-details_title">Role:</td>
+                                <td th:text="${dto.message.role}"></td>
+                            </tr>
+                        </table>
+                        <p style="text-align: center;" th:text="#{email.invite.accepted.content.2}"></p>
+                        <div style="min-width: 150px; width: 30%; margin: auto;">
+                            <a th:href="${dto.actionUrl}">
+                                <div class="button">Start Scheduling</div>
+                            </a>
+                        </div>
+                        <br/>
+                        <p th:text="#{email.link.message(#{email.invite.accepted.action})}" style="text-align: center;"></p>
+                        <div th:replace="mail/common/footer :: footer"></div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+</body>
+
+</html>
