@@ -1,4 +1,4 @@
-package ca.waaw.email.javamailsender;
+package ca.waaw.service.email.javamailsender;
 
 import ca.waaw.config.applicationconfig.AppMailConfig;
 import ca.waaw.dto.MailDto;

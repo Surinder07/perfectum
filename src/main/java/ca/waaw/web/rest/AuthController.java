@@ -1,17 +1,17 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.dto.LoginDto;
-import ca.waaw.dto.LoginResponseDto;
+import ca.waaw.dto.userdtos.LoginDto;
+import ca.waaw.dto.userdtos.LoginResponseDto;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.jwt.JWTFilter;
 import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
-import ca.waaw.web.rest.utils.customannotations.SwaggerBadRequest;
-import ca.waaw.web.rest.utils.customannotations.SwaggerUnauthenticated;
+import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,6 +35,7 @@ import java.time.Instant;
 @RestController
 @RequestMapping("/api")
 @AllArgsConstructor
+@Tag(name = "Auth", description = "Authentication API")
 public class AuthController {
 
     private final Logger log = LogManager.getLogger(AuthController.class);
@@ -47,7 +48,7 @@ public class AuthController {
 
     @Operation(summary = "Authenticate login password to get a jwt token")
     @SwaggerBadRequest
-    @SwaggerUnauthenticated
+    @ApiResponse(responseCode = "401", description = "Authentication Failed", content = @Content)
     @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = LoginResponseDto.class))})
     @PostMapping("/v1/unAuth/authenticate")

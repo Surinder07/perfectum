@@ -13,6 +13,7 @@ public class AppUrlConfig {
     private String hostedServer;
     private String activateAccount;
     private String resetPassword;
+    private String inviteUser;
     private String register;
     private String login;
 
@@ -22,6 +23,10 @@ public class AppUrlConfig {
 
     public String getResetPasswordUrl(String key) {
         return String.format("%s%s%s", hostedUi, resetPassword, key);
+    }
+
+    public String getInviteUserUrl(String key) {
+        return String.format("%s%s%s", hostedServer, inviteUser, key);
     }
 
     public String getRegisterUrl() {

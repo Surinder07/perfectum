@@ -1,4 +1,4 @@
-package ca.waaw.scheduler;
+package ca.waaw.service.scheduler;
 
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.enumration.EntityStatus;

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}" lang="en">
+
+<head th:replace="mail/common/header :: header"></head>
+
+<body>
+<div class="body">
+    <div style="margin:auto; max-width: 600px;">
+        <table style="padding: 10px;">
+            <tr th:replace="mail/common/logo :: logo"></tr>
+            <tr>
+                <td>
+                    <div class="content-box">
+                        <h1 th:text="#{email.invitation.title(${dto.organizationName})}"></h1>
+                        <p>
+                            <span th:text="#{email.greeting.no.name}"></span>
+                            <br/><br/>
+                            <span th:text="#{email.invitation.content(${dto.organizationName})}"></span>
+                        </p>
+                        <div style="min-width: 150px; width: 30%; margin: auto;">
+                            <a th:href="${dto.actionUrl}">
+                                <div class="button">Start Scheduling</div>
+                            </a>
+                        </div>
+                        <br/>
+                        <p th:text="#{email.link.message(#{email.invitation.action})}" style="text-align: center;"></p>
+                        <div th:replace="mail/common/footer :: footer"></div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+</body>
+
+</html>
