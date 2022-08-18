@@ -4,6 +4,9 @@ import ca.waaw.enumration.Authority;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.security.SecureRandom;
 import java.util.Locale;
@@ -33,6 +36,33 @@ public class CommonUtils {
         if (locale == null) locale = Locale.ENGLISH;
         ResourceBundle bundle = ResourceBundle.getBundle("messages", locale);
         return bundle.getString(property);
+    }
+
+    /**
+     * @param firstname firstname
+     * @param lastname  lastname
+     * @return combined string without any white spaces
+     */
+    public static String combineFirstAndLastName(String firstname, String lastname) {
+        assert (StringUtils.isNotEmpty(firstname));
+        return StringUtils.isNotEmpty(lastname) ? firstname + " " + lastname : firstname;
+    }
+
+    public static <S> S logMessageAndReturnObject(S object, String logType, Class<?> logLocation, String message,
+                                                  Object... messageParams) {
+        Logger log = LogManager.getLogger(logLocation);
+        switch (logType.toLowerCase(Locale.ROOT)) {
+            case "debug":
+                log.debug(message, messageParams);
+                break;
+            case "error":
+                log.error(message, messageParams);
+                break;
+            case "info":
+                log.info(message, messageParams);
+                break;
+        }
+        return object;
     }
 
     /**

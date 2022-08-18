@@ -31,6 +31,9 @@ public class Notification {
     @Column(name = "is_read")
     private boolean isRead;
 
+    @Column(name = "del_flg")
+    private boolean deleteFlag;
+
     @Column
     @Enumerated(EnumType.STRING)
     private NotificationType type;

@@ -1,7 +1,6 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.domain.Location;
-import ca.waaw.domain.User;
 import ca.waaw.dto.locationandroledtos.AdminLocationDto;
 import ca.waaw.dto.locationandroledtos.EmployeeLocationDto;
 import ca.waaw.dto.locationandroledtos.NewLocationDto;
@@ -15,7 +14,6 @@ import ca.waaw.repository.UserRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
-import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -28,9 +26,9 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
-public class LocationService {
+public class LocationAndRoleService {
 
-    private final Logger log = LogManager.getLogger(LocationService.class);
+    private final Logger log = LogManager.getLogger(LocationAndRoleService.class);
 
     private final LocationRepository locationRepository;
 
@@ -47,17 +45,19 @@ public class LocationService {
      * roles under them, for Employees or Contractors: Their location and role information
      */
     public Object getLocation() {
-        User user = SecurityUtils.getCurrentUserLogin()
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER, Authority.CONTRACTOR, Authority.EMPLOYEE);
+        return SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> {
+                    if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN)) {
+                        return getAllLocations(user.getOrganizationId());
+                    } else if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER)) {
+                        return getLocationForAdmin(user.getLocationId());
+                    } else {
+                        return getLocationForEmployee(user.getLocationId(), user.getLocationRoleId());
+                    }
+                })
                 .orElseThrow(AuthenticationException::new);
-        if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN)) {
-            return getAllLocations(user.getOrganizationId());
-        } else if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER)) {
-            return getLocationAdmin(user.getLocationId());
-        } else if (SecurityUtils.isCurrentUserInRole(Authority.EMPLOYEE) || SecurityUtils.isCurrentUserInRole(Authority.CONTRACTOR)) {
-            return getLocationEmployee(user.getLocationId(), user.getLocationRoleId());
-        }
-        throw new UnauthorizedException();
     }
 
     /**
@@ -67,12 +67,13 @@ public class LocationService {
      */
     public void addNewLocation(NewLocationDto newLocationDto) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN);
-        User admin = SecurityUtils.getCurrentUserLogin()
+        SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(admin -> LocationMapper.dtoToEntity(newLocationDto, admin))
+                .map(locationRepository::save)
+                .map(location -> CommonUtils.logMessageAndReturnObject(location, "info", LocationAndRoleService.class,
+                        "New Location saved successfully: {}", location))
                 .orElseThrow(AuthenticationException::new);
-        Location location = LocationMapper.dtoToEntity(newLocationDto, admin);
-        locationRepository.save(location);
-        log.info("New Location saved successfully: {}", location);
     }
 
     /**
@@ -87,7 +88,8 @@ public class LocationService {
                 .map(location -> {
                     location.setDeleteFlag(true);
                     return location;
-                }).map(locationRepository::save)
+                })
+                .map(locationRepository::save)
                 .map(Location::getId)
                 .map(locationId -> userRepository.findAllByLocationIdAndDeleteFlag(locationId, false)
                         .stream().peek(user -> user.setStatus(EntityStatus.SUSPENDED)).collect(Collectors.toList())
@@ -96,7 +98,7 @@ public class LocationService {
     }
 
     /**
-     * @return All locations and their roles
+     * @return All locations and their roles for an organization
      */
     private List<AdminLocationDto> getAllLocations(String organizationId) {
         return locationAndRolesRepository.findAllByOrganizationIdAndDeleteFlag(organizationId, false)
@@ -106,7 +108,7 @@ public class LocationService {
     /**
      * @return Location info with all location roles under that location
      */
-    private AdminLocationDto getLocationAdmin(String locationId) {
+    private AdminLocationDto getLocationForAdmin(String locationId) {
         return locationAndRolesRepository.findOneByIdAndDeleteFlag(locationId, false)
                 .map(LocationMapper::entityToDtoForAdmin)
                 .orElseThrow(() -> new EntityNotFoundException("location"));
@@ -115,7 +117,7 @@ public class LocationService {
     /**
      * @return Location info and role for the single role assigned to the employee
      */
-    private EmployeeLocationDto getLocationEmployee(String locationId, String locationRoleId) {
+    private EmployeeLocationDto getLocationForEmployee(String locationId, String locationRoleId) {
         return locationRepository.findOneByIdAndDeleteFlag(locationId, false)
                 .flatMap(location -> locationRoleRepository.findOneByIdAndDeleteFlag(locationRoleId, false)
                         .map(locationRole -> LocationMapper.entitiesToDtoForEmployee(location, locationRole))

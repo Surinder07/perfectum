@@ -62,8 +62,13 @@ public class AuthController {
             throw new AuthenticationException();
         } catch (Exception e) {
             log.error(e.getMessage());
+            e.printStackTrace();
             throw e;
         }
+
+        final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe());
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
 
         // Update last login to current time
         userRepository.findOneByUsernameOrEmail(loginDto.getLogin(), loginDto.getLogin())
@@ -71,10 +76,6 @@ public class AuthController {
                     user.setLastLogin(Instant.now());
                     return user;
                 }).map(userRepository::save);
-
-        final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe());
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
 
         return new ResponseEntity<>(new LoginResponseDto(token), httpHeaders, HttpStatus.OK);
     }

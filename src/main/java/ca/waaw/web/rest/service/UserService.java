@@ -13,6 +13,7 @@ import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.UserOrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
@@ -60,6 +61,8 @@ public class UserService {
 
     private final UserMailService userMailService;
 
+    private final NotificationInternalService notificationInternalService;
+
     /**
      * @param username username to check in database
      * @return true if username is present in database
@@ -75,7 +78,7 @@ public class UserService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void registerUser(RegisterUserDto userDTO) {
-        userRepository.findOneByInviteKey(userDTO.getInviteKey())
+        String userId = userRepository.findOneByInviteKey(userDTO.getInviteKey())
                 .filter(user -> user.getCreatedDate().isAfter(Instant.now()
                         .minus(appValidityTimeConfig.getUserInvite(), ChronoUnit.DAYS)))
                 .map(user -> {
@@ -84,8 +87,15 @@ public class UserService {
                     return user;
                 })
                 .map(userRepository::save)
-                // TODO send notification to admin
+                .map(User::getId)
                 .orElseThrow(() -> new ExpiredKeyException("invite"));
+
+        // Sending notification to admin
+        userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
+                .ifPresent(user -> userRepository.findOneByIdAndDeleteFlag(user.getInvitedBy(), false)
+                        .ifPresent(admin ->
+                                notificationInternalService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl()))
+                );
     }
 
     /**
@@ -265,7 +275,7 @@ public class UserService {
         String organizationName = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(admin -> {
-                    user.setLastModifiedBy(admin.getId());
+                    user.setInvitedBy(admin.getId());
                     user.setCreatedBy(admin.getId());
                     user.setOrganizationId(admin.getOrganization().getId());
                     return admin.getOrganization().getName();

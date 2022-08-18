@@ -2,8 +2,10 @@ package ca.waaw.web.rest;
 
 import ca.waaw.dto.locationandroledtos.AdminLocationDto;
 import ca.waaw.dto.locationandroledtos.NewLocationDto;
-import ca.waaw.web.rest.service.LocationService;
+import ca.waaw.web.rest.service.LocationAndRoleService;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerAuthenticated;
+import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerCreated;
+import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerOk;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerUnauthorized;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,10 +23,10 @@ import javax.validation.Valid;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api")
-@Tag(name = "Location", description = "All Location related apis")
-public class LocationController {
+@Tag(name = "Location and Location_Roles", description = "All Location related apis")
+public class LocationAndRoleController {
 
-    private final LocationService locationService;
+    private final LocationAndRoleService locationAndRoleService;
 
     @Operation(summary = "Api to get information location and roles under them.")
     @SwaggerAuthenticated
@@ -35,27 +37,27 @@ public class LocationController {
                     "will be returned. For employee single location and single role will be returned.")
     @GetMapping("/v1/location/get")
     public ResponseEntity<Object> getLocation() {
-        return ResponseEntity.ok(locationService.getLocation());
+        return ResponseEntity.ok(locationAndRoleService.getLocation());
     }
 
     @Operation(summary = "Adds a new location under logged in admins organization")
     @SwaggerAuthenticated
     @SwaggerUnauthorized
-    @ApiResponse(responseCode = "200", description = "Success", content = {@Content})
+    @SwaggerCreated
     @PostMapping("/v1/location/save")
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.CREATED)
     public void addNewLocation(@Valid @RequestBody NewLocationDto newLocationDto) {
-        locationService.addNewLocation(newLocationDto);
+        locationAndRoleService.addNewLocation(newLocationDto);
     }
 
     @Operation(summary = "Deletes the location with given Id and suspends the account of related users")
     @SwaggerAuthenticated
     @SwaggerUnauthorized
-    @ApiResponse(responseCode = "200", description = "Success", content = {@Content})
+    @SwaggerOk
     @DeleteMapping("/v1/location/delete")
     @ResponseStatus(HttpStatus.OK)
     public void deleteLocation(@Valid @RequestParam String id) {
-        locationService.deleteLocation(id);
+        locationAndRoleService.deleteLocation(id);
     }
 
 }

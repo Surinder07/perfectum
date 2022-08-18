@@ -1,8 +1,6 @@
 package ca.waaw.web.rest.utils.customannotations.swagger;
 
-import ca.waaw.web.rest.errors.ErrorVM;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
@@ -17,7 +15,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @SecurityRequirement(name = "jwt")
-@ApiResponse(responseCode = "401", description = "Authentication Failed", content = {@Content(mediaType = "application/json",
-        schema = @Schema(implementation = ErrorVM.class))})
+@ApiResponse(responseCode = "401", description = "Authentication Failed", content = @Content)
 public @interface SwaggerAuthenticated {
 }

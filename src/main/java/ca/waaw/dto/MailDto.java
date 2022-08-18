@@ -25,4 +25,6 @@ public class MailDto {
 
     private Object message;
 
+    private String organizationName;
+
 }
