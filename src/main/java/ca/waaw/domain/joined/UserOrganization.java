@@ -1,9 +1,6 @@
 package ca.waaw.domain.joined;
 
-import ca.waaw.domain.AbstractEntity;
-import ca.waaw.domain.Location;
-import ca.waaw.domain.LocationRole;
-import ca.waaw.domain.Organization;
+import ca.waaw.domain.*;
 import ca.waaw.enumration.Authority;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,7 +22,7 @@ public class UserOrganization extends AbstractEntity {
     private String username;
 
     @Column(name = "first_name")
-    private String firstname;
+    private String firstName;
 
     @Column(name = "last_name")
     private String lastName;
@@ -50,20 +47,21 @@ public class UserOrganization extends AbstractEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @NotFound(action = NotFoundAction.EXCEPTION)
-    @JoinColumn(name = "organization_id", referencedColumnName = "uuid", updatable = false)
+    @JoinColumn(name = "organization_id", referencedColumnName = "uuid", updatable = false, insertable = false)
     private Organization organization;
 
     @OneToOne(fetch = FetchType.LAZY)
     @NotFound(action = NotFoundAction.IGNORE)
-    @JoinColumn(name = "location_id", referencedColumnName = "uuid", updatable = false)
+    @JoinColumn(name = "location_id", referencedColumnName = "uuid", updatable = false, insertable = false)
     private Location location;
 
     @OneToOne(fetch = FetchType.LAZY)
     @NotFound(action = NotFoundAction.IGNORE)
-    @JoinColumn(name = "location_role_id", referencedColumnName = "uuid", updatable = false)
+    @JoinColumn(name = "location_role_id", referencedColumnName = "uuid", updatable = false, insertable = false)
     private LocationRole locationRole;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private Authority authority;
 
     @Column(name = "email_notification_on")

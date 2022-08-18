@@ -36,7 +36,7 @@ public class NotificationInternalService {
             message.setAdminName(CommonUtils.combineFirstAndLastName(admin.getFirstName(), admin.getLastName()));
             message.setEmail(admin.getEmail());
             message.setLangKey(user.getLangKey());
-            message.setName(CommonUtils.combineFirstAndLastName(user.getFirstname(), user.getLastName()));
+            message.setName(CommonUtils.combineFirstAndLastName(user.getFirstName(), user.getLastName()));
             message.setUserEmail(user.getEmail());
             notificationMailService.sendNewUserMailToAdmin(message, user.getOrganization().getName(), loginUrl);
         }
@@ -47,7 +47,7 @@ public class NotificationInternalService {
         notification.setType(NotificationType.USER);
         notification.setTitle(CommonUtils.getPropertyFromMessagesResourceBundle("notification.invite.accepted.title", null));
         String description = String.format(CommonUtils.getPropertyFromMessagesResourceBundle("notification.invite.accepted.content", null),
-                CommonUtils.combineFirstAndLastName(user.getFirstname(), user.getLastName()), user.getEmail(),
+                CommonUtils.combineFirstAndLastName(user.getFirstName(), user.getLastName()), user.getEmail(),
                 user.getOrganization().getName(), message.getRole(), message.getLocation());
         notification.setDescription(description);
         notificationRepository.save(notification);

@@ -1,13 +1,13 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.dto.locationandroledtos.AdminLocationDto;
+import ca.waaw.dto.locationandroledtos.LocationRoleDto;
+import ca.waaw.dto.locationandroledtos.LocationRoleWithUsersDto;
 import ca.waaw.dto.locationandroledtos.NewLocationDto;
 import ca.waaw.web.rest.service.LocationAndRoleService;
-import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerAuthenticated;
-import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerCreated;
-import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerOk;
-import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerUnauthorized;
+import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,6 +43,7 @@ public class LocationAndRoleController {
     @Operation(summary = "Adds a new location under logged in admins organization")
     @SwaggerAuthenticated
     @SwaggerUnauthorized
+    @SwaggerBadRequest
     @SwaggerCreated
     @PostMapping("/v1/location/save")
     @ResponseStatus(HttpStatus.CREATED)
@@ -53,11 +54,59 @@ public class LocationAndRoleController {
     @Operation(summary = "Deletes the location with given Id and suspends the account of related users")
     @SwaggerAuthenticated
     @SwaggerUnauthorized
+    @SwaggerBadRequest
     @SwaggerOk
     @DeleteMapping("/v1/location/delete")
     @ResponseStatus(HttpStatus.OK)
     public void deleteLocation(@Valid @RequestParam String id) {
         locationAndRoleService.deleteLocation(id);
+    }
+
+    @Operation(summary = "Adds a new location role under logged in admins organization")
+    @SwaggerAuthenticated
+    @SwaggerUnauthorized
+    @SwaggerBadRequest
+    @SwaggerCreated
+    @PostMapping("/v1/location/role/save")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void addNewLocationRole(@Valid @RequestBody LocationRoleDto locationRoleDto) {
+        locationAndRoleService.addNewLocationRole(locationRoleDto);
+    }
+
+    @Operation(summary = "Deletes the location role with given Id and suspends the account of related users")
+    @SwaggerAuthenticated
+    @SwaggerUnauthorized
+    @SwaggerBadRequest
+    @SwaggerOk
+    @DeleteMapping("/v1/location/role/delete")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteLocationRole(@Valid @RequestParam String id) {
+        locationAndRoleService.deleteLocationRole(id);
+    }
+
+
+    @Operation(summary = "Api to get information about location roles.")
+    @SwaggerAuthenticated
+    @SwaggerUnauthorized
+    @SwaggerBadRequest
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = LocationRoleWithUsersDto.class))},
+            description = "For Global and Location Admin, users will be returned. " +
+                    "For employee only role info will be returned.")
+    @GetMapping("/v1/location/role/get")
+    public ResponseEntity<Object> getLocationRole(@RequestParam(required = false) @Parameter(description = "Required for admins only") String locationRoleId) {
+        return ResponseEntity.ok(locationAndRoleService.getLocationRoleInfo(locationRoleId));
+    }
+
+    @Operation(summary = "Update a location role under logged in admins organization")
+    @SwaggerAuthenticated
+    @SwaggerUnauthorized
+    @SwaggerBadRequest
+    @SwaggerOk
+    @PutMapping("/v1/location/role/update")
+    @ResponseStatus(HttpStatus.OK)
+    public void updateLocationRole(@Valid @RequestBody LocationRoleDto locationRoleDto) {
+        locationAndRoleService.updateLocationRolePreferences(locationRoleDto);
     }
 
 }

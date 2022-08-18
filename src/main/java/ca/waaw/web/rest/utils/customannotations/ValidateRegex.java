@@ -1,7 +1,7 @@
 package ca.waaw.web.rest.utils.customannotations;
 
 import ca.waaw.web.rest.utils.customannotations.helperclass.RegexMatcherValidator;
-import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.ValidatorType;
+import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
@@ -15,7 +15,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Will check any dto field for given regex patterns, if anyone matches it will allow process to continue
- * Pass one of the {@link ValidatorType}
+ * Pass one of the {@link RegexValidatorType}
  */
 @SuppressWarnings("unused")
 @Documented
@@ -24,7 +24,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Constraint(validatedBy = RegexMatcherValidator.class)
 public @interface ValidateRegex {
 
-    ValidatorType type();
+    RegexValidatorType type();
 
     String message() default "invalid pattern";
 

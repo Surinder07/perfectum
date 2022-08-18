@@ -1,21 +1,17 @@
 package ca.waaw.dto.locationandroledtos;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AdminLocationDto {
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+public class AdminLocationDto extends NewLocationDto {
 
     private String id;
-
-    private String name;
-
-    private String timezone;
 
     private List<LocationRoleDto> locationRoles;
 

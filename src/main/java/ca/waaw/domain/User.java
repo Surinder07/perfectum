@@ -54,8 +54,8 @@ public class User extends AbstractEntity {
     @Column(name = "location_role_id")
     private String locationRoleId;
 
-    @Enumerated(EnumType.STRING)
     @Column
+    @Enumerated(EnumType.STRING)
     private Authority authority;
 
     @Column(name = "email_notification_on")

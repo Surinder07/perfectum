@@ -3,6 +3,7 @@ package ca.waaw.web.rest.utils.customannotations;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.utils.customannotations.helperclass.ValidateLocationAndRoleValidator;
+import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.LocationRoleValidatorType;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
@@ -19,6 +20,8 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = ValidateLocationAndRoleValidator.class)
 public @interface ValidateLocationAndRole {
+
+    LocationRoleValidatorType type();
 
     String message() default "location_id is required for manager/ both location_id and location_role_id is required for a employee";
 

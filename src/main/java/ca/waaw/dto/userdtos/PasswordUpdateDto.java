@@ -1,7 +1,7 @@
 package ca.waaw.dto.userdtos;
 
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
-import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.ValidatorType;
+import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,7 +19,7 @@ public class PasswordUpdateDto {
 
     @NotEmpty
     @Size(min = 8, max = 60, message = "password must be more than 8 characters")
-    @ValidateRegex(type = ValidatorType.PASSWORD)
+    @ValidateRegex(type = RegexValidatorType.PASSWORD)
     private String newPassword;
 
 }

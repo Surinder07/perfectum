@@ -4,7 +4,7 @@ import ca.waaw.dto.userdtos.*;
 import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
-import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.ValidatorType;
+import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -34,7 +34,7 @@ public class UserController {
     @SwaggerBadRequest
     @GetMapping("/v1/unAuth/checkUserNameExistence")
     @ResponseStatus(HttpStatus.OK)
-    public void checkUserNameExistence(@Valid @RequestParam @ValidateRegex(type = ValidatorType.USERNAME) String username) {
+    public void checkUserNameExistence(@Valid @RequestParam @ValidateRegex(type = RegexValidatorType.USERNAME) String username) {
         if(userService.checkIfUsernameExists(username)) throw new EntityAlreadyExistsException("username", username);
     }
 
@@ -81,7 +81,7 @@ public class UserController {
     @SwaggerBadRequest
     @GetMapping("/v1/unAuth/resetPassword/init")
     @ResponseStatus(HttpStatus.CREATED)
-    public void initResetPassword(@Valid @RequestParam @ValidateRegex(type = ValidatorType.EMAIL) String email) {
+    public void initResetPassword(@Valid @RequestParam @ValidateRegex(type = RegexValidatorType.EMAIL) String email) {
         userService.requestPasswordReset(email);
     }
 

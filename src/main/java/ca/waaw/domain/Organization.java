@@ -33,6 +33,12 @@ public class Organization extends AbstractEntity {
     @Column(name = "is_trial_used")
     private boolean isTrialUsed;
 
+    @Column(name = "is_timeclock_enabled_default")
+    private boolean isTimeclockEnabledDefault;
+
+    @Column(name = "is_timeoff_enabled_default")
+    private boolean isTimeoffEnabledDefault;
+
     @Column(name = "is_paid_until")
     private Instant isPaidUntil;
 

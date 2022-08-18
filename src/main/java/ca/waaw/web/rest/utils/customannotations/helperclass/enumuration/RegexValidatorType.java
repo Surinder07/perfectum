@@ -1,5 +1,5 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass.enumuration;
 
-public enum ValidatorType {
+public enum RegexValidatorType {
     EMAIL, USERNAME, PASSWORD, EMAIL_USERNAME
 }

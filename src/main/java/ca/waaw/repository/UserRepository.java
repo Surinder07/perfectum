@@ -21,5 +21,6 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findOneByInviteKey(String key);
     Optional<User> findOneByAuthority(Authority authority);
     Optional<List<User>> findAllByStatusAndCreatedDateBefore(EntityStatus status, Instant date);
-    List<User> findAllByLocationIdAndDeleteFlag(String organizationId, boolean deleteFlag);
+    List<User> findAllByLocationIdAndDeleteFlag(String locationId, boolean deleteFlag);
+    List<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag);
 }

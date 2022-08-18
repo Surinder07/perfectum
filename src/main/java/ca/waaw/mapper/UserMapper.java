@@ -21,7 +21,7 @@ public class UserMapper {
         UserDetailsDto target = new UserDetailsDto();
         BeanUtils.copyProperties(source, target);
         target.setMobile(source.getCountryCode() + "-" + target.getMobile());
-        target.setRole(source.getAuthority().toString());
+        target.setRole(source.getAuthority());
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
         return target;

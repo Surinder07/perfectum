@@ -4,7 +4,9 @@ import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
 import ca.waaw.web.rest.utils.customannotations.ToLowercase;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
@@ -12,19 +14,15 @@ import javax.validation.constraints.Size;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
-public class RegisterUserDto extends BaseUser {
-
-    @NotEmpty
-    private String inviteKey;
-
-    private String employeeId;
+public class BaseUser {
 
     @NotEmpty
     @ToLowercase
+    @Size(min = 5, max = 100, message = "username must be more than 5 characters")
+    @ValidateRegex(type = RegexValidatorType.USERNAME)
     private String username;
 
+    @NotEmpty
     @CapitalizeFirstLetter
     private String firstName;
 

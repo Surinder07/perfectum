@@ -1,27 +1,29 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.domain.Location;
-import ca.waaw.dto.locationandroledtos.AdminLocationDto;
-import ca.waaw.dto.locationandroledtos.EmployeeLocationDto;
-import ca.waaw.dto.locationandroledtos.NewLocationDto;
+import ca.waaw.domain.LocationRole;
+import ca.waaw.domain.User;
+import ca.waaw.dto.locationandroledtos.*;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.mapper.LocationMapper;
-import ca.waaw.repository.LocationAndRolesRepository;
-import ca.waaw.repository.LocationRepository;
-import ca.waaw.repository.LocationRoleRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.mapper.LocationRoleMapper;
+import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
+import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
+import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +38,11 @@ public class LocationAndRoleService {
 
     private final LocationAndRolesRepository locationAndRolesRepository;
 
+    private final LocationRolesUserRepository locationRolesUserRepository;
+
     private final UserRepository userRepository;
+
+    private final OrganizationRepository organizationRepository;
 
     /**
      * Checks if logged in employee is admin or employee and then returns accordingly
@@ -98,6 +104,116 @@ public class LocationAndRoleService {
     }
 
     /**
+     * Saves new Location role into the database
+     *
+     * @param locationRoleDto New location role information
+     */
+    public void addNewLocationRole(LocationRoleDto locationRoleDto) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(admin -> checkLocationIdForAdminRole(admin, locationRoleDto))
+                .map(admin -> checkOrganizationDefaultAndMapDtoToEntity(admin, locationRoleDto))
+                .map(locationRoleRepository::save)
+                .map(locationRole -> CommonUtils.logMessageAndReturnObject(locationRole, "info", LocationAndRoleService.class,
+                        "New Location role saved successfully: {}", locationRole))
+                .orElseThrow(() -> new BadRequestException("LocationId is required for global admin"));
+    }
+
+    /**
+     * Marks a location role as deleted in the database and suspend all associated users
+     *
+     * @param id id for the location to be deleted
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteLocationRole(String id) {
+        log.info("Deleting location role with id: {}", id);
+        locationRoleRepository.findOneByIdAndDeleteFlag(id, false)
+                .map(locationRole -> {
+                    locationRole.setDeleteFlag(true);
+                    return locationRole;
+                })
+                .map(locationRoleRepository::save)
+                .map(LocationRole::getId)
+                .map(locationRoleId -> userRepository.findAllByLocationRoleIdAndDeleteFlag(locationRoleId, false)
+                        .stream().peek(user -> user.setStatus(EntityStatus.SUSPENDED)).collect(Collectors.toList())
+                ).map(userRepository::saveAll);
+        log.info("Successfully deleted the location role and suspended all users for the location: {}", id);
+    }
+
+    /**
+     * @param locationRoleId id to search location role in database
+     * @return Location Role Info based on authority
+     */
+    public Object getLocationRoleInfo(String locationRoleId) {
+        if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN, Authority.MANAGER) && StringUtils.isEmpty(locationRoleId)) {
+            throw new BadRequestException("locationRoleId is required", "locationRoleId");
+        } else if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN, Authority.MANAGER)) {
+            return getAllLocationRoleInfo(locationRoleId);
+        } else if (SecurityUtils.isCurrentUserInRole(Authority.EMPLOYEE, Authority.CONTRACTOR)) {
+            return getAllLocationRoleInfo();
+        }
+        throw new UnauthorizedException();
+    }
+
+    /**
+     * Update the location role preferences
+     *
+     * @param locationRoleDto details to update
+     */
+    public void updateLocationRolePreferences(LocationRoleDto locationRoleDto) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(user -> locationRoleRepository.findOneByIdAndDeleteFlag(locationRoleDto.getId(), false)
+                        .map(locationRole -> locationRole.getOrganizationId().equals(user.getOrganizationId()) ? locationRole : null)
+                )
+                .map(locationRole -> {
+                    LocationRoleMapper.updateDtoToEntity(locationRoleDto, locationRole);
+                    return locationRole;
+                })
+                .map(locationRoleRepository::save)
+                .map(locationRole -> CommonUtils.logMessageAndReturnObject(locationRole, "info", LocationAndRoleService.class,
+                        "Location role updated successfully: {}", locationRole))
+                .orElseThrow(() -> new EntityNotFoundException("location role"));
+    }
+
+    /**
+     * For employees and contractors
+     *
+     * @return Simple info about location role
+     */
+    private BaseLocationRole getAllLocationRoleInfo() {
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(user -> locationRoleRepository.findOneByIdAndDeleteFlag(user.getLocationRoleId(), false))
+                .map(LocationRoleMapper::entityToDtoSimple)
+                .orElseThrow(AuthenticationException::new);
+    }
+
+    /**
+     * For admins
+     *
+     * @param locationRoleId id for the locationRole to look in database
+     * @return Location Role info with all users under it
+     */
+    private LocationRoleWithUsersDto getAllLocationRoleInfo(String locationRoleId) {
+        return locationRolesUserRepository.findOneByIdAndDeleteFlag(locationRoleId, false)
+                .flatMap(locationRolesUser -> SecurityUtils.getCurrentUserLogin()
+                        .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
+                                .map(user -> {
+                                    if (!user.getOrganizationId().equalsIgnoreCase(locationRolesUser.getOrganizationId())) {
+                                        return null;
+                                    }
+                                    return locationRolesUser;
+                                })
+                        )
+                )
+                .map(LocationRoleMapper::entityToDto)
+                .orElseThrow(() -> new EntityNotFoundException("location role"));
+    }
+
+    /**
      * @return All locations and their roles for an organization
      */
     private List<AdminLocationDto> getAllLocations(String organizationId) {
@@ -122,6 +238,46 @@ public class LocationAndRoleService {
                 .flatMap(location -> locationRoleRepository.findOneByIdAndDeleteFlag(locationRoleId, false)
                         .map(locationRole -> LocationMapper.entitiesToDtoForEmployee(location, locationRole))
                 ).orElseThrow(() -> new EntityNotFoundException("location"));
+    }
+
+    /**
+     * If admin is a global admin and location id is not provided in the request, it will return null,
+     * so {@link Optional#orElseThrow()} will throw a bad request exception
+     *
+     * @param admin           admin adding the new location role
+     * @param locationRoleDto details for location role
+     * @return admin object received by method or null
+     */
+    private User checkLocationIdForAdminRole(User admin, LocationRoleDto locationRoleDto) {
+        if (admin.getAuthority().equals(Authority.ADMIN) && StringUtils.isEmpty(locationRoleDto.getLocationId())) {
+            return null;
+        }
+        return admin;
+    }
+
+    /**
+     * If admin is location admin, location id will be updated same as admin, if timeclock and timeoff preference
+     * are not given, they will be set according to organization default
+     *
+     * @param admin           admin adding the new location role
+     * @param locationRoleDto details for location role
+     * @return locationRole object received by method or null
+     */
+    private LocationRole checkOrganizationDefaultAndMapDtoToEntity(User admin, LocationRoleDto locationRoleDto) {
+        if (admin.getAuthority().equals(Authority.MANAGER)) {
+            locationRoleDto.setLocationId(admin.getLocationId());
+        }
+        LocationRole locationRole = LocationRoleMapper.dtoToEntity(locationRoleDto, admin);
+        if (locationRoleDto.getIsTimeclockEnabled() == null || locationRoleDto.getIsTimeoffEnabled() == null) {
+            organizationRepository.findOneByIdAndDeleteFlag(admin.getOrganizationId(), false)
+                    .ifPresent(organization -> {
+                        locationRole.setTimeclockEnabled(locationRoleDto.getIsTimeclockEnabled() == null ?
+                                organization.isTimeclockEnabledDefault() : locationRoleDto.getIsTimeclockEnabled());
+                        locationRole.setTimeoffEnabled(locationRoleDto.getIsTimeoffEnabled() == null ?
+                                organization.isTimeoffEnabledDefault() : locationRoleDto.getIsTimeoffEnabled());
+                    });
+        }
+        return locationRole;
     }
 
 }

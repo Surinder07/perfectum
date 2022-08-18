@@ -1,16 +1,17 @@
 package ca.waaw.dto.locationandroledtos;
 
+import ca.waaw.dto.userdtos.BaseUserDetails;
 import lombok.*;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class EmployeeLocationDto extends NewLocationDto {
+public class LocationRoleWithUsersDto extends BaseLocationRole {
 
-    private String id;
-
-    private LocationRoleDto locationRoles;
+    List<BaseUserDetails> users;
 
 }

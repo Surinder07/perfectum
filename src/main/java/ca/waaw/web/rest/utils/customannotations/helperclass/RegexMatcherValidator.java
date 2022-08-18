@@ -2,7 +2,7 @@ package ca.waaw.web.rest.utils.customannotations.helperclass;
 
 import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
-import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.ValidatorType;
+import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -12,7 +12,7 @@ public class RegexMatcherValidator implements ConstraintValidator<ValidateRegex,
 
     private final AppRegexConfig appRegexConfig;
 
-    private ValidatorType type;
+    private RegexValidatorType type;
 
     public RegexMatcherValidator(AppRegexConfig appRegexConfig) {
         this.appRegexConfig = appRegexConfig;
