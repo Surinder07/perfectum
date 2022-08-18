@@ -11,7 +11,7 @@ CREATE TRIGGER location_updated_by
 
 BEGIN
 
-	UPDATE `location` SET NEW.last_modified_date = NOW();
+	SET NEW.last_modified_date = CURRENT_TIMESTAMP();
 
 END;
 

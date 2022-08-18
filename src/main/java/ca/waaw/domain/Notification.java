@@ -12,7 +12,7 @@ import java.time.Instant;
 @Entity
 @ToString
 @EqualsAndHashCode
-@Table(name = "notifications")
+@Table(name = "notification")
 public class Notification {
 
     @Id

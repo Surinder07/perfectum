@@ -11,7 +11,7 @@ CREATE TRIGGER user_updated_by
 
 BEGIN
 
-	UPDATE `user` SET NEW.last_modified_date = NOW();
+	SET NEW.last_modified_date = CURRENT_TIMESTAMP();
 
 END
 

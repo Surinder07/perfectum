@@ -61,13 +61,15 @@ public class NotificationInternalService {
      */
     private void populateInviteAcceptedMessageLocationAndRole(InviteAcceptedMessageDto message, UserOrganization user) {
         String role;
-        String location = user.getLocation().getName();
+        String location;
         if (user.getAuthority().equals(Authority.ADMIN)) {
             role = "Global Admin";
             location = "All";
         } else if (user.getAuthority().equals(Authority.MANAGER)) {
+            location = user.getLocation().getName();
             role = "Location Admin";
         } else {
+            location = user.getLocation().getName();
             role = String.format(user.getAuthority().equals(Authority.CONTRACTOR) ? "Contractor / %s" : "Employee / %s",
                     user.getLocationRole().getName());
         }

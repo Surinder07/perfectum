@@ -34,7 +34,7 @@ public class CommonUtils {
      */
     public static String getPropertyFromMessagesResourceBundle(String property, Locale locale) {
         if (locale == null) locale = Locale.ENGLISH;
-        ResourceBundle bundle = ResourceBundle.getBundle("messages", locale);
+        ResourceBundle bundle = ResourceBundle.getBundle("i18n/messages", locale);
         return bundle.getString(property);
     }
 

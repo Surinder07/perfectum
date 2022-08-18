@@ -33,6 +33,12 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
                   name: type
                   type: VARCHAR(50)
               - column:

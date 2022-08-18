@@ -46,7 +46,7 @@ CREATE TRIGGER organization_updated_by
 
 BEGIN
 
-	UPDATE `organization` SET NEW.last_modified_date = NOW();
+	SET NEW.last_modified_date = CURRENT_TIMESTAMP();
 
 END
 
