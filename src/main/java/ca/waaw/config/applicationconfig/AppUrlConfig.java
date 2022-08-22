@@ -10,11 +10,17 @@ import org.springframework.context.annotation.Configuration;
 public class AppUrlConfig {
 
     private String hostedUi;
+
     private String hostedServer;
+
     private String activateAccount;
+
     private String resetPassword;
+
     private String inviteUser;
+
     private String register;
+
     private String login;
 
     public String getActivateAccountUrl(String key) {

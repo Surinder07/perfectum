@@ -225,7 +225,7 @@ public class UserService {
                 })
                 .map(userRepository::save)
                 .orElseThrow(() -> new EntityNotFoundException("email"));
-        String resetUrl = appUrlConfig.getActivateAccountUrl(user.getActivationKey());
+        String resetUrl = appUrlConfig.getResetPasswordUrl(user.getResetKey());
         userMailService.sendPasswordResetMail(user, resetUrl);
         log.info("Sent a password rest email to {}", email);
     }
