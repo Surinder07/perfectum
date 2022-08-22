@@ -11,8 +11,8 @@ spring:
 #####    Security Configurations    #####
 #########################################
 security:
-  un-auth-url-patterns: /api/*/unAuth/**, /api/unAuth/**, /test/**, /swagger-ui.html, /v3/api-docs/**, /swagger-ui/**
-  cors-allowed-origins: http://localhost:3000,https://localhost:3000,http://localhost:9000,https://localhost:9000
+  un-auth-url-patterns: /api/*/unAuth/**, /api/unAuth/**, /test/**, /swagger-ui.html, /swagger-ui/**, /v3/api-docs/**, ${application.websocket.connection-endpoint}/**
+  cors-allowed-origins: http://localhost:3000,http://127.0.0.1:5500,http://localhost:4200
   # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
   jwt-secret: YjE0OTg3YTEyM2YwY2YyNGJjYmZlYTUwNjJkZDQ0YzYxNmUwNjIyMGVkOTIxNTEyODA1M2I3Yjk0NTU5NmIyNjMwZTJiZTlmNjA0YTAyNGY3MzdjOGNlNzQ4OTQzNTAxYmJiM2VlYmRiZGE1YTM5NjhiNGEyNWE1YzA0YTY1MTI=
   jwt-default-token-validity-in-seconds: 1800
@@ -24,7 +24,7 @@ security:
 swagger:
   title: WAAW APIs Collection
   version: 1.0.0
-  description: WAAW Api reference for developers
+  description: WAAW Api reference for developers. <br><br> Web-sockets are setup in the application, you can subscribe to websocket on <b>"your domain"${application.websockets.connection-endpoint}</b> (set in application.yml), <b>jwt token</b> needs to be added in headers during inaitial connection as <b>access_token</b> then subscribe to needed services (also set in application.yml), <br>1. Notification Service - <b>/user${application.websockets.notification-url}</b>
 springdoc:
   swagger-ui:
     enabled: true

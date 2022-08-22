@@ -30,7 +30,7 @@ public class NotificationController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = NotificationDto.class)))},
             description = " Response will contain, total number of pages(totalPages), number of entries(totalEntries) and the list response(data)")
-    @GetMapping("/v1/notifications/getAll")
+    @GetMapping("/v1/notifications/getAll/{pageNo}/{pageSize}")
     public ResponseEntity<PaginationDto> getAllNotifications(@PathVariable int pageNo, @PathVariable int pageSize) {
         return ResponseEntity.ok(notificationService.getAllNotifications(pageNo, pageSize));
     }

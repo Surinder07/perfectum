@@ -6,6 +6,7 @@ import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.emailmessagedtos.InviteAcceptedMessageDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.NotificationType;
+import ca.waaw.mapper.NotificationMapper;
 import ca.waaw.repository.NotificationRepository;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,8 @@ public class NotificationInternalService {
     private final NotificationMailService notificationMailService;
 
     private final NotificationRepository notificationRepository;
+
+    private final WebSocketService webSocketService;
 
     /**
      * Will send an email notification to admin if email notifications are will on and send an application notification
@@ -51,6 +54,7 @@ public class NotificationInternalService {
                 user.getOrganization().getName(), message.getRole(), message.getLocation());
         notification.setDescription(description);
         notificationRepository.save(notification);
+        webSocketService.notifyUser(NotificationMapper.entityToDto(notification), admin.getUsername());
     }
 
     /**
@@ -62,7 +66,7 @@ public class NotificationInternalService {
     private void populateInviteAcceptedMessageLocationAndRole(InviteAcceptedMessageDto message, UserOrganization user) {
         String role;
         String location;
-        if (user.getAuthority().equals(Authority.ADMIN)) {
+        if (user.getAuthority().equals(Authority.ADMIN) || user.getAuthority().equals(Authority.SUPER_USER )) {
             role = "Global Admin";
             location = "All";
         } else if (user.getAuthority().equals(Authority.MANAGER)) {

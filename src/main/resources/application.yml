@@ -93,3 +93,9 @@ application:
     organization: WAAW
   triggers:
     location: classpath:db/sqltriggers/
+  websockets:
+    connection-endpoint: /ws-connect
+    simple-broker: /ws-server
+    application-destination-prefix: /ws
+    allowed-origins: ${security.cors-allowed-origins}
+    notification-url: ${application.websockets.simple-broker}/notification

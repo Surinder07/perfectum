@@ -15,3 +15,5 @@ While running the application for the first time, set `spring.liquibase.enabled=
 ### Resources
 
 - **Swagger Url** : http://localhost:8080/swagger-ui.html
+
+> All details about websockets is available in swagger doc description.
