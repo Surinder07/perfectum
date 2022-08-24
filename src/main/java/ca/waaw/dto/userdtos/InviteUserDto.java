@@ -1,11 +1,9 @@
 package ca.waaw.dto.userdtos;
 
-import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
-import ca.waaw.web.rest.utils.customannotations.ValidateLocationAndRole;
+import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
-import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
-import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.LocationRoleValidatorType;
+import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -13,17 +11,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ValidateLocationAndRole(type = LocationRoleValidatorType.ROLE_TO_LOCATION_AND_LOCATION_ROLE)
+@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.ROLE_TO_LOCATION_AND_LOCATION_ROLE,
+        message = "location_id is required for manager/ both location_id and location_role_id is required for a employee / role has an invalid value")
 public class InviteUserDto {
 
-    @NotNull
+    @NotEmpty
     @Schema(allowableValues = {"ADMIN", "MANAGER", "EMPLOYEE"})
-    @ValueOfEnum(enumClass = Authority.class, message = "Please pass a valid role")
     private String role;
 
     @NotEmpty
