@@ -1,15 +1,13 @@
 package ca.waaw.web.rest.errors.exceptions;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
 public class BadRequestException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    private String[] fields;
+    private final String[] fields;
 
     public BadRequestException(String message, String... fields) {
         super(message);

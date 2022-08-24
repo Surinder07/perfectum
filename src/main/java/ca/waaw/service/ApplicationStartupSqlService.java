@@ -91,16 +91,14 @@ public class ApplicationStartupSqlService {
      */
     public void createSqlTriggers() {
         try {
-            if (Boolean.parseBoolean(env.getProperty("spring.liquibase.enabled"))) {
-                log.info("Executing Sql trigger scripts...");
-                ResourceDatabasePopulator resourceDatabasePopulator = new ResourceDatabasePopulator();
-                String triggerPath = env.getProperty("application.triggers.location");
-                Resource[] resources = resourcePatternResolver.getResources(triggerPath + "*.sql");
-                resourceDatabasePopulator.addScripts(resources);
-                resourceDatabasePopulator.setSeparator("//");
-                resourceDatabasePopulator.execute(dataSource);
-                log.info("Executing Sql trigger scripts successful.");
-            }
+            log.info("Executing Sql trigger scripts...");
+            ResourceDatabasePopulator resourceDatabasePopulator = new ResourceDatabasePopulator();
+            String triggerPath = env.getProperty("application.triggers.location");
+            Resource[] resources = resourcePatternResolver.getResources(triggerPath + "*.sql");
+            resourceDatabasePopulator.addScripts(resources);
+            resourceDatabasePopulator.setSeparator("//");
+            resourceDatabasePopulator.execute(dataSource);
+            log.info("Executing Sql trigger scripts successful.");
         } catch (Exception e) {
             log.error("Executing Sql trigger scripts failed: {}", e.getMessage());
         }

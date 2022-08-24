@@ -42,8 +42,7 @@ public class WaawApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        applicationStartupSqlService.createSqlTriggers();
-        applicationStartupSqlService.checkExistenceAndGenerateSuperUser();
+        createSqlTriggersAndSupperUser();
         logApplicationStartup();
     }
 
@@ -76,6 +75,13 @@ public class WaawApplication implements CommandLineRunner {
                 env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(),
                 swaggerEnabled ? String.format("%s%s", externalUrl, "swagger-ui.html") : "");
         System.out.println("Application is running on port " + env.getProperty("server.port"));
+    }
+
+    private void createSqlTriggersAndSupperUser() {
+        if (Boolean.parseBoolean(env.getProperty("spring.liquibase.enabled"))) {
+            applicationStartupSqlService.createSqlTriggers();
+            applicationStartupSqlService.checkExistenceAndGenerateSuperUser();
+        }
     }
 
 }

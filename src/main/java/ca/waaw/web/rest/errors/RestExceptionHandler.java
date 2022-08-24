@@ -44,7 +44,8 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         try {
             fields = ex.getBindingResult().getAllErrors().stream()
                     .map(e -> ((FieldError) e).getField()).toArray(String[]::new);
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
         return new ResponseEntity<>(new ErrorVM(errors.toString(), fields), HttpStatus.BAD_REQUEST);
     }
 
@@ -67,23 +68,22 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(UserNotActivatedException.class)
     protected ResponseEntity<ErrorVM> handleUserNotActivatedException(UserNotActivatedException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.userNotActivatedMessage,
-                null), ex.getMessage());
+                null), ex.getLoginName());
         return new ResponseEntity<>(new ErrorVM(message, "username/email"), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     protected ResponseEntity<ErrorVM> handleUsernameNotFoundException(UsernameNotFoundException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.usernameNotFoundMessage,
-                null), ex.getMessage());
+                null), ex.getLoginName());
         return new ResponseEntity<>(new ErrorVM(message, "username/email"), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     protected ResponseEntity<ErrorVM> handleEntityNotFoundException(EntityNotFoundException ex) {
-        String entity = ex.getMessage();
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotFoundMessage,
-                null), entity);
-        return new ResponseEntity<>(new ErrorVM(message, entity), HttpStatus.NOT_FOUND);
+                null), ex.getEntity());
+        return new ResponseEntity<>(new ErrorVM(message, ex.getEntity()), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(UserAccountDisabledException.class)
@@ -114,7 +114,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ExpiredKeyException.class)
     protected ResponseEntity<ErrorVM> handleExpiredKeyException(ExpiredKeyException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.expiredKeyMessage,
-                null), ex.getMessage());
+                null), ex.getKeyType());
         return new ResponseEntity<>(new ErrorVM(message, "key"), HttpStatus.NOT_FOUND);
     }
 
