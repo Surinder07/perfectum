@@ -24,7 +24,7 @@ databaseChangeLog:
                   name: start
                   type: TIMESTAMP
               - column:
-                  name: start
+                  name: end
                   type: TIMESTAMP
               - column:
                   name: type

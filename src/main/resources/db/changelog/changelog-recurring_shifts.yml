@@ -49,7 +49,7 @@ databaseChangeLog:
                   name: location_role_id
                   type: VARCHAR(100)
               - column:
-                  name: end_minute
+                  name: available_quantity
                   type: SMALLINT
                   constraints:
                     nullable: false
@@ -80,14 +80,14 @@ databaseChangeLog:
                   type: TIMESTAMP
                   defaultValueDate: now()
         - addForeignKeyConstraint:
-            baseTableName: shifts
+            baseTableName: recurring_shifts
             baseColumnNames: location_role_id
-            constraintName: fk_shifts_location_role_id
+            constraintName: fk_recurring_shifts_location_role_id
             referencedColumnNames: uuid
             referencedTableName: location_role
         - addForeignKeyConstraint:
-            baseTableName: shifts
+            baseTableName: recurring_shifts
             baseColumnNames: user_id
-            constraintName: fk_shifts_user_id
+            constraintName: fk_recurring_shifts_user_id
             referencedColumnNames: uuid
             referencedTableName: user
