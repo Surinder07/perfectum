@@ -1,11 +1,16 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.domain.User;
 import ca.waaw.dto.userdtos.LoginDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
+import ca.waaw.enumration.Authority;
+import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.jwt.JWTFilter;
 import ca.waaw.security.jwt.TokenProvider;
+import ca.waaw.web.rest.errors.PaymentErrorVM;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
+import ca.waaw.web.rest.errors.exceptions.TrialExpiredException;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @SuppressWarnings("unused")
 @RestController
@@ -46,11 +53,15 @@ public class AuthController {
 
     private final UserRepository userRepository;
 
+    private final OrganizationRepository organizationRepository;
+
     @Operation(summary = "Authenticate login password to get a jwt token")
     @SwaggerBadRequest
-    @ApiResponse(responseCode = "401", description = "Authentication Failed", content = @Content)
     @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = LoginResponseDto.class))})
+    @ApiResponse(responseCode = "401", description = "Authentication Failed", content = @Content)
+    @ApiResponse(responseCode = "402", description = "If role is ADMIN redirect to payment page with error message or else just show the error.",
+            content = {@Content(mediaType = "application/json", schema = @Schema(implementation = PaymentErrorVM.class))})
     @PostMapping("/v1/unAuth/authenticate")
     public ResponseEntity<LoginResponseDto> authenticate(@Valid @RequestBody LoginDto loginDto) {
         Authentication authentication;
@@ -61,21 +72,31 @@ public class AuthController {
         } catch (BadCredentialsException e) {
             throw new AuthenticationException();
         } catch (Exception e) {
-            log.error(e.getMessage());
-            e.printStackTrace();
+            log.error("Exception while logging in", e);
             throw e;
         }
+
+        Optional<User> userEntity = userRepository.findOneByUsernameOrEmail(loginDto.getLogin(), loginDto.getLogin());
+
+        userEntity.ifPresent(user -> organizationRepository.findOneByIdAndDeleteFlag(user.getOrganizationId(), false)
+                .map(organization -> {
+                    if (organization.getCreatedDate().isBefore(Instant.now().minus(organization.getTrialDays(), ChronoUnit.DAYS))
+                            && !user.getAuthority().equals(Authority.SUPER_USER)) {
+                        throw new TrialExpiredException(user.getId(), user.getAuthority());
+                    }
+                    return null;
+                })
+        );
 
         final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe());
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
 
         // Update last login to current time
-        userRepository.findOneByUsernameOrEmail(loginDto.getLogin(), loginDto.getLogin())
-                .map(user -> {
-                    user.setLastLogin(Instant.now());
-                    return user;
-                }).map(userRepository::save);
+        userEntity.map(user -> {
+            user.setLastLogin(Instant.now());
+            return user;
+        }).map(userRepository::save);
 
         return new ResponseEntity<>(new LoginResponseDto(token), httpHeaders, HttpStatus.OK);
     }

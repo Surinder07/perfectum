@@ -13,7 +13,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
+    show-sql: false
   liquibase:
     enabled: false
     change-log: classpath:db/changelog/db.changelog-master.yml
