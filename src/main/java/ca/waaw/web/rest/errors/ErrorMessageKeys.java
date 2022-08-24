@@ -14,5 +14,7 @@ public final class ErrorMessageKeys {
     public static final String authenticationFailedMessage = "error.authenticationFailedMessage";
     public static final String internalServerMessage = "error.internalServerMessage";
     public static final String entityAlreadyExistsMessage = "error.entityAlreadyExistsMessage";
+    public static final String trialExpiredAdminMessage = "error.trialExpiredAdminMessage";
+    public static final String trialExpiredEmployeeMessage = "error.trialExpiredEmployeeMessage";
 
 }

@@ -1,5 +1,6 @@
 package ca.waaw.web.rest.errors;
 
+import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import org.springframework.core.Ordered;
@@ -116,6 +117,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.expiredKeyMessage,
                 null), ex.getKeyType());
         return new ResponseEntity<>(new ErrorVM(message, "key"), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(TrialExpiredException.class)
+    protected ResponseEntity<ErrorVM> handleTrialExpiredException(TrialExpiredException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle((ex.getRole().equals(Authority.ADMIN) ?
+                ErrorMessageKeys.trialExpiredAdminMessage : ErrorMessageKeys.trialExpiredEmployeeMessage), null);
+        return new ResponseEntity<>(new PaymentErrorVM(message, ex.getRole(), ex.getUserId()),
+                HttpStatus.PAYMENT_REQUIRED);
     }
 
 }
