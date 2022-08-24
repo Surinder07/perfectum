@@ -3,6 +3,8 @@ package ca.waaw;
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.NewShiftDto;
+import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.repository.UserOrganizationRepository;
 import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
@@ -10,8 +12,11 @@ import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @SuppressWarnings("unused")
 @RestController
@@ -64,6 +69,11 @@ public class ApiTestingController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @GetMapping("/4")
+    public NewShiftDto test4(@Valid @RequestBody NewShiftDto dto) {
+        return dto;
     }
 
 }
