@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-timesheet
+      author: AkhilSinghChauhan
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: timesheet
+      changes:
+        - createTable:
+            tableName: timesheet
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: VARCHAR(100)
+              - column:
+                  name: start
+                  type: TIMESTAMP
+              - column:
+                  name: start
+                  type: TIMESTAMP
+              - column:
+                  name: type
+                  type: VARCHAR(100)
+              - column:
+                  name: added_by
+                  type: VARCHAR(100)
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: timesheet
+            baseColumnNames: user_id
+            constraintName: fk_timesheet_user_id
+            referencedColumnNames: uuid
+            referencedTableName: user
