@@ -1,6 +1,9 @@
 package ca.waaw.domain.joined;
 
-import ca.waaw.domain.*;
+import ca.waaw.domain.AbstractEntity;
+import ca.waaw.domain.Location;
+import ca.waaw.domain.LocationRole;
+import ca.waaw.domain.Organization;
 import ca.waaw.enumration.Authority;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -16,6 +19,23 @@ import java.time.Instant;
 @Table(name = "user")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+@NamedQueries({
+        @NamedQuery(name = "UserOrganization.searchUsersWithOrganizationIdAndLocationIdAndDeleteFlagAndAuthority",
+                query = "SELECT u FROM UserOrganization u WHERE (u.firstName LIKE ?1 OR u.lastName LIKE ?1 " +
+                        "or u.email LIKE ?1 OR u.employeeId LIKE ?1 OR u.waawId LIKE ?1) " +
+                        "AND u.organizationId = ?2 AND (?3 IS NULL OR u.locationId = ?3) AND u.deleteFlag " +
+                        "= ?4 AND (?5 IS NULL OR u.authority = ?5)"),
+        @NamedQuery(name = "UserOrganization.searchUsersWithLocationIdAndDeleteFlagAndAuthority",
+                query = "SELECT u FROM UserOrganization u WHERE (u.firstName LIKE ?1 OR u.lastName LIKE ?1 " +
+                        "or u.email LIKE ?1 OR u.employeeId LIKE ?1 OR u.waawId LIKE ?1) AND u.locationId = ?2 " +
+                        "AND u.deleteFlag = ?3 AND (?4 IS NULL OR u.authority = ?4)"),
+        @NamedQuery(name = "UserOrganization.findUsersWithLocationIdAndDeleteFlagAndAuthority",
+                query = "SELECT u FROM UserOrganization u WHERE u.locationId = ?1 " +
+                        "AND u.deleteFlag = ?2 AND (?3 IS NULL OR u.authority = ?3)"),
+        @NamedQuery(name = "UserOrganization.findUsersWithOrganizationIdAndLocationIdAndDeleteFlagAndAuthority",
+                query = "SELECT u FROM UserOrganization u WHERE u.organizationId = ?1 AND (?2 IS NULL OR " +
+                        "u.locationId = ?2) AND u.deleteFlag = ?3 AND (?4 IS NULL OR u.authority = ?4)")
+})
 public class UserOrganization extends AbstractEntity {
 
     @Column
@@ -59,6 +79,15 @@ public class UserOrganization extends AbstractEntity {
     @NotFound(action = NotFoundAction.IGNORE)
     @JoinColumn(name = "location_role_id", referencedColumnName = "uuid", updatable = false, insertable = false)
     private LocationRole locationRole;
+
+    @Column(name = "organization_id")
+    private String organizationId;
+
+    @Column(name = "location_id")
+    private String locationId;
+
+    @Column(name = "location_role_id")
+    private String locationRoleId;
 
     @Column
     @Enumerated(EnumType.STRING)

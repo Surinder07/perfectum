@@ -2,6 +2,7 @@ package ca.waaw.web.rest.utils;
 
 import ca.waaw.enumration.Authority;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.stream.Stream;
 
 public class CommonUtils {
 
@@ -46,6 +48,17 @@ public class CommonUtils {
     public static String combineFirstAndLastName(String firstname, String lastname) {
         assert (StringUtils.isNotEmpty(firstname));
         return StringUtils.isNotEmpty(lastname) ? firstname + " " + lastname : firstname;
+    }
+
+    public static String combinePhoneNumber(String countryCode, String mobile) {
+        if (StringUtils.isEmpty(countryCode) && StringUtils.isEmpty(mobile)) return null;
+        return StringUtils.isNotEmpty(countryCode) ? countryCode + " " + mobile : mobile;
+    }
+
+    public static void validateStringInEnum(Class<?extends Enum<?>> enumClass, String value, String field) {
+        if (Stream.of(enumClass.getEnumConstants()).map(Enum::name).noneMatch(name -> name.equalsIgnoreCase(value))) {
+            throw new BadRequestException("Invalid value for the field", field);
+        }
     }
 
     public static <S> S logMessageAndReturnObject(S object, String logType, Class<?> logLocation, String message,

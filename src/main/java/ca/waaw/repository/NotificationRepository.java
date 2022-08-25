@@ -12,6 +12,8 @@ import java.util.Optional;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, String> {
     Optional<Notification> findOneByIdAndUserIdAndDeleteFlag(String id, String userId, boolean deleteFlag);
+
     List<Notification> findAllByUserIdAndIsReadAndDeleteFlag(String userId, boolean isRead, boolean deleteFlag);
+
     Page<Notification> findAllByUserIdAndDeleteFlag(String userId, boolean deleteFlag, Pageable pageable);
 }
