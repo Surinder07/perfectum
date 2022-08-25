@@ -15,6 +15,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @SecurityRequirement(name = "jwt")
-@ApiResponse(responseCode = "401", description = "Authentication Failed", content = @Content)
+@ApiResponse(responseCode = "401", description = "${api.swagger.error-description.authentication}", content = @Content)
 public @interface SwaggerAuthenticated {
 }
