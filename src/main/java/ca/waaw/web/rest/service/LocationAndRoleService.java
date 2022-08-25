@@ -99,7 +99,8 @@ public class LocationAndRoleService {
                 .map(Location::getId)
                 .map(locationId -> userRepository.findAllByLocationIdAndDeleteFlag(locationId, false)
                         .stream().peek(user -> user.setStatus(EntityStatus.SUSPENDED)).collect(Collectors.toList())
-                ).map(userRepository::saveAll);
+                ).map(userRepository::saveAll)
+                .orElseThrow(() -> new EntityNotFoundException("location"));
         log.info("Successfully deleted the location and suspended all users for the location: {}", id);
     }
 

@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@ApiResponse(responseCode = "401", description = "${api.swagger.error-description.unauthorized}", content = {@Content(mediaType = "application/json",
-        schema = @Schema(implementation = ErrorVM.class))})
-public @interface SwaggerUnauthorized {
+@ApiResponse(responseCode = "404", description = "${api.swagger.error-description.not-found}",
+        content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorVM.class))})
+public @interface SwaggerNotFound {
 }

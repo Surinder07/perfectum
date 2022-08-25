@@ -5,7 +5,6 @@ import ca.waaw.dto.locationandroledtos.LocationRoleDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleWithUsersDto;
 import ca.waaw.dto.locationandroledtos.NewLocationDto;
 import ca.waaw.web.rest.service.LocationAndRoleService;
-import ca.waaw.web.rest.utils.APIConstants;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,86 +23,86 @@ import javax.validation.Valid;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api")
-@Tag(name = APIConstants.TagNames.locationAndRole, description = APIConstants.TagDescription.locationAndRole)
+@Tag(name = "${api.swagger.groups.location-and-role}")
 public class LocationAndRoleController {
 
     private final LocationAndRoleService locationAndRoleService;
 
-    @Operation(description = APIConstants.ApiDescription.LocationAndRole.getLocation)
     @SwaggerAuthenticated
-    @SwaggerUnauthorized
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
-            schema = @Schema(implementation = AdminLocationDto.class))},
-            description = APIConstants.SchemaDescription.getLocation)
-    @GetMapping(APIConstants.ApiEndpoints.LocationAndRole.getLocation)
+    @Operation(description = "${api.description.location-and-role.getLocation}")
+    @GetMapping("${api.endpoints.location-and-role.getLocation}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
+            implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getLocation}")
     public ResponseEntity<Object> getLocation() {
         return ResponseEntity.ok(locationAndRoleService.getLocation());
     }
 
-    @Operation(description = APIConstants.ApiDescription.LocationAndRole.addLocation)
-    @SwaggerAuthenticated
-    @SwaggerUnauthorized
-    @SwaggerBadRequest
     @SwaggerCreated
-    @PostMapping(APIConstants.ApiEndpoints.LocationAndRole.addLocation)
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "${api.description.location-and-role.addLocation}")
+    @PostMapping("${api.endpoints.location-and-role.addLocation}")
     public void addNewLocation(@Valid @RequestBody NewLocationDto newLocationDto) {
         locationAndRoleService.addNewLocation(newLocationDto);
     }
 
-    @Operation(description = APIConstants.ApiDescription.LocationAndRole.deleteLocation)
-    @SwaggerAuthenticated
-    @SwaggerUnauthorized
-    @SwaggerBadRequest
     @SwaggerOk
-    @DeleteMapping(APIConstants.ApiEndpoints.LocationAndRole.deleteLocation)
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.location-and-role.deleteLocation}")
+    @DeleteMapping("${api.endpoints.location-and-role.deleteLocation}")
     public void deleteLocation(@Valid @RequestParam String id) {
         locationAndRoleService.deleteLocation(id);
     }
 
-    @Operation(description = APIConstants.ApiDescription.LocationAndRole.addLocationRole)
-    @SwaggerAuthenticated
-    @SwaggerUnauthorized
-    @SwaggerBadRequest
     @SwaggerCreated
-    @PostMapping(APIConstants.ApiEndpoints.LocationAndRole.addLocationRole)
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "${api.description.location-and-role.addLocationRole}")
+    @PostMapping("${api.endpoints.location-and-role.addLocationRole}")
     public void addNewLocationRole(@Valid @RequestBody LocationRoleDto locationRoleDto) {
         locationAndRoleService.addNewLocationRole(locationRoleDto);
     }
 
-    @Operation(description = APIConstants.ApiDescription.LocationAndRole.deleteLocationRole)
-    @SwaggerAuthenticated
-    @SwaggerUnauthorized
-    @SwaggerBadRequest
     @SwaggerOk
-    @DeleteMapping(APIConstants.ApiEndpoints.LocationAndRole.deleteLocationRole)
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.location-and-role.deleteLocationRole}")
+    @DeleteMapping("${api.endpoints.location-and-role.deleteLocationRole}")
     public void deleteLocationRole(@Valid @RequestParam String id) {
         locationAndRoleService.deleteLocationRole(id);
     }
 
-
-    @Operation(description = APIConstants.ApiDescription.LocationAndRole.getLocationRole)
-    @SwaggerAuthenticated
-    @SwaggerUnauthorized
     @SwaggerBadRequest
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
-            schema = @Schema(implementation = LocationRoleWithUsersDto.class))},
-            description = APIConstants.SchemaDescription.getLocationRole)
-    @GetMapping(APIConstants.ApiEndpoints.LocationAndRole.getLocationRole)
-    public ResponseEntity<Object> getLocationRole(@RequestParam(required = false) @Parameter(description = "Required for admins only") String locationRoleId) {
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.location-and-role.getLocationRole}")
+    @GetMapping("${api.endpoints.location-and-role.getLocationRole}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema =
+    @Schema(implementation = LocationRoleWithUsersDto.class))}, description = "${api.swagger.schema-description.getLocationRole}")
+    public ResponseEntity<Object> getLocationRole(@RequestParam(required = false) @Parameter(
+            description = "${api.swagger.param-description.getLocationRole}") String locationRoleId) {
         return ResponseEntity.ok(locationAndRoleService.getLocationRoleInfo(locationRoleId));
     }
 
-    @Operation(description = APIConstants.ApiDescription.LocationAndRole.updateLocationRole)
-    @SwaggerAuthenticated
-    @SwaggerUnauthorized
-    @SwaggerBadRequest
     @SwaggerOk
-    @PutMapping(APIConstants.ApiEndpoints.LocationAndRole.updateLocationRole)
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.location-and-role.updateLocationRole}")
+    @PutMapping("${api.endpoints.location-and-role.updateLocationRole}")
     public void updateLocationRole(@Valid @RequestBody LocationRoleDto locationRoleDto) {
         locationAndRoleService.updateLocationRolePreferences(locationRoleDto);
     }

@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@ApiResponse(responseCode = "400", description = "Bad Request", content = {@Content(mediaType = "application/json",
-        schema = @Schema(implementation = ErrorVM.class))})
+@ApiResponse(responseCode = "400", description = "${api.swagger.error-description.bad-request}",
+        content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorVM.class))})
 public @interface SwaggerBadRequest {
 }

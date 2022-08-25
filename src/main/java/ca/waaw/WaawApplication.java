@@ -19,7 +19,7 @@ import java.net.UnknownHostException;
 import java.util.Optional;
 
 @SpringBootApplication
-@OpenAPIDefinition(info = @Info(title = "${swagger.title}", version = "${swagger.title}", description = "${swagger.description}"))
+@OpenAPIDefinition(info = @Info(title = "${swagger.title}", version = "${swagger.version}", description = "${swagger.description}"))
 @SecurityScheme(name = "jwt", scheme = "bearer", type = SecuritySchemeType.HTTP, in = SecuritySchemeIn.HEADER)
 public class WaawApplication implements CommandLineRunner {
 

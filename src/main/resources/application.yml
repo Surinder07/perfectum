@@ -6,6 +6,8 @@ spring:
     name: ^project.name^
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
+  config:
+    import: classpath:apiinfo.yml
   jpa:
     hibernate:
       ddl-auto: none
@@ -58,7 +60,7 @@ swagger:
 
     | Service               | Endpoint                                                       |
     | --------------------- | ---------------------------------------------------------------|
-    | Connect to web-socket | **"your domain"${application.websockets.connection-endpoint}** |
+    | Connect to web-socket | **"Backend URL"${application.websockets.connection-endpoint}** |
     | Notification Service  | **/user${application.websockets.notification-url}**            |
 
 springdoc:

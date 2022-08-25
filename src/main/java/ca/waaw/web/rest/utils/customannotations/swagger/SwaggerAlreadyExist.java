@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@ApiResponse(responseCode = "401", description = "${api.swagger.error-description.unauthorized}", content = {@Content(mediaType = "application/json",
-        schema = @Schema(implementation = ErrorVM.class))})
-public @interface SwaggerUnauthorized {
+@ApiResponse(responseCode = "407", description = "${api.swagger.error-description.already-exist}",
+        content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorVM.class))})
+public @interface SwaggerAlreadyExist {
 }

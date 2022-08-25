@@ -1,8 +1,12 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.dto.locationandroledtos.AdminLocationDto;
 import ca.waaw.web.rest.service.ShiftSchedulingService;
-import ca.waaw.web.rest.utils.APIConstants;
+import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,73 +17,124 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api")
-@Tag(name = APIConstants.TagNames.shiftManagement, description = APIConstants.TagDescription.shiftManagement)
+@Tag(name = "${api.swagger.groups.shift-management}")
 public class ShiftSchedulingController {
 
     private final ShiftSchedulingService shiftSchedulingService;
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.createShift)
+    @SwaggerCreated
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping(APIConstants.ApiEndpoints.ShiftManagement.createShift)
+    @Operation(description = "${api.description.shift-management.createShift}")
+    @PostMapping("${api.endpoints.shift-management.createShift}")
     public void createShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.updateShift)
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.updateShift)
+    @Operation(description = "${api.description.shift-management.updateShift}")
+    @PutMapping("${api.endpoints.shift-management.updateShift}")
     public void updateShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.deleteShift)
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @DeleteMapping(APIConstants.ApiEndpoints.ShiftManagement.deleteShift)
+    @Operation(description = "${api.description.shift-management.deleteShift}")
+    @DeleteMapping("${api.endpoints.shift-management.deleteShift}")
     public void deleteShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.assignShift)
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.assignShift)
+    @Operation(description = "${api.description.shift-management.assignShift}")
+    @PutMapping("${api.endpoints.shift-management.assignShift}")
     public void assignShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.claimShift)
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.claimShift)
+    @Operation(description = "${api.description.shift-management.claimShift}")
+    @PutMapping("${api.endpoints.shift-management.claimShift}")
     public void claimShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.createRecurringShift)
+    @SwaggerCreated
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping(APIConstants.ApiEndpoints.ShiftManagement.createRecurringShift)
+    @Operation(description = "${api.description.shift-management.createRecurringShift}")
+    @PostMapping("${api.endpoints.shift-management.createRecurringShift}")
     public void createRecurringShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.updateRecurringShift)
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.updateRecurringShift)
+    @Operation(description = "${api.description.shift-management.updateRecurringShift}")
+    @PutMapping("${api.endpoints.shift-management.updateRecurringShift}")
     public void updateRecurringShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.deleteRecurringShift)
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @DeleteMapping(APIConstants.ApiEndpoints.ShiftManagement.deleteRecurringShift)
+    @Operation(description = "${api.description.shift-management.deleteRecurringShift}")
+    @DeleteMapping("${api.endpoints.shift-management.deleteRecurringShift}")
     public void deleteRecurringShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.assignRecurringShift)
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.assignRecurringShift)
+    @Operation(description = "${api.description.shift-management.assignRecurringShift}")
+    @PutMapping("${api.endpoints.shift-management.assignRecurringShift}")
     public void assignRecurringShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.claimRecurringShift)
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.claimRecurringShift)
+    @Operation(description = "${api.description.shift-management.claimRecurringShift}")
+    @PutMapping("${api.endpoints.shift-management.claimRecurringShift}")
     public void claimRecurringShift() {
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.getAllShifts)
-    @GetMapping(APIConstants.ApiEndpoints.ShiftManagement.getAllShifts)
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.shift-management.getAllShifts}")
+    @GetMapping("${api.endpoints.shift-management.getAllShifts}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
+            implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getAllShifts}")
     public ResponseEntity<Object> getAllShifts(@RequestParam(required = false) String locationId,
                                                @RequestParam(required = false) String location_role_id,
                                                @RequestParam String date, @RequestParam(required = false) String endDate,
@@ -87,8 +142,11 @@ public class ShiftSchedulingController {
         return null;
     }
 
-    @Operation(description = APIConstants.ApiDescription.ShiftManagement.getAllRecurringShifts)
-    @GetMapping(APIConstants.ApiEndpoints.ShiftManagement.getAllRecurringShifts)
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.shift-management.getAllRecurringShifts}")
+    @GetMapping("${api.endpoints.shift-management.getAllRecurringShifts}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
+            implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getAllShifts}")
     public ResponseEntity<Object> getAllRecurringShifts(@RequestParam(required = false) String locationId,
                                                         @RequestParam(required = false) String location_role_id,
                                                         @PathVariable int pageNo, @PathVariable int pageSize) {

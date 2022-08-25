@@ -25,10 +25,12 @@ public class UserMapper {
         target.setRole(source.getAuthority());
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
-        OrganizationPreferences preferences = new OrganizationPreferences();
-        BeanUtils.copyProperties(source.getOrganization(), preferences);
-        AccountMessageMapper.checkTrialAndAddWarning(target, source);
-        target.setOrganizationPreferences(preferences);
+        if (source.getAuthority().equals(Authority.ADMIN)) {
+            OrganizationPreferences preferences = new OrganizationPreferences();
+            BeanUtils.copyProperties(source.getOrganization(), preferences);
+            target.setOrganizationPreferences(preferences);
+            AccountMessageMapper.checkTrialAndAddWarning(target, source);
+        }
         return target;
     }
 
