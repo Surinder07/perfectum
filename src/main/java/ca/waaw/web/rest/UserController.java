@@ -1,8 +1,8 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.dto.userdtos.*;
-import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
+import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
@@ -144,6 +144,15 @@ public class UserController {
     @GetMapping("/v1/users/getAll")
     public ResponseEntity<List<UserDetailsForAdminDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @Operation(summary = "Update organization preferences under logged-in admin")
+    @SwaggerAuthenticated
+    @SwaggerUnauthorized
+    @SwaggerOk
+    @PutMapping("/v1/organization/update")
+    public void updateOrganizationPreferences(@RequestBody OrganizationPreferences preferences) {
+        userService.updateOrganizationPreferences(preferences);
     }
 
 }

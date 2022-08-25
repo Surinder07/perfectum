@@ -114,6 +114,7 @@ public class UserService {
         organization.setLastModifiedBy(user.getId());
         organization.setFirstDayOfWeek(DaysOfWeek.valueOf(userDTO.getFirstDayOfWeek()));
         organization.setName(userDTO.getOrganizationName());
+        organization.setOvertimeRequestEnabled(true);
         user.setOrganizationId(organization.getId());
         user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
 
@@ -314,6 +315,22 @@ public class UserService {
                     }
                 }).map(users -> users.stream().map(UserMapper::entityToUserDetailsForAdmin).collect(Collectors.toList()))
                 .orElseThrow(UnauthorizedException::new);
+    }
+
+    /**
+     * Updates the preferences of logged-in admins organization
+     *
+     * @param preferences preferences to be updated
+     */
+    public void updateOrganizationPreferences(OrganizationPreferences preferences) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(user -> organizationRepository.findOneByIdAndDeleteFlag(user.getOrganizationId(), false))
+                .map(organization -> UserMapper.updateOrganizationPreferences(organization, preferences))
+                .map(organization -> CommonUtils.logMessageAndReturnObject(organization, "info", UserService.class,
+                        "Organization Preferences for organization id ({}) updated: {}", organization.getId(), preferences))
+                .map(organizationRepository::save);
     }
 
     /**

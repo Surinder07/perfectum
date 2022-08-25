@@ -1,5 +1,6 @@
 package ca.waaw.mapper;
 
+import ca.waaw.domain.Organization;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.userdtos.*;
@@ -24,6 +25,10 @@ public class UserMapper {
         target.setRole(source.getAuthority());
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
+        OrganizationPreferences preferences = new OrganizationPreferences();
+        BeanUtils.copyProperties(source.getOrganization(), preferences);
+        AccountMessageMapper.checkTrialAndAddWarning(target, source);
+        target.setOrganizationPreferences(preferences);
         return target;
     }
 
@@ -124,6 +129,25 @@ public class UserMapper {
                 registrationUrl, user.getInviteKey(), StringUtils.isNotEmpty(user.getFirstName()) ? user.getFirstName() : "",
                 StringUtils.isNotEmpty(user.getLastName()) ? user.getLastName() : ""
         );
+    }
+
+    /**
+     * Updates preferences if not null
+     *
+     * @param target Organization entity to be saved in database
+     * @param source Preferences to be updated in entity
+     * @return Same Organization entity
+     */
+    public static Organization updateOrganizationPreferences(Organization target, OrganizationPreferences source) {
+        if (source.getIsOvertimeRequestEnabled() != null)
+            target.setOvertimeRequestEnabled(source.getIsOvertimeRequestEnabled());
+        if (source.getIsTimeclockEnabledDefault() != null)
+            target.setTimeclockEnabledDefault(source.getIsTimeclockEnabledDefault());
+        if (source.getIsTimeoffEnabledDefault() != null)
+            target.setTimeoffEnabledDefault(source.getIsTimeoffEnabledDefault());
+        if (source.getDaysBeforeShiftsAssigned() != null)
+            target.setDaysBeforeShiftsAssigned(source.getDaysBeforeShiftsAssigned());
+        return target;
     }
 
 }
