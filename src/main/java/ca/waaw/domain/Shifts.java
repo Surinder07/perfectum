@@ -25,6 +25,9 @@ public class Shifts extends AbstractEntity {
 
     private String notes;
 
+    @Column(name = "location_id")
+    private String locationId;
+
     @Column(name = "location_role_id")
     private String locationRoleId;
 

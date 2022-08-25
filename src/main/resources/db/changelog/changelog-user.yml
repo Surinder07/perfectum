@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-table-user
-      author: AkhilSinghChauhan
+      author: ${author.akhil}
       preConditions:
         - onFail: MARK_RAN
           not:

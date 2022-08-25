@@ -33,6 +33,9 @@ public class RecurringShifts extends AbstractEntity {
     @Column(name = "end_minute")
     private int endMinute;
 
+    @Column(name = "location_id")
+    private String locationId;
+
     @Column(name = "location_role_id")
     private String locationRoleId;
 

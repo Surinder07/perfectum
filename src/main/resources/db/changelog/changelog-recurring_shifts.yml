@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-table-recurring_shifts
-      author: AkhilSinghChauhan
+      author: ${author.akhil}
       preConditions:
         - onFail: MARK_RAN
           not:
@@ -91,3 +91,26 @@ databaseChangeLog:
             constraintName: fk_recurring_shifts_user_id
             referencedColumnNames: uuid
             referencedTableName: user
+  - changeSet:
+      id: addColumn-location_id_TO_recurring_shifts
+      author: ${author.akhil}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: recurring_shifts
+              columnName: location_id
+      changes:
+        - addColumn:
+            tableName: recurring_shifts
+            columns:
+              - column:
+                  name: location_id
+                  type: VARCHAR(100)
+                  afterColumn: end_minute
+        - addForeignKeyConstraint:
+            baseTableName: recurring_shifts
+            baseColumnNames: location_id
+            constraintName: fk_recurring_shifts_location_id
+            referencedColumnNames: uuid
+            referencedTableName: location

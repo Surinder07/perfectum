@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-table-shifts
-      author: AkhilSinghChauhan
+      author: ${author.akhil}
       preConditions:
         - onFail: MARK_RAN
           not:
@@ -74,3 +74,26 @@ databaseChangeLog:
             constraintName: fk_shifts_user_id
             referencedColumnNames: uuid
             referencedTableName: user
+  - changeSet:
+      id: addColumn-location_id_TO_shifts
+      author: ${author.akhil}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: shifts
+              columnName: location_id
+      changes:
+        - addColumn:
+            tableName: shifts
+            columns:
+              - column:
+                  name: location_id
+                  type: VARCHAR(100)
+                  afterColumn: notes
+        - addForeignKeyConstraint:
+            baseTableName: shifts
+            baseColumnNames: location_id
+            constraintName: fk_shifts_location_id
+            referencedColumnNames: uuid
+            referencedTableName: location
