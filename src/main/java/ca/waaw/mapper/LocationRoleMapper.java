@@ -25,8 +25,8 @@ public class LocationRoleMapper {
 
     public static LocationRole dtoToEntity(LocationRoleDto source1, User source2) {
         LocationRole target = new LocationRole();
-        target.setId(UUID.randomUUID().toString());
         BeanUtils.copyProperties(source1, target);
+        target.setId(UUID.randomUUID().toString());
         target.setLocationId(source2.getAuthority().equals(Authority.ADMIN)? source1.getLocationId() : null);
         target.setOrganizationId(source2.getOrganizationId());
         target.setCreatedBy(source2.getId());
