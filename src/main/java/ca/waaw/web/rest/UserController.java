@@ -30,7 +30,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = APIConstants.ApiDescription.User.checkUsername)
+    @Operation(description = APIConstants.ApiDescription.User.checkUsername)
     @SwaggerOk
     @SwaggerBadRequest
     @GetMapping(APIConstants.ApiEndpoints.User.checkUsername)
@@ -39,7 +39,7 @@ public class UserController {
         if (userService.checkIfUsernameExists(username)) throw new EntityAlreadyExistsException("username", username);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.registerUser)
+    @Operation(description = APIConstants.ApiDescription.User.registerUser)
     @SwaggerCreated
     @SwaggerBadRequest
     @PostMapping(APIConstants.ApiEndpoints.User.registerUser)
@@ -48,7 +48,7 @@ public class UserController {
         userService.registerUser(registerUserDto);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.registerOrganization)
+    @Operation(description = APIConstants.ApiDescription.User.registerOrganization)
     @SwaggerCreated
     @SwaggerBadRequest
     @PostMapping(APIConstants.ApiEndpoints.User.registerOrganization)
@@ -57,7 +57,7 @@ public class UserController {
         userService.registerAdminAndOrganization(registerOrganizationDto);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.updateUser)
+    @Operation(description = APIConstants.ApiDescription.User.updateUser)
     @SwaggerOk
     @SwaggerBadRequest
     @SwaggerAuthenticated
@@ -67,7 +67,7 @@ public class UserController {
         userService.updateUserDetails(updateUserDto);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.updatePassword)
+    @Operation(description = APIConstants.ApiDescription.User.updatePassword)
     @SwaggerOk
     @SwaggerBadRequest
     @SwaggerAuthenticated
@@ -77,7 +77,7 @@ public class UserController {
         userService.updatePasswordOfLoggedInUser(passwordUpdateDto);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.resetPasswordInit)
+    @Operation(description = APIConstants.ApiDescription.User.resetPasswordInit)
     @SwaggerCreated
     @SwaggerBadRequest
     @GetMapping(APIConstants.ApiEndpoints.User.resetPasswordInit)
@@ -86,7 +86,7 @@ public class UserController {
         userService.requestPasswordReset(email);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.resetPasswordFinish)
+    @Operation(description = APIConstants.ApiDescription.User.resetPasswordFinish)
     @SwaggerOk
     @SwaggerBadRequest
     @PutMapping(APIConstants.ApiEndpoints.User.resetPasswordFinish)
@@ -95,7 +95,7 @@ public class UserController {
         userService.completePasswordReset(passwordResetDto);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.updateProfileImage)
+    @Operation(description = APIConstants.ApiDescription.User.updateProfileImage)
     @SwaggerOk
     @SwaggerBadRequest
     @SwaggerAuthenticated
@@ -119,7 +119,7 @@ public class UserController {
         return userService.acceptInvite(key);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.sendInvite)
+    @Operation(description = APIConstants.ApiDescription.User.sendInvite)
     @SwaggerBadRequest
     @SwaggerUnauthorized
     @SwaggerAuthenticated
@@ -129,7 +129,7 @@ public class UserController {
         userService.inviteNewUsers(inviteUserDto);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.getUserDetails)
+    @Operation(description = APIConstants.ApiDescription.User.getUserDetails)
     @SwaggerAuthenticated
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = UserDetailsDto.class))})
@@ -138,7 +138,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
     }
 
-    @Operation(summary = APIConstants.ApiDescription.User.getAllUsers)
+    @Operation(description = APIConstants.ApiDescription.User.getAllUsers)
     @SwaggerAuthenticated
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = UserDetailsForAdminDto.class)))})

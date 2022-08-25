@@ -26,7 +26,7 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @Operation(summary = APIConstants.ApiDescription.Notification.getAllNotification)
+    @Operation(description = APIConstants.ApiDescription.Notification.getAllNotification)
     @SwaggerAuthenticated
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = NotificationDto.class)))},
@@ -36,7 +36,7 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getAllNotifications(pageNo, pageSize));
     }
 
-    @Operation(summary = APIConstants.ApiDescription.Notification.markNotificationAsRead)
+    @Operation(description = APIConstants.ApiDescription.Notification.markNotificationAsRead)
     @SwaggerAuthenticated
     @SwaggerBadRequest
     @SwaggerOk
@@ -45,7 +45,7 @@ public class NotificationController {
         notificationService.markNotificationAsRead(id);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.Notification.markAllNotificationAsRead)
+    @Operation(description = APIConstants.ApiDescription.Notification.markAllNotificationAsRead)
     @SwaggerAuthenticated
     @SwaggerOk
     @PutMapping(APIConstants.ApiEndpoints.Notification.markAllNotificationAsRead)
@@ -53,7 +53,7 @@ public class NotificationController {
         notificationService.markAllNotificationAsRead();
     }
 
-    @Operation(summary = APIConstants.ApiDescription.Notification.deleteNotification)
+    @Operation(description = APIConstants.ApiDescription.Notification.deleteNotification)
     @SwaggerAuthenticated
     @SwaggerBadRequest
     @SwaggerOk

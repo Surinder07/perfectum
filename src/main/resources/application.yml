@@ -46,8 +46,26 @@ logging:
   level:
     liquibase: info
 
+########################################
+#####    Swagger Configurations    #####
+########################################
+swagger:
+  title: WAAW APIs Collection
+  version: 1.0.0
+  description: |
+    ### WAAW Api reference for developers.
+    ##### Web-sockets are setup in the application, you can connect to websocket with the **jwt token** passed in headers as **access_token** and subscribe to the available services.
+
+    | Service               | Endpoint                                                       |
+    | --------------------- | ---------------------------------------------------------------|
+    | Connect to web-socket | **"your domain"${application.websockets.connection-endpoint}** |
+    | Notification Service  | **/user${application.websockets.notification-url}**            |
+
 springdoc:
   packagesToScan: ca.waaw.web.rest
+  swagger-ui:
+    operationsSorter: alpha
+    tagsSorter: alpha
 
 #################################################
 #####    Application specific properties    #####

@@ -21,15 +21,9 @@ security:
 ########################################
 #####    Swagger Configurations    #####
 ########################################
-swagger:
-  title: WAAW APIs Collection
-  version: 1.0.0
-  description: WAAW Api reference for developers. <br><br> Web-sockets are setup in the application, you can subscribe to websocket on <b>"your domain"${application.websockets.connection-endpoint}</b> (set in application.yml), <b>jwt token</b> needs to be added in headers during inaitial connection as <b>access_token</b> then subscribe to needed services (also set in application.yml), <br>1. Notification Service - <b>/user${application.websockets.notification-url}</b>
 springdoc:
   swagger-ui:
     enabled: true
-    operationsSorter: alpha
-    tagsSorter: alpha
   api-docs:
     enabled: true
 

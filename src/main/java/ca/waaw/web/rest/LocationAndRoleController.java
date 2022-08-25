@@ -29,7 +29,7 @@ public class LocationAndRoleController {
 
     private final LocationAndRoleService locationAndRoleService;
 
-    @Operation(summary = APIConstants.ApiDescription.LocationAndRole.getLocation)
+    @Operation(description = APIConstants.ApiDescription.LocationAndRole.getLocation)
     @SwaggerAuthenticated
     @SwaggerUnauthorized
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
@@ -40,7 +40,7 @@ public class LocationAndRoleController {
         return ResponseEntity.ok(locationAndRoleService.getLocation());
     }
 
-    @Operation(summary = APIConstants.ApiDescription.LocationAndRole.addLocation)
+    @Operation(description = APIConstants.ApiDescription.LocationAndRole.addLocation)
     @SwaggerAuthenticated
     @SwaggerUnauthorized
     @SwaggerBadRequest
@@ -51,7 +51,7 @@ public class LocationAndRoleController {
         locationAndRoleService.addNewLocation(newLocationDto);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.LocationAndRole.deleteLocation)
+    @Operation(description = APIConstants.ApiDescription.LocationAndRole.deleteLocation)
     @SwaggerAuthenticated
     @SwaggerUnauthorized
     @SwaggerBadRequest
@@ -62,7 +62,7 @@ public class LocationAndRoleController {
         locationAndRoleService.deleteLocation(id);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.LocationAndRole.addLocationRole)
+    @Operation(description = APIConstants.ApiDescription.LocationAndRole.addLocationRole)
     @SwaggerAuthenticated
     @SwaggerUnauthorized
     @SwaggerBadRequest
@@ -73,7 +73,7 @@ public class LocationAndRoleController {
         locationAndRoleService.addNewLocationRole(locationRoleDto);
     }
 
-    @Operation(summary = APIConstants.ApiDescription.LocationAndRole.deleteLocationRole)
+    @Operation(description = APIConstants.ApiDescription.LocationAndRole.deleteLocationRole)
     @SwaggerAuthenticated
     @SwaggerUnauthorized
     @SwaggerBadRequest
@@ -85,7 +85,7 @@ public class LocationAndRoleController {
     }
 
 
-    @Operation(summary = APIConstants.ApiDescription.LocationAndRole.getLocationRole)
+    @Operation(description = APIConstants.ApiDescription.LocationAndRole.getLocationRole)
     @SwaggerAuthenticated
     @SwaggerUnauthorized
     @SwaggerBadRequest
@@ -97,7 +97,7 @@ public class LocationAndRoleController {
         return ResponseEntity.ok(locationAndRoleService.getLocationRoleInfo(locationRoleId));
     }
 
-    @Operation(summary = APIConstants.ApiDescription.LocationAndRole.updateLocationRole)
+    @Operation(description = APIConstants.ApiDescription.LocationAndRole.updateLocationRole)
     @SwaggerAuthenticated
     @SwaggerUnauthorized
     @SwaggerBadRequest

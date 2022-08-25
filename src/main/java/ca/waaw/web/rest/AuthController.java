@@ -56,7 +56,7 @@ public class AuthController {
 
     private final OrganizationRepository organizationRepository;
 
-    @Operation(summary = APIConstants.ApiDescription.Auth.authentication)
+    @Operation(description = APIConstants.ApiDescription.Auth.authentication)
     @SwaggerBadRequest
     @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = LoginResponseDto.class))})
