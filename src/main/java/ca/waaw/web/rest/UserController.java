@@ -1,8 +1,9 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.dto.userdtos.*;
-import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
+import ca.waaw.web.rest.service.UserService;
+import ca.waaw.web.rest.utils.APIConstants;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
@@ -24,124 +25,124 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @AllArgsConstructor
-@Tag(name = "User Account", description = "All User account related APIs")
+@Tag(name = APIConstants.TagNames.user, description = APIConstants.TagDescription.user)
 public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "Will Return Success only if given username is available")
+    @Operation(summary = APIConstants.ApiDescription.User.checkUsername)
     @SwaggerOk
     @SwaggerBadRequest
-    @GetMapping("/v1/unAuth/checkUserNameExistence")
+    @GetMapping(APIConstants.ApiEndpoints.User.checkUsername)
     @ResponseStatus(HttpStatus.OK)
-    public void checkUserNameExistence(@Valid @RequestParam @ValidateRegex(type = RegexValidatorType.USERNAME) String username) {
-        if(userService.checkIfUsernameExists(username)) throw new EntityAlreadyExistsException("username", username);
+    public void checkUserNameExistence(@RequestParam String username) {
+        if (userService.checkIfUsernameExists(username)) throw new EntityAlreadyExistsException("username", username);
     }
 
-    @Operation(summary = "Register a new user (by email invite only)")
+    @Operation(summary = APIConstants.ApiDescription.User.registerUser)
     @SwaggerCreated
     @SwaggerBadRequest
-    @PostMapping("/v1/unAuth/registerUser")
+    @PostMapping(APIConstants.ApiEndpoints.User.registerUser)
     @ResponseStatus(HttpStatus.CREATED)
     public void registerNewUser(@Valid @RequestBody RegisterUserDto registerUserDto) {
         userService.registerUser(registerUserDto);
     }
 
-    @Operation(summary = "Register a new user (admin) with an organization")
+    @Operation(summary = APIConstants.ApiDescription.User.registerOrganization)
     @SwaggerCreated
     @SwaggerBadRequest
-    @PostMapping("/v1/unAuth/registerAdmin")
+    @PostMapping(APIConstants.ApiEndpoints.User.registerOrganization)
     @ResponseStatus(HttpStatus.CREATED)
     public void registerNewAdminAndOrganization(@Valid @RequestBody RegisterOrganizationDto registerOrganizationDto) {
         userService.registerAdminAndOrganization(registerOrganizationDto);
     }
 
-    @Operation(summary = "Update logged in user details")
+    @Operation(summary = APIConstants.ApiDescription.User.updateUser)
     @SwaggerOk
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @PutMapping("/v1/updateUser")
+    @PutMapping(APIConstants.ApiEndpoints.User.updateUser)
     @ResponseStatus(HttpStatus.OK)
     public void updateUser(@Valid @RequestBody UpdateUserDto updateUserDto) {
         userService.updateUserDetails(updateUserDto);
     }
 
-    @Operation(summary = "Update current password using the old password")
+    @Operation(summary = APIConstants.ApiDescription.User.updatePassword)
     @SwaggerOk
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @PutMapping("v1/updatePassword")
+    @PutMapping(APIConstants.ApiEndpoints.User.updatePassword)
     @ResponseStatus(HttpStatus.OK)
     public void updatePassword(@Valid @RequestBody PasswordUpdateDto passwordUpdateDto) {
         userService.updatePasswordOfLoggedInUser(passwordUpdateDto);
     }
 
-    @Operation(summary = "Initialize a password reset request and get email to reset password")
+    @Operation(summary = APIConstants.ApiDescription.User.resetPasswordInit)
     @SwaggerCreated
     @SwaggerBadRequest
-    @GetMapping("/v1/unAuth/resetPassword/init")
+    @GetMapping(APIConstants.ApiEndpoints.User.resetPasswordInit)
     @ResponseStatus(HttpStatus.CREATED)
     public void initResetPassword(@Valid @RequestParam @ValidateRegex(type = RegexValidatorType.EMAIL) String email) {
         userService.requestPasswordReset(email);
     }
 
-    @Operation(summary = "Finish password reset request with key received on email")
+    @Operation(summary = APIConstants.ApiDescription.User.resetPasswordFinish)
     @SwaggerOk
     @SwaggerBadRequest
-    @PutMapping("/v1/unAuth/resetPassword/finish")
+    @PutMapping(APIConstants.ApiEndpoints.User.resetPasswordFinish)
     @ResponseStatus(HttpStatus.OK)
     public void finishResetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
         userService.completePasswordReset(passwordResetDto);
     }
 
-    @Operation(summary = "Update profile image for logged in user", hidden = true)
+    @Operation(summary = APIConstants.ApiDescription.User.updateProfileImage)
     @SwaggerOk
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @PostMapping("/v1/updateProfileImage")
+    @PostMapping(APIConstants.ApiEndpoints.User.updateProfileImage)
     @ResponseStatus(HttpStatus.OK)
     public void updateProfileImage() {
-        // TODO Add logic and remove hidden = true from Operation annotation
+        // TODO Add logic
     }
 
     @Operation(hidden = true)
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping(value = "/v1/unAuth/activateAccount", produces = "text/html;charset=UTF-8")
+    @GetMapping(value = APIConstants.ApiEndpoints.User.activateAccount, produces = "text/html;charset=UTF-8")
     public ResponseEntity<String> activateAccount(@RequestParam String key) {
         return userService.activateUser(key);
     }
 
     @Operation(hidden = true)
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping(value = "/v1/unAuth/acceptInvitation")
+    @GetMapping(value = APIConstants.ApiEndpoints.User.acceptInvitation)
     public ResponseEntity<String> acceptInvitation(@RequestParam String key) {
         return userService.acceptInvite(key);
     }
 
-    @Operation(summary = "Invite new users to join logged in admins organization")
+    @Operation(summary = APIConstants.ApiDescription.User.sendInvite)
     @SwaggerBadRequest
     @SwaggerUnauthorized
     @SwaggerAuthenticated
-    @PostMapping(value = "/v1/sendInvite")
+    @PostMapping(value = APIConstants.ApiEndpoints.User.sendInvite)
     @ResponseStatus(HttpStatus.CREATED)
     public void sendInvite(@Valid @RequestBody InviteUserDto inviteUserDto) {
         userService.inviteNewUsers(inviteUserDto);
     }
 
-    @Operation(summary = "Get all Logged in user's account details")
+    @Operation(summary = APIConstants.ApiDescription.User.getUserDetails)
     @SwaggerAuthenticated
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = UserDetailsDto.class))})
-    @GetMapping("/v1/getAccount")
+    @GetMapping(APIConstants.ApiEndpoints.User.getUserDetails)
     public ResponseEntity<UserDetailsDto> getLoggedInUser() {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
     }
 
-    @Operation(summary = "Get all Employees and Admins under logged-in user")
+    @Operation(summary = APIConstants.ApiDescription.User.getAllUsers)
     @SwaggerAuthenticated
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = UserDetailsForAdminDto.class)))})
-    @GetMapping("/v1/users/getAll")
+    @GetMapping(APIConstants.ApiEndpoints.User.getAllUsers)
     public ResponseEntity<List<UserDetailsForAdminDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }

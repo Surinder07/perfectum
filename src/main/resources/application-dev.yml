@@ -28,6 +28,8 @@ swagger:
 springdoc:
   swagger-ui:
     enabled: true
+    operationsSorter: alpha
+    tagsSorter: alpha
   api-docs:
     enabled: true
 
