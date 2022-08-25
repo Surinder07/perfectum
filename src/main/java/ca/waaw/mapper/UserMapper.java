@@ -21,7 +21,7 @@ public class UserMapper {
     public static UserDetailsDto entityToDto(UserOrganization source) {
         UserDetailsDto target = new UserDetailsDto();
         BeanUtils.copyProperties(source, target);
-        target.setMobile(source.getCountryCode() + "-" + target.getMobile());
+        target.setMobile(CommonUtils.combinePhoneNumber(source.getCountryCode(), source.getMobile()));
         target.setRole(source.getAuthority());
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
@@ -103,17 +103,18 @@ public class UserMapper {
     }
 
     /**
-     * @param source details for user to be invited
-     * @return entity to be saved in database
+     * @param source details for user to be mapped
+     * @return User details for Admin
      */
     public static UserDetailsForAdminDto entityToUserDetailsForAdmin(UserOrganization source) {
         UserDetailsForAdminDto target = new UserDetailsForAdminDto();
         BeanUtils.copyProperties(source, target);
-        target.setMobile(source.getCountryCode() + " " + source.getMobile());
-        target.setLocationId(source.getLocation().getId());
-        target.setLocationName(source.getLocation().getName());
-        target.setLocationRoleId(source.getLocationRole().getId());
-        target.setLocationRoleName(source.getLocationRole().getName());
+        target.setRole(source.getAuthority());
+        target.setMobile(CommonUtils.combinePhoneNumber(source.getCountryCode(), source.getMobile()));
+        target.setLocationId(source.getLocation() == null ? null : source.getLocation().getId());
+        target.setLocationName(source.getLocation() == null ? null : source.getLocation().getName());
+        target.setLocationRoleId(source.getLocationRole() == null ? null : source.getLocationRole().getId());
+        target.setLocationRoleName(source.getLocationRole() == null ? null : source.getLocationRole().getName());
         return target;
     }
 
