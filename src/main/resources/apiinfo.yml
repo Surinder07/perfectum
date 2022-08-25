@@ -1,0 +1,135 @@
+##############################################################
+#### All API information, like endpoints and swagger info ####
+##############################################################
+api:
+  endpoints:
+    authentication: /v1/unAuth/authenticate
+    user-organization:
+      checkUsername: /v1/unAuth/checkUserNameExistence
+      registerOrganization: /v1/unAuth/registerAdmin
+      registerUser: /v1/unAuth/registerUser
+      resetPasswordInit: /v1/unAuth/resetPassword/init
+      resetPasswordFinish: /v1/unAuth/resetPassword/finish
+      activateAccount: /v1/unAuth/activateAccount
+      acceptInvitation: /v1/unAuth/acceptInvitation
+      updateUser: /v1/updateUser
+      updatePassword: v1/updatePassword
+      updateProfileImage: /v1/updateProfileImage
+      sendInvite: /v1/sendInvite
+      getUserDetails: /v1/getAccount
+      getAllUsers: /v1/users/getAll
+      updateOrganizationPreferences: /v1/organization/update
+    notification:
+      getAllNotification: /v1/notifications/getAll/{pageNo}/{pageSize}
+      markNotificationAsRead: /v1/notifications/markAsRead
+      markAllNotificationAsRead: /v1/notifications/markAllAsRead
+      deleteNotification: /v1/notifications/delete
+    location-and-role:
+      getLocation: /v1/location/get
+      addLocation: /v1/location/save
+      deleteLocation: /v1/location/delete
+      addLocationRole: /v1/location/role/save
+      deleteLocationRole: /v1/location/role/delete
+      getLocationRole: /v1/location/role/get
+      updateLocationRole: /v1/location/role/update
+    shift-management:
+      createShift: /v1/shifts/create
+      updateShift: /v1/shifts/update
+      deleteShift: /v1/shifts/delete
+      assignShift: /v1/shifts/assign
+      claimShift: /v1/shifts/claim
+      getAllShifts: /v1/shifts/getAll/{pageNo}/{pageSize}
+      createRecurringShift: /v1/recurringShifts/create
+      updateRecurringShift: /v1/recurringShifts/update
+      deleteRecurringShift: /v1/recurringShifts/delete
+      assignRecurringShift: /v1/recurringShifts/assign
+      claimRecurringShift: /v1/recurringShifts/claim
+      getAllRecurringShifts: /v1/recurringShifts/getAll/{pageNo}/{pageSize}
+  description:
+    authentication: Authenticate login and password to get a jwt token.
+    user-organization:
+      checkUsername: Will Return Success only if given username is available.
+      registerUser: Register a new user **(by email invite only)**.
+      registerOrganization: Register a new user **(admin)** with an organization.
+      updateUser: Update logged in user details.
+      updatePassword: Update current password using the old password.
+      resetPasswordInit: Initialize a password reset request and get email to reset password.
+      resetPasswordFinish: Finish password reset request with key received on email.
+      updateProfileImage: Update profile image for logged in user ***(Not operational right now)***.
+      sendInvite: Invite new users to join logged in admins organization.
+      getUserDetails: Get Logged in user's account details.
+      getAllUsers: Get all Employees and Admins under logged-in user.
+      updateOrganizationPreferences: Update organization preferences under logged-in admin
+    notification:
+      getAllNotification: Get all notifications, Page numbers start with 0.
+      markNotificationAsRead: Mark notification with given id as read.
+      markAllNotificationAsRead: Mark all notifications as read.
+      deleteNotification: Delete a notification.
+    location-and-role:
+      getLocation: Api to get information about location and roles under them.
+      addLocation: Adds a new location under logged in admins organization.
+      deleteLocation: Deletes the location with given Id and suspends the account of related users.
+      addLocationRole: Adds a new location role under logged in admins organization.
+      deleteLocationRole: Deletes the location role with given Id and suspends the account of related users.
+      getLocationRole: Api to get information about location roles.
+      updateLocationRole: Update a location role under logged in admins organization.
+    shift-management:
+      createShift: Create a new shift (assigned or unassigned).
+      updateShift: Update any shift under your authorization.
+      deleteShift: Delete an existing shift.
+      assignShift: Assign an existing shift to an user.
+      claimShift: Claim an unassigned shift for the user.
+      getAllShifts: |
+        Get all shifts under your authorization.
+        Pass date only if a single date data is needed and pass endDate too if data between two days is needed.
+        **Date format is MM/DD/YYYY**
+      createRecurringShift: Create a new recurring shift (assigned or unassigned).
+      updateRecurringShift: Update any recurring shift under your authorization.
+      deleteRecurringShift: Delete an existing recurring shift.
+      assignRecurringShift: Assign an existing recurring shift to an user.
+      claimRecurringShift: Claim an unassigned recurring shift for the user.
+      getAllRecurringShifts: Get all recurring shifts under your authorization.
+  swagger:
+    groups:
+      auth: 1. Auth
+      user: 2. User and Organization
+      notification: 3. Notifications
+      location-and-role: 4. Location and Location Role
+      shift-management: 5. Shift Management
+    error-description:
+      trial-over: If role is ADMIN redirect to payment page with error message or else just show the error.
+      authentication: Authentication Failed.
+      bad-request: Your request was not formed correctly.
+      unauthorized: You are not authorized to access this resource.
+      already-exist: The resoourse you are trying to create already exist.
+      not-found: The resource you are trying to fetch or change was not found.
+    schema-description:
+      pagination: |
+        Response will contain,
+        - Total number of pages(totalPages)
+        - Number of entries(totalEntries)
+        - List of response(data)
+      getLocation: |
+        Different responses will be
+        | Role                              | Response                                                     |
+        |-----------------------------------|--------------------------------------------------------------|
+        | ADMIN (Global Admin)              | A list of location will be returned                          |
+        | MANAGER (Location Admin)          | Single location with list of location_roles will be returned |
+        | EMPLOYEE (Employee)               | single location and single location_role will be returned    |
+      getLocationRole: |
+        Different responses will be
+        | Role                              | Response                                                     |
+        |-----------------------------------|--------------------------------------------------------------|
+        | ADMIN (Global Admin)              | Location_role with list of users will be returned            |
+        | MANAGER (Location Admin)          | Location_role with list of users will be returned            |
+        | EMPLOYEE (Employee)               | Only location_role will be returned                          |
+      getAllShifts: |
+        ${api.swagger.schema-description.pagination}
+        Different responses will be
+        | Role                              | Response                                                                   |
+        |-----------------------------------|----------------------------------------------------------------------------|
+        | ADMIN (Global Admin)              | All shifts will be returned                                                |
+        | MANAGER (Location Admin)          | All shifts will be returned                                                |
+        | EMPLOYEE (Employee)               | Only shifts assigned to the employee and unassigned shift will be returned |
+    param-description:
+      getLocationRole: Required for ADMIN(Global admin) and MANAGER(Location admin) only.
