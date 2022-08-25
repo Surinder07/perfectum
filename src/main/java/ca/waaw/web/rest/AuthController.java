@@ -11,6 +11,7 @@ import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.web.rest.errors.PaymentErrorVM;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.TrialExpiredException;
+import ca.waaw.web.rest.utils.APIConstants;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -42,7 +43,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api")
 @AllArgsConstructor
-@Tag(name = "Auth", description = "Authentication API")
+@Tag(name = APIConstants.TagNames.auth, description = APIConstants.TagDescription.auth)
 public class AuthController {
 
     private final Logger log = LogManager.getLogger(AuthController.class);
@@ -55,14 +56,14 @@ public class AuthController {
 
     private final OrganizationRepository organizationRepository;
 
-    @Operation(summary = "Authenticate login password to get a jwt token")
+    @Operation(description = APIConstants.ApiDescription.Auth.authentication)
     @SwaggerBadRequest
     @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = LoginResponseDto.class))})
-    @ApiResponse(responseCode = "401", description = "Authentication Failed", content = @Content)
-    @ApiResponse(responseCode = "402", description = "If role is ADMIN redirect to payment page with error message or else just show the error.",
+    @ApiResponse(responseCode = "401", description = APIConstants.ErrorDescription.authentication, content = @Content)
+    @ApiResponse(responseCode = "402", description = APIConstants.ErrorDescription.trialOver,
             content = {@Content(mediaType = "application/json", schema = @Schema(implementation = PaymentErrorVM.class))})
-    @PostMapping("/v1/unAuth/authenticate")
+    @PostMapping(APIConstants.ApiEndpoints.Auth.authentication)
     public ResponseEntity<LoginResponseDto> authenticate(@Valid @RequestBody LoginDto loginDto) {
         Authentication authentication;
         try {

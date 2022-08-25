@@ -1,6 +1,8 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.web.rest.service.ShiftSchedulingService;
+import ca.waaw.web.rest.utils.APIConstants;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,59 +13,85 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api")
-@Tag(name = "Shift Scheduling", description = "Shift scheduling Apis")
+@Tag(name = APIConstants.TagNames.shiftManagement, description = APIConstants.TagDescription.shiftManagement)
 public class ShiftSchedulingController {
 
     private final ShiftSchedulingService shiftSchedulingService;
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.createShift)
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/v1/shifts/create")
-    public void createShift() {}
+    @PostMapping(APIConstants.ApiEndpoints.ShiftManagement.createShift)
+    public void createShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.updateShift)
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/v1/shifts/update")
-    public void updateShift() {}
+    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.updateShift)
+    public void updateShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.deleteShift)
     @ResponseStatus(HttpStatus.OK)
-    @DeleteMapping("/v1/shifts/delete")
-    public void deleteShift() {}
+    @DeleteMapping(APIConstants.ApiEndpoints.ShiftManagement.deleteShift)
+    public void deleteShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.assignShift)
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/v1/shifts/assign")
-    public void assignShift() {}
+    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.assignShift)
+    public void assignShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.claimShift)
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/v1/shifts/claim")
-    public void claimShift() {}
+    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.claimShift)
+    public void claimShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.createRecurringShift)
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/v1/recurringShifts/create")
-    public void createRecurringShift() {}
+    @PostMapping(APIConstants.ApiEndpoints.ShiftManagement.createRecurringShift)
+    public void createRecurringShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.updateRecurringShift)
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/v1/recurringShifts/update")
-    public void updateRecurringShift() {}
+    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.updateRecurringShift)
+    public void updateRecurringShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.deleteRecurringShift)
     @ResponseStatus(HttpStatus.OK)
-    @DeleteMapping("/v1/recurringShifts/delete")
-    public void deleteRecurringShift() {}
+    @DeleteMapping(APIConstants.ApiEndpoints.ShiftManagement.deleteRecurringShift)
+    public void deleteRecurringShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.assignRecurringShift)
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/v1/recurringShifts/assign")
-    public void assignRecurringShift() {}
+    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.assignRecurringShift)
+    public void assignRecurringShift() {
+    }
 
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.claimRecurringShift)
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("/v1/recurringShifts/claim")
-    public void claimRecurringShift() {}
+    @PutMapping(APIConstants.ApiEndpoints.ShiftManagement.claimRecurringShift)
+    public void claimRecurringShift() {
+    }
 
-    @GetMapping("/v1/shifts/getAll/{pageNo}/{pageSize}")
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.getAllShifts)
+    @GetMapping(APIConstants.ApiEndpoints.ShiftManagement.getAllShifts)
     public ResponseEntity<Object> getAllShifts(@RequestParam(required = false) String locationId,
-                                               @RequestParam(required = false) String location_role_id) {
+                                               @RequestParam(required = false) String location_role_id,
+                                               @RequestParam String date, @RequestParam(required = false) String endDate,
+                                               @PathVariable int pageNo, @PathVariable int pageSize) {
         return null;
     }
 
-    @GetMapping("/v1/recurringShifts/getAll/{pageNo}/{pageSize}")
-    public ResponseEntity<Object> getAllRecurringShifts() {
+    @Operation(description = APIConstants.ApiDescription.ShiftManagement.getAllRecurringShifts)
+    @GetMapping(APIConstants.ApiEndpoints.ShiftManagement.getAllRecurringShifts)
+    public ResponseEntity<Object> getAllRecurringShifts(@RequestParam(required = false) String locationId,
+                                                        @RequestParam(required = false) String location_role_id,
+                                                        @PathVariable int pageNo, @PathVariable int pageSize) {
         return null;
     }
 
