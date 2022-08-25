@@ -30,14 +30,17 @@ public class Organization extends AbstractEntity {
     @Column(name = "trial_days")
     private Integer trialDays;
 
-    @Column(name = "is_trial_used")
-    private boolean isTrialUsed;
-
     @Column(name = "is_timeclock_enabled_default")
     private boolean isTimeclockEnabledDefault;
 
     @Column(name = "is_timeoff_enabled_default")
     private boolean isTimeoffEnabledDefault;
+
+    @Column(name = "is_overtime_request_enabled")
+    private boolean isOvertimeRequestEnabled;
+
+    @Column(name = "days_before_shifts_assigned")
+    private Integer daysBeforeShiftsAssigned;
 
     @Column(name = "is_paid_until")
     private Instant isPaidUntil;

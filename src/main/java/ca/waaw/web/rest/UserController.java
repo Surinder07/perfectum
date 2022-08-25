@@ -147,4 +147,13 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    @Operation(summary = "Update organization preferences under logged-in admin")
+    @SwaggerAuthenticated
+    @SwaggerUnauthorized
+    @SwaggerOk
+    @PutMapping("/v1/organization/update")
+    public void updateOrganizationPreferences(@RequestBody OrganizationPreferences preferences) {
+        userService.updateOrganizationPreferences(preferences);
+    }
+
 }

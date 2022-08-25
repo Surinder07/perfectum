@@ -61,7 +61,6 @@ public class ApplicationStartupSqlService {
                             organization.setId(UUID.randomUUID().toString());
                             organization.setName(appSuperUserConfig.getOrganization());
                             organization.setSubscriptionPlan(SubscriptionPlans.UNLIMITED);
-                            organization.setTrialUsed(false);
                             organization.setStatus(EntityStatus.ACTIVE);
                             organization.setCreatedBy("SYSTEM");
                             organizationRepository.save(organization);

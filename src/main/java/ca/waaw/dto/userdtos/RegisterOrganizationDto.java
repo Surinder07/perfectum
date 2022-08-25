@@ -6,6 +6,7 @@ import ca.waaw.web.rest.utils.customannotations.ToLowercase;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
 import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import javax.validation.constraints.NotEmpty;
@@ -28,6 +29,7 @@ public class RegisterOrganizationDto extends BaseUser {
     @CapitalizeFirstLetter
     private String organizationName;
 
+    @Schema(example = "MONDAY")
     @ValueOfEnum(enumClass = DaysOfWeek.class)
     private String firstDayOfWeek;
 
