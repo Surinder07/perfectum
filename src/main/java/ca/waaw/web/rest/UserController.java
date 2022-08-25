@@ -1,22 +1,25 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
+import java.util.Locale;
 
 @SuppressWarnings("unused")
 @RestController
@@ -127,13 +130,39 @@ public class UserController {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
     }
 
+    @SwaggerBadRequest
     @SwaggerAuthenticated
     @Operation(description = "${api.description.user-organization.getAllUsers}")
     @GetMapping("${api.endpoints.user-organization.getAllUsers}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = UserDetailsForAdminDto.class)))})
-    public ResponseEntity<List<UserDetailsForAdminDto>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+            schema = @Schema(implementation = UserDetailsForAdminDto.class)))},
+            description = "${api.swagger.schema-description.pagination}")
+    @GetMapping(APIConstants.ApiEndpoints.User.getAllUsers)
+    public ResponseEntity<PaginationDto> getAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                     @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
+                                                     @RequestParam(required = false) String searchKey,
+                                                     @Parameter(description = "${api.swagger.param-description.getUsersLocation}")
+                                                     @RequestParam(required = false) String locationId,
+                                                     @Parameter(description = "${api.swagger.param-description.getUsersRole}")
+                                                     @RequestParam(required = false) String role) {
+        role = StringUtils.isNotEmpty(role) ? role.toUpperCase(Locale.ROOT) : null;
+        locationId = StringUtils.isNotEmpty(locationId) ? locationId : null;
+        return ResponseEntity.ok(userService.getAllUsers(pageNo, pageSize, searchKey, locationId, role));
+    }
+
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.user.listAllUsers}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
+            schema = @Schema(implementation = UserInfoForDropDown.class)))},
+            description = "${api.swagger.schema-description.pagination}")
+    @GetMapping("${api.endpoints.user.listAllUsers}")
+    public ResponseEntity<PaginationDto> listAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                     @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
+                                                     @RequestParam(required = false) String searchKey,
+                                                     @Parameter(description = "${api.swagger.param-description.getUsersLocationRole}")
+                                                     @RequestParam String locationRoleId) {
+        return ResponseEntity.ok(userService.listAllUsers(pageNo, pageSize, searchKey, locationRoleId));
     }
 
     @SwaggerOk
