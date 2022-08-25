@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-shifts
+      author: AkhilSinghChauhan
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: shifts
+      changes:
+        - createTable:
+            tableName: shifts
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: VARCHAR(100)
+              - column:
+                  name: start
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: VARCHAR(1000)
+              - column:
+                  name: location_role_id
+                  type: VARCHAR(100)
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: PENDING
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: last_modified_by
+                  type: VARCHAR(100)
+              - column:
+                  name: last_modified_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+        - addForeignKeyConstraint:
+            baseTableName: shifts
+            baseColumnNames: location_role_id
+            constraintName: fk_shifts_location_role_id
+            referencedColumnNames: uuid
+            referencedTableName: location_role
+        - addForeignKeyConstraint:
+            baseTableName: shifts
+            baseColumnNames: user_id
+            constraintName: fk_shifts_user_id
+            referencedColumnNames: uuid
+            referencedTableName: user

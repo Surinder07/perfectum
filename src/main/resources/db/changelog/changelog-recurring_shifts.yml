@@ -1,0 +1,93 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-recurring_shifts
+      author: AkhilSinghChauhan
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: recurring_shifts
+      changes:
+        - createTable:
+            tableName: recurring_shifts
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: VARCHAR(100)
+              - column:
+                  name: day_of_week
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_hour
+                  type: SMALLINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_minute
+                  type: SMALLINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_hour
+                  type: SMALLINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_minute
+                  type: SMALLINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: location_role_id
+                  type: VARCHAR(100)
+              - column:
+                  name: available_quantity
+                  type: SMALLINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: PENDING
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: last_modified_by
+                  type: VARCHAR(100)
+              - column:
+                  name: last_modified_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+        - addForeignKeyConstraint:
+            baseTableName: recurring_shifts
+            baseColumnNames: location_role_id
+            constraintName: fk_recurring_shifts_location_role_id
+            referencedColumnNames: uuid
+            referencedTableName: location_role
+        - addForeignKeyConstraint:
+            baseTableName: recurring_shifts
+            baseColumnNames: user_id
+            constraintName: fk_recurring_shifts_user_id
+            referencedColumnNames: uuid
+            referencedTableName: user
