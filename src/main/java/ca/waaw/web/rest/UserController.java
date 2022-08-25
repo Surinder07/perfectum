@@ -160,6 +160,21 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers(pageNo, pageSize, searchKey, locationId, role));
     }
 
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.user.listAllUsers}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
+            schema = @Schema(implementation = UserInfoForDropDown.class)))},
+            description = "${api.swagger.schema-description.pagination}")
+    @GetMapping("${api.endpoints.user.listAllUsers}")
+    public ResponseEntity<PaginationDto> listAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                     @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
+                                                     @RequestParam(required = false) String searchKey,
+                                                     @Parameter(description = "${api.swagger.param-description.getUsersLocationRole}")
+                                                     @RequestParam String locationRoleId) {
+        return ResponseEntity.ok(userService.listAllUsers(pageNo, pageSize, searchKey, locationRoleId));
+    }
+
     @Operation(summary = "Update organization preferences under logged-in admin")
     @SwaggerAuthenticated
     @SwaggerUnauthorized

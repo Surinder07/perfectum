@@ -339,7 +339,40 @@ public class UserService {
                 .totalPages(userPage.getTotalPages())
                 .data(users)
                 .build();
+    }
+
+    /**
+     * @return all Employees and Admins for a given location_role_id
+     */
+    public PaginationDto listAllUsers(int pageNo, int pageSize, String searchKey, String locationRoleId) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        Pageable getSortedByName = PageRequest.of(pageNo, pageSize, Sort.by("firstName", "lastName").ascending());
+        LocationRole locationRole = locationRoleRepository.findOneByIdAndDeleteFlag(locationRoleId, false)
+                .orElseThrow(() -> new EntityNotFoundException("location role"));
+
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> {
+                    if (user.getOrganizationId().equals(locationRole.getOrganizationId())) return user;
+                    return null;
+                })
                 .orElseThrow(UnauthorizedException::new);
+
+        Page<User> userPage;
+        if (StringUtils.isNotEmpty(searchKey)) {
+            userPage = userRepository.searchUsersWithLocationRoleIdAndDeleteFlag("%" + searchKey + "%",
+                    locationRoleId, false, getSortedByName);
+        } else {
+            userPage = userRepository.findAllByLocationRoleIdAndDeleteFlag(locationRoleId, false, getSortedByName);
+        }
+        List<UserInfoForDropDown> users = userPage.getContent().stream()
+                .map(UserMapper::entityToUserInfoForDropDown).collect(Collectors.toList());
+        return PaginationDto.builder()
+                .totalEntries((int) userPage.getTotalElements())
+                .totalPages(userPage.getTotalPages())
+                .data(users)
+                .build();
+
     }
 
     /**

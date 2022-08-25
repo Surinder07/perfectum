@@ -13,6 +13,10 @@ import java.time.Instant;
 @Table(name = "user")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+@NamedQuery(name = "User.searchUsersWithLocationRoleIdAndDeleteFlag",
+        query = "SELECT u FROM User u WHERE (u.firstName LIKE ?1 OR u.lastName LIKE ?1 " +
+                "or u.email LIKE ?1 OR u.employeeId LIKE ?1 OR u.waawId LIKE ?1) AND u.locationRoleId = ?2 " +
+                "AND u.deleteFlag = ?3")
 public class User extends AbstractEntity {
 
     @Column

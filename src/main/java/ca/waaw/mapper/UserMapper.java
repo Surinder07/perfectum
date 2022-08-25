@@ -119,6 +119,19 @@ public class UserMapper {
     }
 
     /**
+     * @param source details for user to be mapped
+     * @return minimal details about user for a drop-down
+     */
+    public static UserInfoForDropDown entityToUserInfoForDropDown(User source) {
+        UserInfoForDropDown target = new UserInfoForDropDown();
+        target.setId(source.getId());
+        target.setFullName(CommonUtils.combineFirstAndLastName(source.getFirstName(), source.getLastName()));
+        target.setEmail(source.getEmail());
+        target.setAuthority(source.getAuthority());
+        return target;
+    }
+
+    /**
      * @param user            new user to register
      * @param registrationUrl Registration url set in {@code application.yml}
      * @return Registration url with known user info as query params
