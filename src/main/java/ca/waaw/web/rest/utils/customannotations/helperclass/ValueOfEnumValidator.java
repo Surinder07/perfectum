@@ -1,5 +1,6 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass;
 
+import ca.waaw.enumration.Timezones;
 import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
 
 import javax.validation.ConstraintValidator;
@@ -16,8 +17,14 @@ public class ValueOfEnumValidator implements ConstraintValidator<ValueOfEnum, Ch
     @Override
     public void initialize(ValueOfEnum annotation) {
         acceptedValues = Stream.of(annotation.enumClass().getEnumConstants())
-                .map(Enum::name)
-                .filter(name -> !name.equalsIgnoreCase("ANONYMOUS"))
+                .map(enumVal -> {
+                    if (enumVal.getClass().equals(Timezones.class)) {
+                        return ((Timezones) enumVal).value;
+                    }
+                    return enumVal.name();
+                })
+                .map(String::toLowerCase)
+                .filter(name -> !name.equalsIgnoreCase("anonymous"))
                 .collect(Collectors.toList());
     }
 
@@ -26,7 +33,7 @@ public class ValueOfEnumValidator implements ConstraintValidator<ValueOfEnum, Ch
         if (value == null) {
             return true;
         }
-        return acceptedValues.contains(value.toString().toUpperCase(Locale.ROOT));
+        return acceptedValues.contains(value.toString().toLowerCase(Locale.ROOT));
     }
 
 }

@@ -23,7 +23,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(FIELD)
 @Retention(RUNTIME)
 @Constraint(validatedBy = ValueOfEnumValidator.class)
-@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 @JacksonAnnotationsInside
 public @interface ValueOfEnum {
     Class<? extends Enum<?>> enumClass();
