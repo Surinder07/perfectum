@@ -2,6 +2,8 @@
 #### All API information, like endpoints and swagger info ####
 ##############################################################
 api:
+  date-format: yyyy/MM/dd
+  time-format: 24 hours (HH:MM)
   endpoints:
     authentication: /v1/unAuth/authenticate
     user-organization:
@@ -64,14 +66,17 @@ api:
       resetPasswordFinish: Finish password reset request with key received on email.
       updateProfileImage: Update profile image for logged in user ***(Not operational right now)***.
       sendInvite: Invite new users to join logged in admins organization.
-      getUserDetails: Get Logged in user's account details.
+      getUserDetails: |
+        Get Logged in user's account details.
+
+        > **Last Login Date will be returned in UTC, make sure to change it to user's timezone.**
       getAllUsers: Get all Employees and Admins under logged-in user.
       listAllUsers: |
         Get all Users under one locationId with search.
         This API can be used for populating a drop-down while **scheduling shifts**
       updateOrganizationPreferences: Update organization preferences under logged-in admin
     dropdown:
-      getTimezones: Get a list of timexone to show for Addign new location.
+      getTimezones: Get a list of timezone to show for adding new location.
     notification:
       getAllNotification: Get all notifications, Page numbers start with 0.
       markNotificationAsRead: Mark notification with given id as read.
@@ -94,7 +99,7 @@ api:
       getAllShifts: |
         Get all shifts under your authorization.
         Pass date only if a single date data is needed and pass endDate too if data between two days is needed.
-        **Date format is MM/DD/YYYY**
+        **Date format is ${api.date-format}**
       createRecurringShift: Create a new recurring shift (assigned or unassigned).
       updateRecurringShift: Update any recurring shift under your authorization.
       deleteRecurringShift: Delete an existing recurring shift.
