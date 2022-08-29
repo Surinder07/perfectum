@@ -1,6 +1,6 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass;
 
-import ca.waaw.dto.NewShiftDto;
+import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;

@@ -12,10 +12,7 @@ import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.DaysOfWeek;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.mapper.UserMapper;
-import ca.waaw.repository.LocationRoleRepository;
-import ca.waaw.repository.OrganizationRepository;
-import ca.waaw.repository.UserOrganizationRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
@@ -67,6 +64,8 @@ public class UserService {
     private final UserMailService userMailService;
 
     private final NotificationInternalService notificationInternalService;
+
+    private final LocationRepository locationRepository;
 
     private final LocationRoleRepository locationRoleRepository;
 
@@ -314,8 +313,20 @@ public class UserService {
         CommonUtils.validateStringInEnum(Authority.class, role, "role");
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         Pageable getSortedByName = PageRequest.of(pageNo, pageSize, Sort.by("firstName", "lastName").ascending());
+
         Page<UserOrganization> userPage = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> {
+                    if (user.getAuthority().equals(Authority.ADMIN)) {
+                        return locationRepository.findOneByIdAndDeleteFlag(locationId, false)
+                                .map(location -> {
+                                    if (location.getOrganizationId().equals(user.getOrganizationId())) return user;
+                                    return null;
+                                })
+                                .orElseThrow(() -> new EntityNotFoundException("location"));
+                    }
+                    return user;
+                })
                 .map(user -> {
                     if (user.getAuthority().equals(Authority.ADMIN) && StringUtils.isNotEmpty(searchKey)) {
                         return userOrganizationRepository.searchUsersWithOrganizationIdAndLocationIdAndDeleteFlagAndAuthority("%" + searchKey + "%",

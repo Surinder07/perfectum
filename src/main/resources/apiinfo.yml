@@ -18,7 +18,10 @@ api:
       sendInvite: /v1/sendInvite
       getUserDetails: /v1/getAccount
       getAllUsers: /v1/users/getAll
+      listAllUsers: /v1/users/listAll
       updateOrganizationPreferences: /v1/organization/update
+    dropdown:
+      getTimezones: /vi/unAuth/timezone/get
     notification:
       getAllNotification: /v1/notifications/getAll/{pageNo}/{pageSize}
       markNotificationAsRead: /v1/notifications/markAsRead
@@ -49,8 +52,12 @@ api:
     authentication: Authenticate login and password to get a jwt token.
     user-organization:
       checkUsername: Will Return Success only if given username is available.
-      registerUser: Register a new user **(by email invite only)**.
-      registerOrganization: Register a new user **(admin)** with an organization.
+      registerUser: |
+        Register a new user **(by email invite only)**.
+        ${regex.table}
+      registerOrganization: |
+        Register a new user **(admin)** with an organization.
+        ${regex.table}
       updateUser: Update logged in user details.
       updatePassword: Update current password using the old password.
       resetPasswordInit: Initialize a password reset request and get email to reset password.
@@ -59,7 +66,12 @@ api:
       sendInvite: Invite new users to join logged in admins organization.
       getUserDetails: Get Logged in user's account details.
       getAllUsers: Get all Employees and Admins under logged-in user.
+      listAllUsers: |
+        Get all Users under one locationId with search.
+        This API can be used for populating a drop-down while **scheduling shifts**
       updateOrganizationPreferences: Update organization preferences under logged-in admin
+    dropdown:
+      getTimezones: Get a list of timexone to show for Addign new location.
     notification:
       getAllNotification: Get all notifications, Page numbers start with 0.
       markNotificationAsRead: Mark notification with given id as read.
@@ -93,9 +105,10 @@ api:
     groups:
       auth: 1. Auth
       user: 2. User and Organization
-      notification: 3. Notifications
-      location-and-role: 4. Location and Location Role
-      shift-management: 5. Shift Management
+      dropdown: 3. Dropdown
+      notification: 4. Notifications
+      location-and-role: 5. Location and Location Role
+      shift-management: 6. Shift Management
     error-description:
       trial-over: If role is ADMIN redirect to payment page with error message or else just show the error.
       authentication: Authentication Failed.
@@ -133,3 +146,24 @@ api:
         | EMPLOYEE (Employee)               | Only shifts assigned to the employee and unassigned shift will be returned |
     param-description:
       getLocationRole: Required for ADMIN(Global admin) and MANAGER(Location admin) only.
+      getUsersSearchKey: Pass the search key to search user by name or id.
+      getUsersLocation: Pass the locationId to search under particular location.
+      getUsersRole: Pass user role(ADMIN, MANAGER, EMPLOYEE) to show users with particular role.
+
+regex:
+  explaination:
+    email: xx@xx.xx
+    username: <li>Username consists of alphanumeric characters (a-zA-Z0-9), lowercase or uppercase.</li><li>Username allowed of the dot (.), underscore (\_), and hyphen (-).</li><li>The dot (.), underscore (\_), or hyphen (-) must not be the first or last character.</li><li>The dot (.), underscore (\_), or hyphen (-) does not appear consecutively, e.g., java..regex</li><li>The number of characters must be between 5 and 20.</li>
+    password: <li>Minimum eight characters.</li><li>at least one uppercase letter.</li><li>one lowercase letter.</li><li>one number.</li><li>one special character.</li>
+  pattern:
+    # We have repeated these here to add escape characters, so they will show properly on swagger
+    email: <code>^[\w-\+]+(\.[\w]+)*@[\w-]+(\.[\w]+)*(\.[a-zA-Z]{2,})$</code>
+    username: <code><span>^[a-zA-Z0-9]</span>([._-]<span>(?![._-])</span>&#x7c;[a-zA-Z0-9]){3,18}[a-zA-Z0-9]$</code>
+    password: <code>^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$</code>
+  table: |
+    We are using below given patterns for our valiadtions
+    | Type            | Description                            | Regex                       |
+    |-----------------|----------------------------------------|-----------------------------|
+    | Email           | ${regex.explaination.email}            | ${regex.pattern.email}      |
+    | Username        | ${regex.explaination.username}         | ${regex.pattern.username}   |
+    | Password        | ${regex.explaination.password}         | ${regex.pattern.password}   |

@@ -15,6 +15,8 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+        jdbc:
+          time_zone: UTC
     show-sql: false
   liquibase:
     enabled: false
@@ -58,10 +60,10 @@ swagger:
     ### WAAW Api reference for developers.
     ##### Web-sockets are setup in the application, you can connect to websocket with the **jwt token** passed in headers as **access_token** and subscribe to the available services.
 
-    | Service               | Endpoint                                                       |
-    | --------------------- | ---------------------------------------------------------------|
-    | Connect to web-socket | **"Backend URL"${application.websockets.connection-endpoint}** |
-    | Notification Service  | **/user${application.websockets.notification-url}**            |
+    | Service               | Endpoint                                                                           |
+    | --------------------- | -----------------------------------------------------------------------------------|
+    | Connect to web-socket | **${application.urls.hosted-server}${application.websockets.connection-endpoint}** |
+    | Notification Service  | **/user${application.websockets.notification-url}**                                |
 
 springdoc:
   packagesToScan: ca.waaw.web.rest
@@ -77,8 +79,7 @@ application:
   version: ^project.version^
   validations:
     regex:
-      # Minimum eight characters, at least one uppercase letter, one lowercase letter,
-      # one number and one special character.
+      # Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character.
       password: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
       # Username consists of alphanumeric characters (a-zA-Z0-9), lowercase or uppercase.
       # Username allowed of the dot (.), underscore (_), and hyphen (-).

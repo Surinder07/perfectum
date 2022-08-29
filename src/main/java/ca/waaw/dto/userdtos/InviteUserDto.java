@@ -24,7 +24,7 @@ public class InviteUserDto {
     private String role;
 
     @NotEmpty
-    @ValidateRegex(type = RegexValidatorType.EMAIL)
+    @ValidateRegex(type = RegexValidatorType.EMAIL, message = "Pass a valid email")
     private String email;
 
     @CapitalizeFirstLetter

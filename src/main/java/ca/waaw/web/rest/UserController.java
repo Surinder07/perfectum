@@ -19,7 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Locale;
+import java.time.ZoneId;
+import java.util.*;
 
 @SuppressWarnings("unused")
 @RestController
@@ -137,7 +138,6 @@ public class UserController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = UserDetailsForAdminDto.class)))},
             description = "${api.swagger.schema-description.pagination}")
-    @GetMapping(APIConstants.ApiEndpoints.User.getAllUsers)
     public ResponseEntity<PaginationDto> getAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
                                                      @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
                                                      @RequestParam(required = false) String searchKey,
@@ -152,15 +152,14 @@ public class UserController {
 
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.user.listAllUsers}")
+    @Operation(description = "${api.description.user-organization.listAllUsers}")
+    @GetMapping("${api.endpoints.user-organization.listAllUsers}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = UserInfoForDropDown.class)))},
             description = "${api.swagger.schema-description.pagination}")
-    @GetMapping("${api.endpoints.user.listAllUsers}")
     public ResponseEntity<PaginationDto> listAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
                                                      @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
                                                      @RequestParam(required = false) String searchKey,
-                                                     @Parameter(description = "${api.swagger.param-description.getUsersLocationRole}")
                                                      @RequestParam String locationRoleId) {
         return ResponseEntity.ok(userService.listAllUsers(pageNo, pageSize, searchKey, locationRoleId));
     }
