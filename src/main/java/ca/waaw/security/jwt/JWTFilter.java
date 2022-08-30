@@ -1,9 +1,12 @@
 package ca.waaw.security.jwt;
 
+import ca.waaw.enumration.Authority;
+import ca.waaw.web.rest.errors.exceptions.TrialExpiredException;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -29,6 +32,8 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private final TokenProvider tokenProvider;
 
+    private final Environment env;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
@@ -39,6 +44,10 @@ public class JWTFilter extends OncePerRequestFilter {
             // only the Token
             if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
                 String jwtToken = requestTokenHeader.substring(7);
+                if (tokenProvider.checkTrialExpiry() && !request.getRequestURI().equals(String
+                        .format("/api%s", env.getProperty("api.endpoints.user-organization.getUserDetails")))) {
+                    throw new TrialExpiredException(Authority.ADMIN);
+                }
                 Authentication authentication = tokenProvider.getAuthentication(jwtToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

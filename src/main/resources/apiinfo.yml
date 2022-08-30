@@ -51,7 +51,11 @@ api:
       claimRecurringShift: /v1/recurringShifts/claim
       getAllRecurringShifts: /v1/recurringShifts/getAll/{pageNo}/{pageSize}
   description:
-    authentication: Authenticate login and password to get a jwt token.
+    authentication: |
+      Authenticate login and password to get a jwt token.
+      * After trial period is expired and no payment is done. Only Admin will be able to log-in to their account.
+        * Only getAccount API will be accesible to admin, that can be used to fetch details to initiate a payment.
+      * For any other role or other APIs for admin an error will be thrown.
     user-organization:
       checkUsername: Will Return Success only if given username is available.
       registerUser: |
@@ -68,7 +72,6 @@ api:
       sendInvite: Invite new users to join logged in admins organization.
       getUserDetails: |
         Get Logged in user's account details.
-
         > **Last Login Date will be returned in UTC, make sure to change it to user's timezone.**
       getAllUsers: Get all Employees and Admins under logged-in user.
       listAllUsers: |

@@ -55,7 +55,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                                                              HttpStatus status, WebRequest request) {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.internalServerMessage, null);
         if (HttpStatus.INTERNAL_SERVER_ERROR.equals(status)) {
-            return new ResponseEntity<>(new ErrorVM(message, ""), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ErrorVM(message), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return new ResponseEntity<>(body, headers, status);
@@ -123,8 +123,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<ErrorVM> handleTrialExpiredException(TrialExpiredException ex) {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle((ex.getRole().equals(Authority.ADMIN) ?
                 ErrorMessageKeys.trialExpiredAdminMessage : ErrorMessageKeys.trialExpiredEmployeeMessage), null);
-        return new ResponseEntity<>(new PaymentErrorVM(message, ex.getRole(), ex.getUserId()),
-                HttpStatus.PAYMENT_REQUIRED);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.PAYMENT_REQUIRED);
     }
 
 }

@@ -19,15 +19,20 @@ public class AccountMessageMapper {
     public static void checkTrialAndAddWarning(UserDetailsDto target, UserOrganization source) {
         Instant createdDate = source.getOrganization().getCreatedDate();
         int trialDays = source.getOrganization().getTrialDays();
-        if (createdDate.isAfter(Instant.now().minus(trialDays, ChronoUnit.DAYS))) {
+        AccountMessagesDto messagesDto = new AccountMessagesDto();
+        if (createdDate.isAfter(Instant.now().minus(trialDays, ChronoUnit.DAYS)) && source.getOrganization().getSubscriptionPlan() == null) {
             int daysRemaining = (int) ChronoUnit.DAYS.between(createdDate.plus(trialDays, ChronoUnit.DAYS), Instant.now());
-            AccountMessagesDto messagesDto = new AccountMessagesDto();
-            messagesDto.setTitle("Trial will run out soon");
-            messagesDto.setDescription(String.format("Only %s remaining in your trial. Buy a plan to continue using services without interruption",
+            messagesDto.setMessage(String.format("Only %s remaining in your trial. Buy a plan to continue using services without interruption",
                     daysRemaining));
             messagesDto.setType(AccountMessagesType.WARNING);
-            target.getAccountMessages().add(messagesDto);
-        }
+        } else if (source.getOrganization().getSubscriptionPlan() == null) {
+            messagesDto.setMessage("Your trial period is over. Buy a plan to continue using services.");
+            messagesDto.setType(AccountMessagesType.ERROR);
+        } else return;
+        messagesDto.setActionMessage("Buy a plan now");
+        // TODO Add payment link here
+        messagesDto.setActionUrl("");
+        target.getAccountMessages().add(messagesDto);
     }
 
 }
