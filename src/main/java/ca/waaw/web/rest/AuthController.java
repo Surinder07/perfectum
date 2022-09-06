@@ -10,7 +10,7 @@ import ca.waaw.security.jwt.JWTFilter;
 import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.web.rest.errors.ErrorVM;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
-import ca.waaw.web.rest.errors.exceptions.TrialExpiredException;
+import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

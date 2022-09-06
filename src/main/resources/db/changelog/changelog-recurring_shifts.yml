@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-table-recurring_shifts
-      author: ${author.akhil}
+      author: ${author1}
       preConditions:
         - onFail: MARK_RAN
           not:
@@ -46,6 +46,9 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: location_id
+                  type: VARCHAR(100)
+              - column:
                   name: location_role_id
                   type: VARCHAR(100)
               - column:
@@ -57,6 +60,12 @@ databaseChangeLog:
                   name: status
                   type: VARCHAR(50)
                   defaultValue: PENDING
+              - column:
+                  name: assign_to_first_claim
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
               - column:
                   name: del_flg
                   type: BOOLEAN
@@ -91,23 +100,6 @@ databaseChangeLog:
             constraintName: fk_recurring_shifts_user_id
             referencedColumnNames: uuid
             referencedTableName: user
-  - changeSet:
-      id: addColumn-location_id_TO_recurring_shifts
-      author: ${author.akhil}
-      preConditions:
-        - onFail: MARK_RAN
-          not:
-            columnExists:
-              tableName: recurring_shifts
-              columnName: location_id
-      changes:
-        - addColumn:
-            tableName: recurring_shifts
-            columns:
-              - column:
-                  name: location_id
-                  type: VARCHAR(100)
-                  afterColumn: end_minute
         - addForeignKeyConstraint:
             baseTableName: recurring_shifts
             baseColumnNames: location_id

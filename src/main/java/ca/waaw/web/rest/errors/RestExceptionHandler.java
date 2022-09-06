@@ -2,6 +2,9 @@ package ca.waaw.web.rest.errors;
 
 import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.errors.exceptions.*;
+import ca.waaw.web.rest.errors.exceptions.application.PastValueNotDeletableException;
+import ca.waaw.web.rest.errors.exceptions.application.ShiftAlreadyAssignedException;
+import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
 import ca.waaw.web.rest.utils.CommonUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -124,6 +127,20 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle((ex.getRole().equals(Authority.ADMIN) ?
                 ErrorMessageKeys.trialExpiredAdminMessage : ErrorMessageKeys.trialExpiredEmployeeMessage), null);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.PAYMENT_REQUIRED);
+    }
+
+    @ExceptionHandler(PastValueNotDeletableException.class)
+    protected ResponseEntity<ErrorVM> handlePastValueNotDeletableException(PastValueNotDeletableException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.pastValueNotDeletableMessage,
+                null), ex.getEntityType());
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ShiftAlreadyAssignedException.class)
+    protected ResponseEntity<ErrorVM> handleShiftAlreadyAssignedException(ShiftAlreadyAssignedException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.shiftAlreadyAssignedMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
     }
 
 }

@@ -1,4 +1,4 @@
-package ca.waaw.web.rest.errors.exceptions;
+package ca.waaw.web.rest.errors.exceptions.application;
 
 import ca.waaw.enumration.Authority;
 import lombok.Getter;

@@ -43,12 +43,14 @@ api:
       deleteShift: /v1/shifts/delete
       assignShift: /v1/shifts/assign
       claimShift: /v1/shifts/claim
+      approveShift: /v1/shifts/approve
       getAllShifts: /v1/shifts/getAll/{pageNo}/{pageSize}
       createRecurringShift: /v1/recurringShifts/create
       updateRecurringShift: /v1/recurringShifts/update
       deleteRecurringShift: /v1/recurringShifts/delete
       assignRecurringShift: /v1/recurringShifts/assign
       claimRecurringShift: /v1/recurringShifts/claim
+      approveRecurringShift: /v1/recurringShifts/approve
       getAllRecurringShifts: /v1/recurringShifts/getAll/{pageNo}/{pageSize}
   description:
     authentication: |
@@ -99,6 +101,7 @@ api:
       deleteShift: Delete an existing shift.
       assignShift: Assign an existing shift to an user.
       claimShift: Claim an unassigned shift for the user.
+      approveShift: Admin can applrove a claim to a shift by employee.
       getAllShifts: |
         Get all shifts under your authorization.
         Pass date only if a single date data is needed and pass endDate too if data between two days is needed.
@@ -108,6 +111,7 @@ api:
       deleteRecurringShift: Delete an existing recurring shift.
       assignRecurringShift: Assign an existing recurring shift to an user.
       claimRecurringShift: Claim an unassigned recurring shift for the user.
+      approveRecurringShift: Admin can applrove a claim to a recurring shift by employee.
       getAllRecurringShifts: Get all recurring shifts under your authorization.
   swagger:
     groups:

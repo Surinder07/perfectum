@@ -16,5 +16,7 @@ public final class ErrorMessageKeys {
     public static final String entityAlreadyExistsMessage = "error.entityAlreadyExistsMessage";
     public static final String trialExpiredAdminMessage = "error.trialExpiredAdminMessage";
     public static final String trialExpiredEmployeeMessage = "error.trialExpiredEmployeeMessage";
+    public static final String pastValueNotDeletableMessage = "error.pastValueNotDeletableMessage";
+    public static final String shiftAlreadyAssignedMessage = "error.shiftAlreadyAssignedMessage";
 
 }

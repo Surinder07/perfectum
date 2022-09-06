@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-table-location_role
-      author: ${author.akhil}
+      author: ${author1}
       preConditions:
         - onFail: MARK_RAN
           not:

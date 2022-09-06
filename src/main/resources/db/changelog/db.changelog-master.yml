@@ -1,6 +1,6 @@
 databaseChangeLog:
   - property:
-      name: author.akhil
+      name: author1
       value: Akhil Singh Chauhan
   - include:
       file: db/changelog/changelog-organization.yml

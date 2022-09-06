@@ -1,7 +1,7 @@
 package ca.waaw.security.jwt;
 
 import ca.waaw.enumration.Authority;
-import ca.waaw.web.rest.errors.exceptions.TrialExpiredException;
+import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
