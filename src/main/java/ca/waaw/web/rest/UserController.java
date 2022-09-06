@@ -34,8 +34,8 @@ public class UserController {
     @SwaggerBadRequest
     @SwaggerAlreadyExist
     @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.user-organization.checkUsername}")
-    @GetMapping("${api.endpoints.user-organization.checkUsername}")
+    @Operation(description = "${api.description.user.checkUsername}")
+    @GetMapping("${api.endpoints.user.checkUsername}")
     public void checkUserNameExistence(@RequestParam String username) {
         if (userService.checkIfUsernameExists(username)) throw new EntityAlreadyExistsException("username", username);
     }
@@ -44,8 +44,8 @@ public class UserController {
     @SwaggerBadRequest
     @SwaggerAlreadyExist
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "${api.description.user-organization.registerUser}")
-    @PostMapping("${api.endpoints.user-organization.registerUser}")
+    @Operation(description = "${api.description.user.registerUser}")
+    @PostMapping("${api.endpoints.user.registerUser}")
     public void registerNewUser(@Valid @RequestBody RegisterUserDto registerUserDto) {
         userService.registerUser(registerUserDto);
     }
@@ -54,8 +54,8 @@ public class UserController {
     @SwaggerBadRequest
     @SwaggerAlreadyExist
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "${api.description.user-organization.registerOrganization}")
-    @PostMapping("${api.endpoints.user-organization.registerOrganization}")
+    @Operation(description = "${api.description.user.registerOrganization}")
+    @PostMapping("${api.endpoints.user.registerOrganization}")
     public void registerNewAdminAndOrganization(@Valid @RequestBody RegisterOrganizationDto registerOrganizationDto) {
         userService.registerAdminAndOrganization(registerOrganizationDto);
     }
@@ -64,8 +64,8 @@ public class UserController {
     @SwaggerBadRequest
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.user-organization.updateUser}")
-    @PutMapping("${api.endpoints.user-organization.updateUser}")
+    @Operation(description = "${api.description.user.updateUser}")
+    @PutMapping("${api.endpoints.user.updateUser}")
     public void updateUser(@Valid @RequestBody UpdateUserDto updateUserDto) {
         userService.updateUserDetails(updateUserDto);
     }
@@ -74,8 +74,8 @@ public class UserController {
     @SwaggerBadRequest
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.user-organization.updatePassword}")
-    @PutMapping("${api.endpoints.user-organization.updatePassword}")
+    @Operation(description = "${api.description.user.updatePassword}")
+    @PutMapping("${api.endpoints.user.updatePassword}")
     public void updatePassword(@Valid @RequestBody PasswordUpdateDto passwordUpdateDto) {
         userService.updatePasswordOfLoggedInUser(passwordUpdateDto);
     }
@@ -84,8 +84,8 @@ public class UserController {
     @SwaggerNotFound
     @SwaggerBadRequest
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "${api.description.user-organization.resetPasswordInit}")
-    @GetMapping("${api.endpoints.user-organization.resetPasswordInit}")
+    @Operation(description = "${api.description.user.resetPasswordInit}")
+    @GetMapping("${api.endpoints.user.resetPasswordInit}")
     public void initResetPassword(@RequestParam String email) {
         userService.requestPasswordReset(email);
     }
@@ -94,8 +94,8 @@ public class UserController {
     @SwaggerNotFound
     @SwaggerBadRequest
     @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.user-organization.resetPasswordFinish}")
-    @PutMapping("${api.endpoints.user-organization.resetPasswordFinish}")
+    @Operation(description = "${api.description.user.resetPasswordFinish}")
+    @PutMapping("${api.endpoints.user.resetPasswordFinish}")
     public void finishResetPassword(@Valid @RequestBody PasswordResetDto passwordResetDto) {
         userService.completePasswordReset(passwordResetDto);
     }
@@ -104,8 +104,8 @@ public class UserController {
     @SwaggerBadRequest
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.user-organization.updateProfileImage}")
-    @PostMapping("${api.endpoints.user-organization.updateProfileImage}")
+    @Operation(description = "${api.description.user.updateProfileImage}")
+    @PostMapping("${api.endpoints.user.updateProfileImage}")
     public void updateProfileImage() {
         // TODO Add logic
     }
@@ -115,15 +115,15 @@ public class UserController {
     @SwaggerUnauthorized
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "${api.description.user-organization.sendInvite}")
-    @PostMapping("${api.endpoints.user-organization.sendInvite}")
+    @Operation(description = "${api.description.user.sendInvite}")
+    @PostMapping("${api.endpoints.user.sendInvite}")
     public void sendInvite(@Valid @RequestBody InviteUserDto inviteUserDto) {
         userService.inviteNewUsers(inviteUserDto);
     }
 
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.user-organization.getUserDetails}")
-    @GetMapping("${api.endpoints.user-organization.getUserDetails}")
+    @Operation(description = "${api.description.user.getUserDetails}")
+    @GetMapping("${api.endpoints.user.getUserDetails}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = UserDetailsDto.class))})
     public ResponseEntity<UserDetailsDto> getLoggedInUser() {
@@ -132,8 +132,8 @@ public class UserController {
 
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.user-organization.getAllUsers}")
-    @GetMapping("${api.endpoints.user-organization.getAllUsers}")
+    @Operation(description = "${api.description.user.getAllUsers}")
+    @GetMapping("${api.endpoints.user.getAllUsers}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = UserDetailsForAdminDto.class)))},
             description = "${api.swagger.schema-description.pagination}")
@@ -151,8 +151,8 @@ public class UserController {
 
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.user-organization.listAllUsers}")
-    @GetMapping("${api.endpoints.user-organization.listAllUsers}")
+    @Operation(description = "${api.description.user.listAllUsers}")
+    @GetMapping("${api.endpoints.user.listAllUsers}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = UserInfoForDropDown.class)))},
             description = "${api.swagger.schema-description.pagination}")
@@ -163,30 +163,20 @@ public class UserController {
         return ResponseEntity.ok(userService.listAllUsers(pageNo, pageSize, searchKey, locationRoleId));
     }
 
-    @SwaggerOk
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.user-organization.updateOrganizationPreferences}")
-    @PutMapping("${api.endpoints.user-organization.updateOrganizationPreferences}")
-    public void updateOrganizationPreferences(@RequestBody OrganizationPreferences preferences) {
-        userService.updateOrganizationPreferences(preferences);
-    }
-
     /*
      Below are APIs for links sent to email for various purpose. These are not exposed on swagger
      */
 
     @Operation(hidden = true)
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping(value = "${api.endpoints.user-organization.activateAccount}", produces = "text/html;charset=UTF-8")
+    @GetMapping(value = "${api.endpoints.user.activateAccount}", produces = "text/html;charset=UTF-8")
     public ResponseEntity<String> activateAccount(@RequestParam String key) {
         return userService.activateUser(key);
     }
 
     @Operation(hidden = true)
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping("${api.endpoints.user-organization.acceptInvitation}")
+    @GetMapping("${api.endpoints.user.acceptInvitation}")
     public ResponseEntity<String> acceptInvitation(@RequestParam String key) {
         return userService.acceptInvite(key);
     }

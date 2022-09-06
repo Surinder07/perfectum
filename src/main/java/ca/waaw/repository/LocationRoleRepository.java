@@ -8,5 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface LocationRoleRepository extends JpaRepository<LocationRole, String> {
+
     Optional<LocationRole> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
+
 }

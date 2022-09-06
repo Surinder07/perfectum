@@ -387,22 +387,6 @@ public class UserService {
     }
 
     /**
-     * Updates the preferences of logged-in admins organization
-     *
-     * @param preferences preferences to be updated
-     */
-    public void updateOrganizationPreferences(OrganizationPreferences preferences) {
-        CommonUtils.checkRoleAuthorization(Authority.ADMIN);
-        SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .flatMap(user -> organizationRepository.findOneByIdAndDeleteFlag(user.getOrganizationId(), false))
-                .map(organization -> UserMapper.updateOrganizationPreferences(organization, preferences))
-                .map(organization -> CommonUtils.logMessageAndReturnObject(organization, "info", UserService.class,
-                        "Organization Preferences for organization id ({}) updated: {}", organization.getId(), preferences))
-                .map(organizationRepository::save);
-    }
-
-    /**
      * Check if user trying to register already exists (if an unactivated user exists with same details, it is deleted)
      *
      * @param userDTO all user related details

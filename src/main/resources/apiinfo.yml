@@ -6,7 +6,7 @@ api:
   time-format: 24 hours (HH:MM)
   endpoints:
     authentication: /v1/unAuth/authenticate
-    user-organization:
+    user:
       checkUsername: /v1/unAuth/checkUserNameExistence
       registerOrganization: /v1/unAuth/registerAdmin
       registerUser: /v1/unAuth/registerUser
@@ -21,7 +21,13 @@ api:
       getUserDetails: /v1/getAccount
       getAllUsers: /v1/users/getAll
       listAllUsers: /v1/users/listAll
+    organization:
       updateOrganizationPreferences: /v1/organization/update
+      getHolidays: /v1/organization/holiday/getAll
+      addHolidaysExcel: /v1/organization/holiday/upload
+      addHoliday: /v1/organization/holiday/add
+      editHoliday: /v1/organization/holiday/edit
+      deleteHoliday: /v1/organization/holiday/delete
     dropdown:
       getTimezones: /vi/unAuth/timezone/get
     notification:
@@ -58,7 +64,7 @@ api:
       * After trial period is expired and no payment is done. Only Admin will be able to log-in to their account.
         * Only getAccount API will be accesible to admin, that can be used to fetch details to initiate a payment.
       * For any other role or other APIs for admin an error will be thrown.
-    user-organization:
+    user:
       checkUsername: Will Return Success only if given username is available.
       registerUser: |
         Register a new user **(by email invite only)**.
@@ -80,6 +86,13 @@ api:
         Get all Users under one locationId with search.
         This API can be used for populating a drop-down while **scheduling shifts**
       updateOrganizationPreferences: Update organization preferences under logged-in admin
+    organization:
+      updateOrganizationPreferences: Update organization preferences under logged-in admin
+      getHolidays: Get all Holidays for current year.
+      addHolidaysExcel: Upload excel with required data, to update all holidays at once. Pass locationId only if holidays are location specific. **Use Form Data.**
+      addHoliday: Add a single holiday manually.
+      editHoliday: Edit a holiday.
+      deleteHoliday: Delete a holiday.
     dropdown:
       getTimezones: Get a list of timezone to show for adding new location.
     notification:
@@ -116,13 +129,14 @@ api:
   swagger:
     groups:
       auth: 1. Auth
-      user: 2. User and Organization
-      dropdown: 3. Dropdown
-      notification: 4. Notifications
-      location-and-role: 5. Location and Location Role
-      shift-management: 6. Shift Management
+      user: 2. User Management
+      organization: 3. Organization Management
+      dropdown: 4. Dropdown
+      notification: 5. Notifications
+      location-and-role: 6. Location and Location Role
+      shift-management: 7. Shift Management
     error-description:
-      trial-over: If role is ADMIN redirect to payment page with error message or else just show the error.
+      trial-over: Payment Required. If role is ADMIN redirect to payment page with error message or else just show the error.
       authentication: Authentication Failed.
       bad-request: Your request was not formed correctly.
       unauthorized: You are not authorized to access this resource.
@@ -156,6 +170,11 @@ api:
         | ADMIN (Global Admin)              | All shifts will be returned                                                |
         | MANAGER (Location Admin)          | All shifts will be returned                                                |
         | EMPLOYEE (Employee)               | Only shifts assigned to the employee and unassigned shift will be returned |
+      getAllHolidays: |
+        * For employees or manager, it will show all holidays assigned to their location and all unassigned ones (as they will be common for all locations)
+        * For admin, it will show:
+          * Groups with all locations and list of their holidays
+          * **Null** location and a list of unassigned(common) holidays.
     param-description:
       getLocationRole: Required for ADMIN(Global admin) and MANAGER(Location admin) only.
       getUsersSearchKey: Pass the search key to search user by name or id.

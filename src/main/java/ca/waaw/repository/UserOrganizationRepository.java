@@ -10,6 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface UserOrganizationRepository extends JpaRepository<UserOrganization, String> {
+
     Optional<UserOrganization> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
 
     Optional<UserOrganization> findOneByUsernameAndDeleteFlag(String username, boolean deleteFlag);
@@ -27,4 +28,5 @@ public interface UserOrganizationRepository extends JpaRepository<UserOrganizati
     Page<UserOrganization> searchUsersWithOrganizationIdAndLocationIdAndDeleteFlagAndAuthority(String searchKey, String locationId, String organizationId, boolean deleteFlag, String authority, Pageable pageable);
 
     Page<UserOrganization> searchUsersWithLocationIdAndDeleteFlagAndAuthority(String searchKey, String locationId, boolean deleteFlag, String authority, Pageable pageable);
+
 }
