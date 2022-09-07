@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-organization_holidays
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: organization_holidays
+      changes:
+        - createTable:
+            tableName: organization_holidays
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+              - column:
+                  name: organization_id
+                  type: VARCHAR(100)
+              - column:
+                  name: location_id
+                  type: VARCHAR(100)
+              - column:
+                  name: type
+                  type: VARCHAR(100)
+              - column:
+                  name: year
+                  type: SMALLINT
+              - column:
+                  name: month
+                  type: SMALLINT
+              - column:
+                  name: date
+                  type: SMALLINT
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: organization_holidays
+            baseColumnNames: organization_id
+            constraintName: fk_organization_holidays_organization_id
+            referencedColumnNames: uuid
+            referencedTableName: organization
+        - addForeignKeyConstraint:
+            baseTableName: organization_holidays
+            baseColumnNames: location_id
+            constraintName: fk_organization_holidays_location_id
+            referencedColumnNames: uuid
+            referencedTableName: location
