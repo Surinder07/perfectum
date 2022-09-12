@@ -2,7 +2,6 @@ package ca.waaw.web.rest.service;
 
 import ca.waaw.domain.Notification;
 import ca.waaw.domain.User;
-import ca.waaw.dto.NotificationDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.mapper.NotificationMapper;
 import ca.waaw.repository.NotificationRepository;
@@ -19,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,13 +36,7 @@ public class NotificationService {
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> notificationRepository.findAllByUserIdAndDeleteFlag(user.getId(), false, getSortedByCreatedDate))
                 .orElse(Page.empty());
-        List<NotificationDto> notifications = notificationPage.getContent().stream()
-                .map(NotificationMapper::entityToDto).collect(Collectors.toList());
-        return PaginationDto.builder()
-                .totalEntries((int) notificationPage.getTotalElements())
-                .totalPages(notificationPage.getTotalPages())
-                .data(notifications)
-                .build();
+        return CommonUtils.getPaginationResponse(notificationPage, NotificationMapper::entityToDto);
     }
 
     public void markNotificationAsRead(String id) {

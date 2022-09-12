@@ -39,9 +39,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -343,13 +341,7 @@ public class UserService {
                     }
                 })
                 .orElseThrow(UnauthorizedException::new);
-        List<UserDetailsForAdminDto> users = userPage.getContent().stream()
-                .map(UserMapper::entityToUserDetailsForAdmin).collect(Collectors.toList());
-        return PaginationDto.builder()
-                .totalEntries((int) userPage.getTotalElements())
-                .totalPages(userPage.getTotalPages())
-                .data(users)
-                .build();
+        return CommonUtils.getPaginationResponse(userPage, UserMapper::entityToUserDetailsForAdmin);
     }
 
     /**
@@ -376,13 +368,7 @@ public class UserService {
         } else {
             userPage = userRepository.findAllByLocationRoleIdAndDeleteFlag(locationRoleId, false, getSortedByName);
         }
-        List<UserInfoForDropDown> users = userPage.getContent().stream()
-                .map(UserMapper::entityToUserInfoForDropDown).collect(Collectors.toList());
-        return PaginationDto.builder()
-                .totalEntries((int) userPage.getTotalElements())
-                .totalPages(userPage.getTotalPages())
-                .data(users)
-                .build();
+        return CommonUtils.getPaginationResponse(userPage, UserMapper::entityToUserInfoForDropDown);
 
     }
 
