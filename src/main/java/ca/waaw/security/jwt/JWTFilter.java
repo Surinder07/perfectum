@@ -1,5 +1,6 @@
 package ca.waaw.security.jwt;
 
+import ca.waaw.config.applicationconfig.AppSecurityConfig;
 import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -17,6 +18,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is
@@ -34,15 +41,16 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private final Environment env;
 
+    private final AppSecurityConfig appSecurityConfig;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
         log.info("Requested endpoint: {}", request.getRequestURI());
         try {
             final String requestTokenHeader = request.getHeader(AUTHORIZATION_HEADER);
-            // JWT Token is in the form "Bearer token". Remove Bearer word and get
-            // only the Token
-            if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+            // JWT Token is in the form "Bearer token". Remove Bearer word and get only the Token
+            if (!isUnAuthUrl(request.getRequestURI()) && requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
                 String jwtToken = requestTokenHeader.substring(7);
                 if (tokenProvider.checkTrialExpiry() && !request.getRequestURI().equals(String
                         .format("/api%s", env.getProperty("api.endpoints.user-organization.getUserDetails")))) {
@@ -58,6 +66,13 @@ public class JWTFilter extends OncePerRequestFilter {
         }
         chain.doFilter(request, response);
         SecurityContextHolder.getContext().setAuthentication(null);
+    }
+
+    private boolean isUnAuthUrl(String requestedUri) {
+        List<PathMatcher> pathMatchers = Arrays.stream(appSecurityConfig.getUnAuthUrlPatterns())
+                .map(pattern -> FileSystems.getDefault().getPathMatcher("glob:" + pattern))
+                .collect(Collectors.toList());
+        return pathMatchers.stream().anyMatch(pattern -> pattern.matches(Paths.get(requestedUri)));
     }
 
 }
