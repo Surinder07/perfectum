@@ -121,3 +121,20 @@ application:
     application-destination-prefix: /ws
     allowed-origins: ${security.cors-allowed-origins}
     notification-url: ${application.websockets.simple-broker}/notification
+
+######################################
+###### Files related properties ######
+######################################
+files:
+  formats-allowed:
+    excel: xls,xlsx
+    csv: csv
+  required-fields:
+    holidays: name, year, month, date
+  pojo-templates:
+    holidays:
+      name: name
+      year: year
+      month: month
+      date: date
+      holiday_type: type

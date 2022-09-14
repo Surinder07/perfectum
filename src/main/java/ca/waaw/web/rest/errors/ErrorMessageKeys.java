@@ -18,5 +18,7 @@ public final class ErrorMessageKeys {
     public static final String trialExpiredEmployeeMessage = "error.trialExpiredEmployeeMessage";
     public static final String pastValueNotDeletableMessage = "error.pastValueNotDeletableMessage";
     public static final String shiftAlreadyAssignedMessage = "error.shiftAlreadyAssignedMessage";
+    public static final String missingHeadersMessage = "error.missingHeadersMessage";
+    public static final String unsupportedFileFormatMessage = "error.unsupportedFileFormatMessage";
 
 }

@@ -2,6 +2,7 @@ package ca.waaw.web.rest.errors;
 
 import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.errors.exceptions.*;
+import ca.waaw.web.rest.errors.exceptions.application.MissingHeadersException;
 import ca.waaw.web.rest.errors.exceptions.application.PastValueNotDeletableException;
 import ca.waaw.web.rest.errors.exceptions.application.ShiftAlreadyAssignedException;
 import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -141,6 +143,20 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.shiftAlreadyAssignedMessage,
                 null);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(MissingHeadersException.class)
+    protected ResponseEntity<ErrorVM> handleMissingHeadersException(MissingHeadersException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.missingHeadersMessage,
+                null), ex.getFileType());
+        return new ResponseEntity<>(new ErrorVM(message, ex.getHeaders()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UnsupportedFileFormatException.class)
+    protected ResponseEntity<ErrorVM> handleUnsupportedFileFormatException(UnsupportedFileFormatException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.unsupportedFileFormatMessage,
+                null), Arrays.toString(ex.getAllowedFormats()));
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
 
 }
