@@ -18,3 +18,5 @@ databaseChangeLog:
       file: db/changelog/changelog-recurring_shifts.yml
   - include:
       file: db/changelog/changelog-timesheet.yml
+  - include:
+      file: db/changelog/changelog-employee_preference.yml
