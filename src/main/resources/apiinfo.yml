@@ -17,10 +17,7 @@ api:
       updateUser: /v1/updateUser
       updatePassword: v1/updatePassword
       updateProfileImage: /v1/updateProfileImage
-      sendInvite: /v1/sendInvite
       getUserDetails: /v1/getAccount
-      getAllUsers: /v1/users/getAll
-      listAllUsers: /v1/users/listAll
     organization:
       updateOrganizationPreferences: /v1/organization/update
       getHolidays: /v1/organization/holiday/getAll
@@ -28,6 +25,11 @@ api:
       addHoliday: /v1/organization/holiday/add
       editHoliday: /v1/organization/holiday/edit
       deleteHoliday: /v1/organization/holiday/delete
+    member:
+      sendInvite: /v1/member/sendInvite
+      getAllUsers: /v1/member/getAll
+      listAllUsers: /v1/member/listAll
+      addEmployeePreferences: /v1/member/addPreference
     dropdown:
       getTimezones: /vi/unAuth/timezone/get
     notification:
@@ -77,14 +79,7 @@ api:
       resetPasswordInit: Initialize a password reset request and get email to reset password.
       resetPasswordFinish: Finish password reset request with key received on email.
       updateProfileImage: Update profile image for logged in user ***(Not operational right now)***.
-      sendInvite: Invite new users to join logged in admins organization.
-      getUserDetails: |
-        Get Logged in user's account details.
-        > **Last Login Date will be returned in UTC, make sure to change it to user's timezone.**
-      getAllUsers: Get all Employees and Admins under logged-in user.
-      listAllUsers: |
-        Get all Users under one locationId with search.
-        This API can be used for populating a drop-down while **scheduling shifts**
+      getUserDetails: Get Logged in user's account details.
       updateOrganizationPreferences: Update organization preferences under logged-in admin
     organization:
       updateOrganizationPreferences: Update organization preferences under logged-in admin
@@ -93,6 +88,13 @@ api:
       addHoliday: Add a single holiday manually.
       editHoliday: Edit a holiday.
       deleteHoliday: Delete a holiday.
+    member:
+      sendInvite: Invite new users to join logged in admins organization.
+      getAllUsers: Get all Employees and Admins under logged-in user.
+      listAllUsers: |
+        Get all Users under one locationId with search.
+        This API can be used for populating a drop-down while **scheduling shifts**
+      addEmployeePreferences: Update employee preferences
     dropdown:
       getTimezones: Get a list of timezone to show for adding new location.
     notification:
@@ -131,10 +133,11 @@ api:
       auth: 1. Auth
       user: 2. User Management
       organization: 3. Organization Management
-      dropdown: 4. Dropdown
-      notification: 5. Notifications
-      location-and-role: 6. Location and Location Role
-      shift-management: 7. Shift Management
+      member: 4. Members Management
+      dropdown: 5. Dropdown
+      notification: 6. Notifications
+      location-and-role: 7. Location and Location Role
+      shift-management: 8. Shift Management
     error-description:
       trial-over: Payment Required. If role is ADMIN redirect to payment page with error message or else just show the error.
       authentication: Authentication Failed.

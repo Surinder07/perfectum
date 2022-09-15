@@ -110,17 +110,6 @@ public class UserController {
         // TODO Add logic
     }
 
-    @SwaggerCreated
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "${api.description.user.sendInvite}")
-    @PostMapping("${api.endpoints.user.sendInvite}")
-    public void sendInvite(@Valid @RequestBody InviteUserDto inviteUserDto) {
-        userService.inviteNewUsers(inviteUserDto);
-    }
-
     @SwaggerAuthenticated
     @Operation(description = "${api.description.user.getUserDetails}")
     @GetMapping("${api.endpoints.user.getUserDetails}")
@@ -128,39 +117,6 @@ public class UserController {
             schema = @Schema(implementation = UserDetailsDto.class))})
     public ResponseEntity<UserDetailsDto> getLoggedInUser() {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
-    }
-
-    @SwaggerBadRequest
-    @SwaggerAuthenticated
-    @Operation(description = "${api.description.user.getAllUsers}")
-    @GetMapping("${api.endpoints.user.getAllUsers}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = UserDetailsForAdminDto.class)))},
-            description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> getAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
-                                                     @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
-                                                     @RequestParam(required = false) String searchKey,
-                                                     @Parameter(description = "${api.swagger.param-description.getUsersLocation}")
-                                                     @RequestParam(required = false) String locationId,
-                                                     @Parameter(description = "${api.swagger.param-description.getUsersRole}")
-                                                     @RequestParam(required = false) String role) {
-        role = StringUtils.isNotEmpty(role) ? role.toUpperCase(Locale.ROOT) : null;
-        locationId = StringUtils.isNotEmpty(locationId) ? locationId : null;
-        return ResponseEntity.ok(userService.getAllUsers(pageNo, pageSize, searchKey, locationId, role));
-    }
-
-    @SwaggerBadRequest
-    @SwaggerAuthenticated
-    @Operation(description = "${api.description.user.listAllUsers}")
-    @GetMapping("${api.endpoints.user.listAllUsers}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = UserInfoForDropDown.class)))},
-            description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> listAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
-                                                     @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
-                                                     @RequestParam(required = false) String searchKey,
-                                                     @RequestParam String locationRoleId) {
-        return ResponseEntity.ok(userService.listAllUsers(pageNo, pageSize, searchKey, locationRoleId));
     }
 
     /*
