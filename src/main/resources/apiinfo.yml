@@ -27,9 +27,11 @@ api:
       deleteHoliday: /v1/organization/holiday/delete
     member:
       sendInvite: /v1/member/sendInvite
-      getAllUsers: /v1/member/getAll
-      listAllUsers: /v1/member/listAll
+      getAllMembers: /v1/member/getAll
+      listAllMembers: /v1/member/listAll
+      getMemberById: /v1/member/getById
       addEmployeePreferences: /v1/member/addPreference
+      getEmployeePreferences: /v1/member/getPreference
     dropdown:
       getTimezones: /vi/unAuth/timezone/get
     notification:
@@ -90,11 +92,13 @@ api:
       deleteHoliday: Delete a holiday.
     member:
       sendInvite: Invite new users to join logged in admins organization.
-      getAllUsers: Get all Employees and Admins under logged-in user.
-      listAllUsers: |
-        Get all Users under one locationId with search.
-        This API can be used for populating a drop-down while **scheduling shifts**
+      getAllMembers: Get all Employees and Admins under logged-in user.
+      listAllMembers: |
+        Get all members under one locationId with search. *Limited info will be returned.*
+        > This API can be used for populating a drop-down while **scheduling shifts**
+      getMemberById: Get details of a meber by id
       addEmployeePreferences: Update employee preferences
+      getEmployeePreferences: Get an employee's preferences
     dropdown:
       getTimezones: Get a list of timezone to show for adding new location.
     notification:
@@ -178,12 +182,14 @@ api:
         * For admin, it will show:
           * Groups with all locations and list of their holidays
           * **Null** location and a list of unassigned(common) holidays.
+      getEmployeePreferences: If **getFullHistory** is **true**, a **list** with all preferences will be returned, else **single** preference object will be returned.
     param-description:
       getLocationRole: Required for ADMIN(Global admin) and MANAGER(Location admin) only.
       getUsersSearchKey: Pass the search key to search user by name or id.
       getUsersLocation: Pass the locationId to search under particular location.
       getUsersRole: Pass user role(ADMIN, MANAGER, EMPLOYEE) to show users with particular role.
-
+      getEmployeePreferences: Pass boolean value if whole list of history preferences is needed.
+      getPreferencesUserId: Not needed if logged-in user is an employee.
 regex:
   explaination:
     email: xx@xx.xx

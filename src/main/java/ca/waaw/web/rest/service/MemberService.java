@@ -1,20 +1,20 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppUrlConfig;
+import ca.waaw.domain.EmployeePreferences;
 import ca.waaw.domain.LocationRole;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
+import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.mapper.UserMapper;
-import ca.waaw.repository.LocationRepository;
-import ca.waaw.repository.LocationRoleRepository;
-import ca.waaw.repository.UserOrganizationRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.UserMailService;
+import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
@@ -29,7 +29,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -48,6 +51,8 @@ public class MemberService {
     private final LocationRepository locationRepository;
 
     private final LocationRoleRepository locationRoleRepository;
+
+    private final EmployeePreferencesRepository employeePreferencesRepository;
 
     /**
      * Sends an invitation to user email
@@ -149,22 +154,82 @@ public class MemberService {
 
     }
 
-    /**
-     *
-     * @param employeePreferencesDto all employee preferences to be updated
-     */
-    public void addEmployeePreferences(EmployeePreferencesDto employeePreferencesDto) {
-        
+    public UserDetailsForAdminDto getMemberById(String userId) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        return SecurityUtils.getCurrentUserLogin()
+                        .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
+                                .flatMap(admin -> Optional.of(userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
+                                        .map(user -> {
+                                            if ((!user.getOrganizationId().equals(admin.getOrganizationId()) || (StringUtils.isNotEmpty(admin.getLocationId())
+                                                    && !admin.getLocationId().equals(user.getLocationId())))) {
+                                                throw new UnauthorizedException();
+                                            }
+                                            return user;
+                                        })
+                                        .orElseThrow(() -> new EntityNotFoundException("user")))
+                                )
+                        )
+                .map(UserMapper::entityToUserDetailsForAdmin)
+                .orElseThrow(AuthenticationException::new);
     }
 
     /**
-     *
-     * @param userId
-     * @param getFullHistory
-     * @return
+     * @param employeePreferencesDto all employee preferences to be updated
      */
-    public List<EmployeePreferencesDto> getEmployeePreferences(String userId, boolean getFullHistory) {
-        return null;
+    public void addEmployeePreferences(EmployeePreferencesDto employeePreferencesDto) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        List<EmployeePreferences> preferencesToSave = new ArrayList<>();
+        String adminUserId = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> Optional.of(userRepository.findOneByUsernameAndDeleteFlag(username, false)
+                        .flatMap(admin -> userRepository.findOneByIdAndDeleteFlag(employeePreferencesDto.getUserId(), false)
+                                .map(user -> {
+                                    if ((!user.getOrganizationId().equals(admin.getOrganizationId()) || (StringUtils.isNotEmpty(admin.getLocationId())
+                                            && !admin.getLocationId().equals(user.getLocationId())))) {
+                                        throw new UnauthorizedException();
+                                    }
+                                    return admin;
+                                })
+                        )
+                        .orElseThrow(() -> new EntityNotFoundException("user")))
+                )
+                .flatMap(admin -> employeePreferencesRepository.findOneByUserIdAndIsExpired(employeePreferencesDto.getUserId(), false)
+                        .map(preference -> {
+                            preference.setExpired(true);
+                            preferencesToSave.add(preference);
+                            return admin.getId();
+                        })
+                )
+                .orElseThrow(AuthenticationException::new);
+        EmployeePreferences newPreference = UserMapper.employeePreferencesToEntity(employeePreferencesDto);
+        newPreference.setCreatedBy(adminUserId);
+        preferencesToSave.add(newPreference);
+        employeePreferencesRepository.saveAll(preferencesToSave);
+        log.info("New preference saved for the employee: {}", newPreference);
+    }
+
+    /**
+     * @param userId         user for whom preferences are required
+     * @param getFullHistory boolean to show if all past preferences should be returned too.
+     * @return List of preferences or  single preference
+     */
+    public Object getEmployeePreferences(String userId, boolean getFullHistory) {
+        if (SecurityUtils.isCurrentUserInRole(Authority.EMPLOYEE)) {
+            userId = SecurityUtils.getCurrentUserLogin()
+                    .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
+                            .map(User::getId)
+                    )
+                    .orElseThrow(AuthenticationException::new);
+        }
+        if (getFullHistory) {
+            return employeePreferencesRepository.findAllByUserId(userId)
+                    .stream().map(UserMapper::employeePreferenceToDto)
+                    .collect(Collectors.toList());
+        } else {
+            return employeePreferencesRepository
+                    .findOneByUserIdAndIsExpired(userId, false)
+                    .map(UserMapper::employeePreferenceToDto)
+                    .orElseThrow(() -> new EntityNotFoundException("preferences"));
+        }
     }
 
 }

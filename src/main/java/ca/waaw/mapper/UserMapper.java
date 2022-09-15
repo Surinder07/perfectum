@@ -1,8 +1,10 @@
 package ca.waaw.mapper;
 
+import ca.waaw.domain.EmployeePreferences;
 import ca.waaw.domain.Organization;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.EntityStatus;
@@ -163,6 +165,27 @@ public class UserMapper {
             target.setTimeoffEnabledDefault(source.getIsTimeoffEnabledDefault());
         if (source.getDaysBeforeShiftsAssigned() != null)
             target.setDaysBeforeShiftsAssigned(source.getDaysBeforeShiftsAssigned());
+        return target;
+    }
+
+    // Employee related mapping
+
+    /**
+     * @param source employee preference database entity
+     * @return dto containing preference info
+     */
+    public static EmployeePreferencesDto employeePreferenceToDto(EmployeePreferences source) {
+        EmployeePreferencesDto target = new EmployeePreferencesDto();
+        BeanUtils.copyProperties(source, target);
+        target.setActive(!source.isExpired());
+        return target;
+    }
+
+    public static EmployeePreferences employeePreferencesToEntity(EmployeePreferencesDto source) {
+        EmployeePreferences target = new EmployeePreferences();
+        BeanUtils.copyProperties(source, target);
+        target.setExpired(false);
+        target.setId(UUID.randomUUID().toString());
         return target;
     }
 

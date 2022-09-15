@@ -24,7 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 import java.util.Locale;
 
 @SuppressWarnings("unused")
@@ -49,18 +48,18 @@ public class MemberController {
 
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.member.getAllUsers}")
-    @GetMapping("${api.endpoints.member.getAllUsers}")
+    @Operation(description = "${api.description.member.getAllMembers}")
+    @GetMapping("${api.endpoints.member.getAllMembers}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = UserDetailsForAdminDto.class)))},
             description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> getAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
-                                                     @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
-                                                     @RequestParam(required = false) String searchKey,
-                                                     @Parameter(description = "${api.swagger.param-description.getUsersLocation}")
-                                                     @RequestParam(required = false) String locationId,
-                                                     @Parameter(description = "${api.swagger.param-description.getUsersRole}")
-                                                     @RequestParam(required = false) String role) {
+    public ResponseEntity<PaginationDto> getAllMembers(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                       @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
+                                                       @RequestParam(required = false) String searchKey,
+                                                       @Parameter(description = "${api.swagger.param-description.getUsersLocation}")
+                                                       @RequestParam(required = false) String locationId,
+                                                       @Parameter(description = "${api.swagger.param-description.getUsersRole}")
+                                                       @RequestParam(required = false) String role) {
         role = StringUtils.isNotEmpty(role) ? role.toUpperCase(Locale.ROOT) : null;
         locationId = StringUtils.isNotEmpty(locationId) ? locationId : null;
         return ResponseEntity.ok(memberService.getAllUsers(pageNo, pageSize, searchKey, locationId, role));
@@ -68,16 +67,26 @@ public class MemberController {
 
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.member.listAllUsers}")
-    @GetMapping("${api.endpoints.member.listAllUsers}")
+    @Operation(description = "${api.description.member.listAllMembers}")
+    @GetMapping("${api.endpoints.member.listAllMembers}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = UserInfoForDropDown.class)))},
             description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> listAllUsers(@PathVariable int pageNo, @PathVariable int pageSize,
-                                                      @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
-                                                      @RequestParam(required = false) String searchKey,
-                                                      @RequestParam String locationRoleId) {
+    public ResponseEntity<PaginationDto> listAllMembers(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                        @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
+                                                        @RequestParam(required = false) String searchKey,
+                                                        @RequestParam String locationRoleId) {
         return ResponseEntity.ok(memberService.listAllUsers(pageNo, pageSize, searchKey, locationRoleId));
+    }
+
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.member.getMemberById}")
+    @GetMapping("${api.endpoints.member.getMemberById}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = UserDetailsForAdminDto.class))})
+    public ResponseEntity<UserDetailsForAdminDto> getMemberById(@RequestParam String userId) {
+        return ResponseEntity.ok(memberService.getMemberById(userId));
     }
 
     @SwaggerCreated
@@ -93,13 +102,15 @@ public class MemberController {
 
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.member.listAllUsers}")
-    @GetMapping("${api.endpoints.member.listAllUsers}")
+    @Operation(description = "${api.description.member.getEmployeePreferences}")
+    @GetMapping("${api.endpoints.member.getEmployeePreferences}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = EmployeePreferencesDto.class)))})
-    public ResponseEntity<List<EmployeePreferencesDto>> getEmployeePreferences(@Parameter(description = "${api.swagger.param-description.getEmployeePreferences}")
-                                                                               @RequestParam boolean getFullHistory,
-                                                                               @RequestParam String userId) {
+            schema = @Schema(implementation = EmployeePreferencesDto.class)))},
+            description = "${api.swagger.schema-description.getEmployeePreferences}")
+    public ResponseEntity<Object> getEmployeePreferences(@Parameter(description = "${api.swagger.param-description.getEmployeePreferences}")
+                                                         @RequestParam boolean getFullHistory,
+                                                         @Parameter(description = "${api.swagger.param-description.getPreferencesUserId}")
+                                                         @RequestParam(required = false) String userId) {
         return ResponseEntity.ok(memberService.getEmployeePreferences(userId, getFullHistory));
     }
 
