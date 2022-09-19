@@ -29,15 +29,15 @@ public class LocationRole extends AbstractEntity {
     private boolean isTimeoffEnabled;
 
     @Column(name = "total_hours_per_day_min")
-    private int totalHoursPerDayMin;
+    private int totalHoursPerDayMin = 4;
 
     @Column(name = "total_hours_per_day_max")
-    private int totalHoursPerDayMax;
+    private int totalHoursPerDayMax = 8;
 
     @Column(name = "min_hours_between_shifts")
-    private int minHoursBetweenShifts;
+    private int minHoursBetweenShifts = 12;
 
     @Column(name = "max_consecutive_work_days")
-    private int maxConsecutiveWorkDays;
+    private int maxConsecutiveWorkDays = 6;
 
 }
