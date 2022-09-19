@@ -1,7 +1,9 @@
 databaseChangeLog:
+  # Defined common properties to be used in all the changelogs
   - property:
       name: author1
       value: Akhil Singh Chauhan
+  # Files to be included
   - include:
       file: db/changelog/changelog-organization.yml
   - include:
@@ -18,5 +20,7 @@ databaseChangeLog:
       file: db/changelog/changelog-recurring_shifts.yml
   - include:
       file: db/changelog/changelog-timesheet.yml
+  - include:
+      file: db/changelog/changelog-organization_holidays.yml
   - include:
       file: db/changelog/changelog-employee_preference.yml

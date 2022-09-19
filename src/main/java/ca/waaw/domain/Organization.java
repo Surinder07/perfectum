@@ -48,4 +48,7 @@ public class Organization extends AbstractEntity {
     @Column(name = "waaw_custom_id")
     private String waawId;
 
+    @Column
+    private String timezone;
+
 }

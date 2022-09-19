@@ -62,6 +62,9 @@ databaseChangeLog:
                   name: waaw_custom_id
                   type: VARCHAR(25)
               - column:
+                  name: timezone
+                  type: VARCHAR(100)
+              - column:
                   name: status
                   type: VARCHAR(50)
                   defaultValue: PENDING
