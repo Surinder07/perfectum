@@ -121,6 +121,11 @@ application:
     application-destination-prefix: /ws
     allowed-origins: ${security.cors-allowed-origins}
     notification-url: ${application.websockets.simple-broker}/notification
+  async:
+    thread-name-prefix: AsyncThread-
+    core-pool-size: 40
+    max-pool-size: 80
+    queue-capacity: 200
 
 ######################################
 ###### Files related properties ######
