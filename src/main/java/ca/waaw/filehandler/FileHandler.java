@@ -10,8 +10,8 @@ import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,18 +34,19 @@ public class FileHandler {
      * @param <T>         return type
      * @return List of all mapped object from the file provided
      */
-    public <T> List<T> readExcelOrCsv(MultipartFile file, Class<T> cls, MutableBoolean missingData, PojoToMap pojoToMap) {
-        String fileExtension = FileUtils.getFileExtension(file);
+    public <T> List<T> readExcelOrCsv(InputStream file, String fileName, Class<T> cls, MutableBoolean missingData,
+                                      PojoToMap pojoToMap) {
+        String fileExtension = FileUtils.getFileExtension(fileName);
         List<T> result;
         if (Arrays.asList(fileConfig.getFormatsAllowed().getExcel()).contains(fileExtension)) {
             result = new ArrayList<>();
             FileToPojoUtils.excelFileToObject(file, result, getRequiredHeaders(pojoToMap), cls,
                     getPojoTemplates(pojoToMap), missingData);
         } else if (Arrays.asList(fileConfig.getFormatsAllowed().getCsv()).contains(fileExtension)) {
-            result = FileToPojoUtils.csvToObject(file, cls, getRequiredHeaders(pojoToMap),
+            result = FileToPojoUtils.csvToObject(file, fileName, cls, getRequiredHeaders(pojoToMap),
                     getPojoTemplates(pojoToMap), missingData);
         } else {
-            log.error("File {} is of unsupported format: {}", file.getOriginalFilename(), fileExtension);
+            log.error("File {} is of unsupported format: {}", fileName, fileExtension);
             throw new UnsupportedFileFormatException(ArrayUtils.addAll(fileConfig.getFormatsAllowed().getExcel(),
                     fileConfig.getFormatsAllowed().getCsv()));
         }

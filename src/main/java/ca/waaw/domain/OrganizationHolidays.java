@@ -2,25 +2,25 @@ package ca.waaw.domain;
 
 import ca.waaw.enumration.HolidayType;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 
 @Data
 @Entity
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "organization_holidays")
 @NamedQueries({
         @NamedQuery(name = "OrganizationHolidays.getAllForLocationAndMonthIfNeeded",
-                query = "SELECT h FROM OrganizationHolidays h WHERE (h.locationId = ?1 OR h.locationId IS NULL) AND " +
+                query = "SELECT h FROM OrganizationHolidays h WHERE (h.locationId IS NULL OR h.locationId = ?1) AND " +
                         "h.deleteFlag = false AND (?2 IS NULL OR h.month = ?2) AND h.year = ?3"),
         @NamedQuery(name = "OrganizationHolidays.getAllForOrganizationAndMonthIfNeeded",
                 query = "SELECT h FROM OrganizationHolidays h WHERE h.organizationId = ?1 AND " +
                         "h.deleteFlag = false AND (?2 IS NULL OR h.month = ?2) AND h.year = ?3")
 })
-public class OrganizationHolidays {
-
-    @Id
-    @Column(name = "uuid")
-    private String id;
+public class OrganizationHolidays extends AbstractEntity {
 
     @Column(name = "organization_id")
     private String organizationId;
@@ -42,8 +42,5 @@ public class OrganizationHolidays {
 
     @Column
     private Integer date;
-
-    @Column(name = "del_flg")
-    private boolean deleteFlag = false;
 
 }

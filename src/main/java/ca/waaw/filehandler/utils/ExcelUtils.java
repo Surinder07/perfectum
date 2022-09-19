@@ -8,9 +8,9 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,9 +25,9 @@ public class ExcelUtils {
      * @param file Multipart Excel File
      * @return Workbook Object from Excel file
      */
-    public static Workbook getWorkbook(MultipartFile file) {
+    public static Workbook getWorkbook(InputStream file) {
         try {
-            FileInputStream stream = (FileInputStream) file.getInputStream();
+            FileInputStream stream = (FileInputStream) file;
             return new XSSFWorkbook(stream);
         } catch (Exception e) {
             log.error("Exception while reading excel file", e);

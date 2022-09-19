@@ -39,11 +39,31 @@ databaseChangeLog:
                   name: date
                   type: SMALLINT
               - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: PENDING
+              - column:
                   name: del_flg
                   type: BOOLEAN
                   defaultValue: false
                   constraints:
                     nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: last_modified_by
+                  type: VARCHAR(100)
+              - column:
+                  name: last_modified_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
         - addForeignKeyConstraint:
             baseTableName: organization_holidays
             baseColumnNames: organization_id

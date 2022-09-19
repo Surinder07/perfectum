@@ -8,8 +8,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class FileToPojoUtils {
      *                        this will be used later to send notification in case of missing data.
      * @param <T>             populating Object
      */
-    public static <T> void excelFileToObject(MultipartFile file, List<T> listToPopulate, String[] requiredHeaders,
+    public static <T> void excelFileToObject(InputStream file, List<T> listToPopulate, String[] requiredHeaders,
                                              Class<T> cls, Map<String, String> pojoTemplate, MutableBoolean missingData) {
         Workbook workbook = ExcelUtils.getWorkbook(file);
         assert workbook != null;
@@ -102,11 +102,11 @@ public class FileToPojoUtils {
      * @param <T>             populating Object
      * @return List of populated object
      */
-    public static <T> List<T> csvToObject(MultipartFile file, Class<T> cls, String[] requiredHeaders,
+    public static <T> List<T> csvToObject(InputStream file, String fileName, Class<T> cls, String[] requiredHeaders,
                                           Map<String, String> pojoTemplate, MutableBoolean missingData) {
-        String[] headers = CsvUtils.getCsvHeaders(file);
+        String[] headers = CsvUtils.getCsvHeaders(file, fileName);
         if (headers != null) {
-            log.info("Processing csv file: {}", file.getOriginalFilename());
+            log.info("Processing csv file: {}", fileName);
             List<Integer> requiredIndices = CsvUtils.validateHeadersAndGetRequiredIndices(headers, requiredHeaders);
             try {
                 List<T> results = new ArrayList<>();
@@ -149,7 +149,7 @@ public class FileToPojoUtils {
                 log.error("Exception while reading csv file", e);
             }
         } else {
-            log.error("Could not extract headers for CSV file: {}", file.getOriginalFilename());
+            log.error("Could not extract headers for CSV file: {}", fileName);
         }
         return null;
     }

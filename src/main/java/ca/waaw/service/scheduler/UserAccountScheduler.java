@@ -33,6 +33,11 @@ public class UserAccountScheduler {
         userRepository
                 .findAllByStatusAndCreatedDateBefore(EntityStatus.PENDING, Instant.now()
                         .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))
-                .ifPresent(userRepository::deleteAll);
+                .ifPresent(users -> {
+                    userRepository.deleteAll(users);
+                    log.info("Successfully Deleted users that are not activated for last {} days: {}",
+                            appValidityTimeConfig.getActivationLink(), users);
+                });
     }
+
 }

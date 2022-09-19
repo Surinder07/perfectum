@@ -15,11 +15,11 @@ public interface OrganizationHolidayRepository extends JpaRepository<Organizatio
     /*
      * If month is null whole year data will be sent
      */
-    List<OrganizationHolidays> getAllForLocationAndMonthIfNeeded(String locationId, int month, int year);
+    List<OrganizationHolidays> getAllForLocationAndMonthIfNeeded(String locationId, Integer month, int year);
 
     /*
      * If month is null whole year data will be sent
      */
-    List<OrganizationHolidays> getAllForOrganizationAndMonthIfNeeded(String organizationId, int month, int year);
+    List<OrganizationHolidays> getAllForOrganizationAndMonthIfNeeded(String organizationId, Integer month, int year);
 
 }

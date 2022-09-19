@@ -1,25 +1,20 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Locale;
 
 @SuppressWarnings("unused")
 @RestController

@@ -8,6 +8,7 @@ import ca.waaw.dto.holiday.HolidayAdminDto;
 import ca.waaw.dto.holiday.HolidayDto;
 import ca.waaw.dto.userdtos.OrganizationPreferences;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.EntityStatus;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
 import ca.waaw.mapper.OrganizationHolidayMapper;
@@ -16,6 +17,7 @@ import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
+import ca.waaw.web.rest.errors.exceptions.FileNotReadableException;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import ca.waaw.web.rest.errors.exceptions.application.FutureCalenderNotAccessibleException;
 import ca.waaw.web.rest.errors.exceptions.application.PastValueNotDeletableException;
@@ -25,9 +27,13 @@ import ca.waaw.web.rest.utils.DateUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,6 +42,8 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class OrganizationService {
+
+    private final Logger log = LogManager.getLogger(OrganizationService.class);
 
     private final UserRepository userRepository;
 
@@ -89,15 +97,28 @@ public class OrganizationService {
                             return user;
                         })
                 ).orElseThrow(UnauthorizedException::new);
+        // Converting file to Input Stream so that it is available in the async process below
+        InputStream fileInputStream;
+        String fileName;
+        try {
+            fileInputStream = file.getInputStream();
+            fileName = file.getOriginalFilename();
+        } catch (IOException e) {
+            log.error("Exception while reading file.", e);
+            throw new FileNotReadableException();
+        }
         CompletableFuture.runAsync(() -> {
             MutableBoolean missingData = new MutableBoolean(false);
             MutableBoolean pastDates = new MutableBoolean(false);
             MutableBoolean nextYearDates = new MutableBoolean(false);
             try {
-                List<OrganizationHolidays> holidays = fileHandler.readExcelOrCsv(file, OrganizationHolidays.class,
-                                missingData, PojoToMap.HOLIDAY).parallelStream().peek(holiday -> {
+                List<OrganizationHolidays> holidays = fileHandler.readExcelOrCsv(fileInputStream, fileName,
+                                OrganizationHolidays.class, missingData, PojoToMap.HOLIDAY)
+                        .parallelStream().peek(holiday -> {
                             holiday.setId(UUID.randomUUID().toString());
                             holiday.setOrganizationId(admin.getOrganizationId());
+                            holiday.setCreatedBy(admin.getId());
+                            holiday.setStatus(EntityStatus.ACTIVE);
                             if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) || StringUtils.isNotEmpty(locationId)) {
                                 holiday.setLocationId(SecurityUtils.isCurrentUserInRole(Authority.MANAGER) ?
                                         admin.getLocationId() : locationId);
@@ -147,6 +168,7 @@ public class OrganizationService {
                             validateDate(holidayDto, timezone.get());
                             OrganizationHolidays holiday = OrganizationHolidayMapper.newDtoToEntity(holidayDto);
                             holiday.setOrganizationId(user.getOrganizationId());
+                            holiday.setCreatedBy(user.getId());
                             return holiday;
                         }
                 )
@@ -190,12 +212,13 @@ public class OrganizationService {
                                     validateDate(holidayDto, timezone.get());
                                     return holiday;
                                 })
+                                .map(holiday -> {
+                                    OrganizationHolidayMapper.updateDtoToEntity(holidayDto, holiday);
+                                    holiday.setLastModifiedBy(user.getId());
+                                    return holiday;
+                                })
                                 .orElseThrow(() -> new EntityNotFoundException("holiday"))
                         )
-                        .map(holiday -> {
-                            OrganizationHolidayMapper.updateDtoToEntity(holidayDto, holiday);
-                            return holiday;
-                        })
                         .map(holidayRepository::save)
                         .map(holiday -> CommonUtils.logMessageAndReturnObject(OrganizationHolidays.class, "info",
                                 OrganizationService.class, "Holiday updated: {}", holiday))
@@ -218,6 +241,7 @@ public class OrganizationService {
                                 throw new UnauthorizedException();
                             }
                             holiday.setDeleteFlag(true);
+                            holiday.setLastModifiedBy(user.getId());
                             return holidayRepository.save(holiday);
                         })
                         .map(holiday -> CommonUtils.logMessageAndReturnObject(OrganizationHolidays.class, "info",
@@ -265,10 +289,10 @@ public class OrganizationService {
      * @return true if date is in past
      */
     private boolean isPastDate(int year, int month, int date, String timezone) {
-        return DateUtils.getCurrentDate("year", timezone) < year ||
-                DateUtils.getCurrentDate("month", timezone) < month ||
+        return DateUtils.getCurrentDate("year", timezone) > year ||
+                DateUtils.getCurrentDate("month", timezone) > month ||
                 (DateUtils.getCurrentDate("month", timezone) == month &&
-                        DateUtils.getCurrentDate("date", timezone) < date);
+                        DateUtils.getCurrentDate("date", timezone) > date);
     }
 
     /**
@@ -280,7 +304,7 @@ public class OrganizationService {
     private boolean isNextYearDate(int year, int month, String timezone) {
         return
                 // check that year is not more than one year ahead
-                (year - DateUtils.getCurrentDate("year", timezone)) < 2 ||
+                (year - DateUtils.getCurrentDate("year", timezone)) > 1 ||
                         // Check that year is not a future year unless that month is december
                         (DateUtils.getCurrentDate("year", timezone) < year && month != 12);
     }
@@ -294,7 +318,10 @@ public class OrganizationService {
         List<HolidayDto> holidaysResponse = holidays.stream().map(OrganizationHolidayMapper::entityToDto)
                 .collect(Collectors.toList());
         if (isAdmin) {
-            List<String> locationIds = holidaysResponse.stream().map(HolidayDto::getLocationId).distinct().collect(Collectors.toList());
+            List<String> locationIds = holidaysResponse.stream()
+                    .map(HolidayDto::getLocationId)
+                    .filter(Objects::nonNull)
+                    .distinct().collect(Collectors.toList());
             Map<String, String> locationNameMap = locationRepository.findAllByIdIn(locationIds)
                     .stream().collect(Collectors.toMap(Location::getId, Location::getName));
             List<HolidayAdminDto> adminResponse = new ArrayList<>();

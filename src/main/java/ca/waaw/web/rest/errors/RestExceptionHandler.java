@@ -132,7 +132,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<ErrorVM> handlePastValueNotDeletableException(PastValueNotDeletableException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.pastValueNotDeletableMessage,
                 null), ex.getEntityType());
-        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ShiftAlreadyAssignedException.class)
@@ -157,10 +157,17 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(FutureCalenderNotAccessibleException.class)
-    protected ResponseEntity<ErrorVM> handleFutureCalenderNotAccessible(FutureCalenderNotAccessibleException ex) {
+    protected ResponseEntity<ErrorVM> handleFutureCalenderNotAccessibleException(FutureCalenderNotAccessibleException ex) {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.futureCalenderNotAccessibleMessage,
                 null);
-        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(FileNotReadableException.class)
+    protected ResponseEntity<ErrorVM> handleFileNotReadableException(FileNotReadableException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.fileNotReadableMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
     }
 
 }
