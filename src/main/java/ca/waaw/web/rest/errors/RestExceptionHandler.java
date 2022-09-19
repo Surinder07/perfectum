@@ -2,10 +2,7 @@ package ca.waaw.web.rest.errors;
 
 import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.errors.exceptions.*;
-import ca.waaw.web.rest.errors.exceptions.application.MissingHeadersException;
-import ca.waaw.web.rest.errors.exceptions.application.PastValueNotDeletableException;
-import ca.waaw.web.rest.errors.exceptions.application.ShiftAlreadyAssignedException;
-import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
+import ca.waaw.web.rest.errors.exceptions.application.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -156,6 +153,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<ErrorVM> handleUnsupportedFileFormatException(UnsupportedFileFormatException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.unsupportedFileFormatMessage,
                 null), Arrays.toString(ex.getAllowedFormats()));
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    }
+
+    @ExceptionHandler(FutureCalenderNotAccessibleException.class)
+    protected ResponseEntity<ErrorVM> handleFutureCalenderNotAccessible(FutureCalenderNotAccessibleException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.futureCalenderNotAccessibleMessage,
+                null);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
     }
 

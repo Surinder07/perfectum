@@ -88,8 +88,14 @@ api:
       updateOrganizationPreferences: Update organization preferences under logged-in admin
     organization:
       updateOrganizationPreferences: Update organization preferences under logged-in admin
-      getHolidays: Get all Holidays for current year.
-      addHolidaysExcel: Upload excel with required data, to update all holidays at once. Pass locationId only if holidays are location specific. **Use Form Data.**
+      getHolidays: |
+        Get all Holidays for current year.
+        > If month is passed with a value within 1 to 12, holidays for that month will be returned only.
+      addHolidaysExcel: |
+        Upload excel with required data, to update all holidays at once.
+        * Pass locationId only if holidays are location specific.
+        * Use Form Data.
+        * Allowed file formats: ${files.formats-allowed.excel},${files.formats-allowed.csv}
       addHoliday: Add a single holiday manually.
       editHoliday: Edit a holiday.
       deleteHoliday: Delete a holiday.
@@ -175,6 +181,7 @@ api:
         * For admin, it will show:
           * Groups with all locations and list of their holidays
           * **Null** location and a list of unassigned(common) holidays.
+      response-message: Show the message to user.
     param-description:
       getLocationRole: Required for ADMIN(Global admin) and MANAGER(Location admin) only.
       getUsersSearchKey: Pass the search key to search user by name or id.

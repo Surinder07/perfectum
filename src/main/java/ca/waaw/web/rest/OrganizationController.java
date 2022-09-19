@@ -1,6 +1,7 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.dto.HolidayDto;
+import ca.waaw.dto.ApiResponseMessageDto;
+import ca.waaw.dto.holiday.HolidayDto;
 import ca.waaw.dto.userdtos.OrganizationPreferences;
 import ca.waaw.web.rest.service.OrganizationService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @SuppressWarnings("unused")
 @RestController
@@ -43,32 +45,32 @@ public class OrganizationController {
     @GetMapping("${api.endpoints.organization.getHolidays}")
     @ApiResponse(responseCode = "200", description = "${api.swagger.schema-description.getAllHolidays}", content =
             {@Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = HolidayDto.class)))})
-    public ResponseEntity<Object> getAllHolidays() {
-        return null;
+    public ResponseEntity<List<?>> getAllHolidays(@RequestParam(required = false) Integer month) {
+        if (month != null && (month > 12 || month < 1)) month = null;
+        return ResponseEntity.ok(organizationService.getAllHolidays(month));
     }
 
-    @SwaggerOk
     @SwaggerNotFound
     @SwaggerBadRequest
     @SwaggerUnauthorized
     @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
+    @SwaggerRespondWithMessage
     @Operation(description = "${api.description.organization.addHolidaysExcel}")
     @PostMapping("${api.endpoints.organization.addHolidaysExcel}")
-    public void uploadHolidaysByExcel(@RequestPart MultipartFile file, @RequestPart(required = false) String locationId) {
-
+    public ResponseEntity<ApiResponseMessageDto> uploadHolidaysByExcel(@RequestPart MultipartFile file, @RequestPart(required = false) String locationId) {
+        return ResponseEntity.ok(organizationService.uploadHolidaysByExcel(file, locationId));
     }
 
-    @SwaggerOk
+    @SwaggerCreated
     @SwaggerNotFound
     @SwaggerBadRequest
     @SwaggerUnauthorized
     @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.CREATED)
     @Operation(description = "${api.description.organization.addHoliday}")
     @PostMapping("${api.endpoints.organization.addHoliday}")
     public void addHoliday(@Valid @RequestBody HolidayDto holidayDto) {
-
+        organizationService.addHoliday(holidayDto);
     }
 
     @SwaggerOk
@@ -79,8 +81,8 @@ public class OrganizationController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.organization.editHoliday}")
     @PutMapping("${api.endpoints.organization.editHoliday}")
-    public void editHoliday(@Valid @RequestBody HolidayDto holidayDto) {
-
+    public void editHoliday(@RequestBody HolidayDto holidayDto) {
+        organizationService.editHoliday(holidayDto);
     }
 
     @SwaggerOk
@@ -92,7 +94,7 @@ public class OrganizationController {
     @Operation(description = "${api.description.organization.deleteHoliday}")
     @DeleteMapping("${api.endpoints.organization.deleteHoliday}")
     public void deleteHoliday(@RequestParam String holidayId) {
-
+        organizationService.deleteHoliday(holidayId);
     }
 
 }

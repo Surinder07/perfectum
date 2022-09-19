@@ -8,8 +8,14 @@ import javax.persistence.*;
 @Data
 @Entity
 @Table(name = "organization_holidays")
-@NamedQuery(name = "getAllForLocation",
-        query ="SELECT h FROM OrganizationHoliday h WHERE (h.locationId = ?1 OR h.locationId IS NULL) AND h.deleteFlag = false")
+@NamedQueries({
+        @NamedQuery(name = "OrganizationHolidays.getAllForLocationAndMonthIfNeeded",
+                query = "SELECT h FROM OrganizationHolidays h WHERE (h.locationId = ?1 OR h.locationId IS NULL) AND " +
+                        "h.deleteFlag = false AND (?2 IS NULL OR h.month = ?2) AND h.year = ?3"),
+        @NamedQuery(name = "OrganizationHolidays.getAllForOrganizationAndMonthIfNeeded",
+                query = "SELECT h FROM OrganizationHolidays h WHERE h.organizationId = ?1 AND " +
+                        "h.deleteFlag = false AND (?2 IS NULL OR h.month = ?2) AND h.year = ?3")
+})
 public class OrganizationHolidays {
 
     @Id
@@ -29,13 +35,13 @@ public class OrganizationHolidays {
     private HolidayType type;
 
     @Column
-    private int year;
+    private Integer year;
 
     @Column
-    private int month;
+    private Integer month;
 
     @Column
-    private int date;
+    private Integer date;
 
     @Column(name = "del_flg")
     private boolean deleteFlag = false;

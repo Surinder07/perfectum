@@ -1,12 +1,13 @@
-package ca.waaw.dto;
+package ca.waaw.dto.holiday;
 
 import ca.waaw.enumration.HolidayType;
 import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 
 @Data
@@ -18,22 +19,21 @@ public class HolidayDto {
 
     private String locationId;
 
-    @Schema(description = "Will be populated in case of location specific holiday")
-    private String locationName;
-
     @NotEmpty
     private String name;
 
     @ValueOfEnum(enumClass = HolidayType.class)
     private String type;
 
-    @NotEmpty
+    @Min(value = 2021, message = "Year cannot be before 2021")
     private int year;
 
-    @NotEmpty
+    @Min(value = 1, message = "Month needs to be in between 1 and 12")
+    @Max(value = 12, message = "Month needs to be in between 1 and 12")
     private int month;
 
-    @NotEmpty
+    @Min(value = 1, message = "Date needs to be in between 1 and 31")
+    @Max(value = 31, message = "Date needs to be in between 1 and 31")
     private int date;
 
 }

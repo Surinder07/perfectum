@@ -64,6 +64,7 @@ public class FileToPojoUtils {
         IntStream.range(1, sheet.getLastRowNum() + 1).forEach(rowIndex -> {
             Row row = sheet.getRow(rowIndex);
             try {
+                MutableBoolean skipRow = new MutableBoolean(false);
                 T result = cls.getDeclaredConstructor().newInstance();
                 IntStream.range(0, row.getPhysicalNumberOfCells()).forEach(cellIndex -> {
                     if (headers.get(cellIndex) != null) {
@@ -72,17 +73,17 @@ public class FileToPojoUtils {
                         Object fieldValue = ExcelUtils.getCellValue(row.getCell(cellIndex), field.getType());
                         if (requiredIndices.contains(cellIndex) && fieldValue == null) {
                             missingData.setTrue();
-                        } else {
-                            try {
-                                field.set(result, fieldValue);
-                            } catch (Exception e) {
-                                log.error("Error while populating {} object, {} field", cls, fieldName, e);
-                                missingData.setTrue();
-                            }
+                            skipRow.setTrue();
+                        }
+                        try {
+                            field.set(result, fieldValue);
+                        } catch (Exception e) {
+                            log.error("Error while populating {} object, {} field", cls, fieldName, e);
+                            missingData.setTrue();
                         }
                     }
                 });
-                results.add(result);
+                if (skipRow.isFalse()) results.add(result);
             } catch (Exception e) {
                 missingData.setTrue();
                 log.error("Exception while creating new instance of class: {}", cls, e);
@@ -116,6 +117,7 @@ public class FileToPojoUtils {
                 if (records.size() > 0) {
                     IntStream.range(0, records.size()).forEach(rowIndex -> {
                         if (headers[rowIndex] != null) {
+                            MutableBoolean skipRow = new MutableBoolean(false);
                             try {
                                 CSVRecord record = records.get(rowIndex);
                                 T result = cls.getDeclaredConstructor().newInstance();
@@ -125,16 +127,16 @@ public class FileToPojoUtils {
                                     Object fieldValue = CsvUtils.getCellValue(record.get(headers[valueIndex]), field.getType());
                                     if (requiredIndices.contains(valueIndex) && fieldValue == null) {
                                         missingData.setTrue();
-                                    } else {
-                                        try {
-                                            field.set(result, fieldValue);
-                                        } catch (Exception e) {
-                                            log.error("Error while populating {} object, {} field", cls, fieldName, e);
-                                            missingData.setTrue();
-                                        }
+                                        skipRow.setTrue();
+                                    }
+                                    try {
+                                        field.set(result, fieldValue);
+                                    } catch (Exception e) {
+                                        log.error("Error while populating {} object, {} field", cls, fieldName, e);
+                                        missingData.setTrue();
                                     }
                                 });
-                                results.add(result);
+                                if (skipRow.isFalse()) results.add(result);
                             } catch (Exception e) {
                                 missingData.setTrue();
                                 log.error("Exception while creating new instance of class: {}", cls, e);
