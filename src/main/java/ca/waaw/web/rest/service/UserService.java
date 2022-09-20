@@ -3,12 +3,15 @@ package ca.waaw.web.rest.service;
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.Organization;
+import ca.waaw.domain.PromotionCode;
 import ca.waaw.domain.User;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.DaysOfWeek;
 import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.PromoCodeType;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.OrganizationRepository;
+import ca.waaw.repository.PromotionCodeRepository;
 import ca.waaw.repository.UserOrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.SecurityUtils;
@@ -18,6 +21,7 @@ import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.io.ClassPathResource;
@@ -43,6 +47,8 @@ public class UserService {
     private final UserRepository userRepository;
 
     private final OrganizationRepository organizationRepository;
+
+    private final PromotionCodeRepository promotionCodeRepository;
 
     private final UserOrganizationRepository userOrganizationRepository;
 
@@ -100,6 +106,13 @@ public class UserService {
     public void registerAdminAndOrganization(RegisterOrganizationDto userDTO) {
         checkUserExistence(userDTO);
 
+        int trialDays = 0;
+        if (StringUtils.isNotEmpty(userDTO.getPromoCode())) {
+            trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(userDTO.getPromoCode(), PromoCodeType.TRIAL, false)
+                    .map(PromotionCode::getPromotionValue)
+                    .orElseThrow(() -> new EntityNotFoundException("promo code"));
+        }
+
         User user = UserMapper.registerDtoToUserEntity(userDTO);
         Organization organization = new Organization();
         organization.setId(UUID.randomUUID().toString());
@@ -109,6 +122,7 @@ public class UserService {
         organization.setName(userDTO.getOrganizationName());
         organization.setOvertimeRequestEnabled(true);
         organization.setTimezone(userDTO.getTimezone());
+        organization.setTrialDays(trialDays);
         user.setOrganizationId(organization.getId());
         user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
 
