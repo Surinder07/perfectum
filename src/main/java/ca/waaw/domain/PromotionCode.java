@@ -14,6 +14,8 @@ import java.time.Instant;
 @ToString
 @EqualsAndHashCode
 @Table(name = "promotion_codes")
+@NamedQuery(name = "PromotionCode.getAllByConditionalExpiredAndDeleted", query = "SELECT c FROM PromotionCode c" +
+        " WHERE (?1 = true OR c.deleteFlag = false) AND (?2 = true or c.expiryDate > NOW())")
 public class PromotionCode implements Serializable {
 
     @Id

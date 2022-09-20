@@ -1,6 +1,7 @@
 package ca.waaw.dto;
 
 import ca.waaw.enumration.PromoCodeType;
+import ca.waaw.web.rest.utils.customannotations.ToUppercase;
 import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ public class PromotionCodeDto {
     private String type;
 
     @NotEmpty
+    @ToUppercase
     @Size(max = 6, message = "Please enter a code with 6 literals")
     private String code;
 
