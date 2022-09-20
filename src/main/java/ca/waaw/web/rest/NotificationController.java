@@ -27,6 +27,7 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    @SwaggerBadRequest
     @SwaggerAuthenticated
     @Operation(description = "${api.description.notification.getAllNotification}")
     @GetMapping("${api.endpoints.notification.getAllNotification}")

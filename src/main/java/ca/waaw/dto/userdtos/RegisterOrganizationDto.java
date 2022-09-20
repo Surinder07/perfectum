@@ -37,4 +37,7 @@ public class RegisterOrganizationDto extends BaseUser {
     @ValueOfEnum(enumClass = Timezones.class, message = "Pass a valid timezone")
     private String timezone;
 
+    @ToUppercase
+    private String promoCode;
+
 }

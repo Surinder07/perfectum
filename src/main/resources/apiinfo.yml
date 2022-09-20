@@ -34,6 +34,10 @@ api:
       getEmployeePreferences: /v1/member/getPreference
     dropdown:
       getTimezones: /vi/unAuth/timezone/get
+    super-user:
+      addCode: /v1/promoCode/add
+      deleteCode: /v1/promoCode/delete
+      getAllCodes: /v1/promoCode/get
     notification:
       getAllNotification: /v1/notifications/getAll/{pageNo}/{pageSize}
       markNotificationAsRead: /v1/notifications/markAsRead
@@ -107,6 +111,10 @@ api:
       getEmployeePreferences: Get an employee's preferences
     dropdown:
       getTimezones: Get a list of timezone to show for adding new location.
+    super-user:
+      addCode: Add a new promocode.
+      deleteCode: Delete a promocode by id.
+      getAllCodes: Get all promocodes; active, expired or deleted.
     notification:
       getAllNotification: Get all notifications, Page numbers start with 0.
       markNotificationAsRead: Mark notification with given id as read.
@@ -145,9 +153,10 @@ api:
       organization: 3. Organization Management
       member: 4. Members Management
       dropdown: 5. Dropdown
-      notification: 6. Notifications
-      location-and-role: 7. Location and Location Role
-      shift-management: 8. Shift Management
+      super-user: 6. Super User
+      notification: 7. Notifications
+      location-and-role: 8. Location and Location Role
+      shift-management: 9. Shift Management
     error-description:
       trial-over: Payment Required. If role is ADMIN redirect to payment page with error message or else just show the error.
       authentication: Authentication Failed.
@@ -197,6 +206,8 @@ api:
       getUsersRole: Pass user role(ADMIN, MANAGER, EMPLOYEE) to show users with particular role.
       getEmployeePreferences: Pass boolean value if whole list of history preferences is needed.
       getPreferencesUserId: Not needed if logged-in user is an employee.
+      getPromoCodeIncludeDeleted: If true will include deleted codes also in response.
+      getPromoCodeIncludeExpired: If true will include expired codes also in response.
 regex:
   explaination:
     email: xx@xx.xx

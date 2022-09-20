@@ -17,3 +17,9 @@ While running the application for the first time, set `spring.liquibase.enabled=
 - **Swagger Url** : http://localhost:8080/swagger-ui.html
 
 > All details about websockets is available in swagger doc description.
+
+
+### Project Structure
+
+- All Api Endpoints and swagger descriptions can be found in apiinfo.yml file.
+- All error messages can be found in the messages.properties bundle.
