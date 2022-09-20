@@ -22,3 +22,5 @@ databaseChangeLog:
       file: db/changelog/changelog-organization_holidays.yml
   - include:
       file: db/changelog/changelog-employee_preference.yml
+  - include:
+      file: db/changelog/changelog-promotion_codes.yml
