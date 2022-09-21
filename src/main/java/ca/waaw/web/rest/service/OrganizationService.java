@@ -23,7 +23,7 @@ import ca.waaw.web.rest.errors.exceptions.application.FutureCalenderNotAccessibl
 import ca.waaw.web.rest.errors.exceptions.application.PastValueNotDeletableException;
 import ca.waaw.web.rest.utils.ApiResponseMessageKeys;
 import ca.waaw.web.rest.utils.CommonUtils;
-import ca.waaw.web.rest.utils.DateUtils;
+import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
@@ -257,7 +257,7 @@ public class OrganizationService {
                 .orElseThrow(AuthenticationException::new);
         String timezone = SecurityUtils.isCurrentUserInRole(Authority.ADMIN) ? userDetails.getOrganization().getTimezone()
                 : userDetails.getLocation().getTimezone();
-        int currentYear = DateUtils.getCurrentDate("year", timezone);
+        int currentYear = DateAndTimeUtils.getCurrentDate("year", timezone);
         List<OrganizationHolidays> holidays;
         if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN)) {
             holidays = holidayRepository.getAllForOrganizationAndMonthIfNeeded(userDetails.getOrganizationId(), month, currentYear);
@@ -289,10 +289,10 @@ public class OrganizationService {
      * @return true if date is in past
      */
     private boolean isPastDate(int year, int month, int date, String timezone) {
-        return DateUtils.getCurrentDate("year", timezone) > year ||
-                DateUtils.getCurrentDate("month", timezone) > month ||
-                (DateUtils.getCurrentDate("month", timezone) == month &&
-                        DateUtils.getCurrentDate("date", timezone) > date);
+        return DateAndTimeUtils.getCurrentDate("year", timezone) > year ||
+                DateAndTimeUtils.getCurrentDate("month", timezone) > month ||
+                (DateAndTimeUtils.getCurrentDate("month", timezone) == month &&
+                        DateAndTimeUtils.getCurrentDate("date", timezone) > date);
     }
 
     /**
@@ -304,9 +304,9 @@ public class OrganizationService {
     private boolean isNextYearDate(int year, int month, String timezone) {
         return
                 // check that year is not more than one year ahead
-                (year - DateUtils.getCurrentDate("year", timezone)) > 1 ||
+                (year - DateAndTimeUtils.getCurrentDate("year", timezone)) > 1 ||
                         // Check that year is not a future year unless that month is december
-                        (DateUtils.getCurrentDate("year", timezone) < year && month != 12);
+                        (DateAndTimeUtils.getCurrentDate("year", timezone) < year && month != 12);
     }
 
     /**

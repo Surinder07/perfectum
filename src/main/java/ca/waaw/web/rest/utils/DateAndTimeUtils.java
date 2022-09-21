@@ -2,13 +2,11 @@ package ca.waaw.web.rest.utils;
 
 import ca.waaw.dto.DateTimeDto;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
-public class DateUtils {
+public class DateAndTimeUtils {
 
     /**
      * @param dateTime Instant object from the database (UTC)
@@ -52,6 +50,25 @@ public class DateUtils {
                 return now.getDayOfMonth();
         }
         return 0;
+    }
+
+    /**
+     * @param time1         first time for past date
+     * @param time2         second time for future date
+     * @param dayDifference difference of days between two times
+     * @return difference in times in hours
+     */
+    public static float getTimeDifference(String time1, String time2, int dayDifference) {
+        Instant day1 = Instant.now().atZone(ZoneOffset.UTC)
+                .withHour(Integer.parseInt(time1.split(":")[0]))
+                .withMinute(Integer.parseInt(time1.split(":")[1]))
+                .withSecond(0).withNano(0).toInstant();
+        Instant day2 = Instant.now().atZone(ZoneOffset.UTC)
+                .withHour(Integer.parseInt(time2.split(":")[0]))
+                .withMinute(Integer.parseInt(time2.split(":")[1]))
+                .withSecond(0).withNano(0).toInstant().plus(dayDifference, ChronoUnit.DAYS);
+        float differenceInSeconds = day2.getEpochSecond() - day1.getEpochSecond();
+        return (differenceInSeconds / 3600);
     }
 
 }

@@ -7,6 +7,7 @@ import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.PaginationDto;
+import ca.waaw.dto.ShiftSchedulingPreferences;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
 import ca.waaw.enumration.Authority;
@@ -19,6 +20,7 @@ import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import ca.waaw.web.rest.utils.CommonUtils;
+import ca.waaw.web.rest.utils.ShiftSchedulingUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -28,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -154,21 +157,25 @@ public class MemberService {
 
     }
 
+    /**
+     * @param userId id for which user info is required
+     * @return User details for that user
+     */
     public UserDetailsForAdminDto getMemberById(String userId) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         return SecurityUtils.getCurrentUserLogin()
-                        .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
-                                .flatMap(admin -> Optional.of(userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
-                                        .map(user -> {
-                                            if ((!user.getOrganizationId().equals(admin.getOrganizationId()) || (StringUtils.isNotEmpty(admin.getLocationId())
-                                                    && !admin.getLocationId().equals(user.getLocationId())))) {
-                                                throw new UnauthorizedException();
-                                            }
-                                            return user;
-                                        })
-                                        .orElseThrow(() -> new EntityNotFoundException("user")))
-                                )
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
+                        .flatMap(admin -> Optional.of(userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
+                                .map(user -> {
+                                    if ((!user.getOrganizationId().equals(admin.getOrganizationId()) || (StringUtils.isNotEmpty(admin.getLocationId())
+                                            && !admin.getLocationId().equals(user.getLocationId())))) {
+                                        throw new UnauthorizedException();
+                                    }
+                                    return user;
+                                })
+                                .orElseThrow(() -> new EntityNotFoundException("user")))
                         )
+                )
                 .map(UserMapper::entityToUserDetailsForAdmin)
                 .orElseThrow(AuthenticationException::new);
     }
@@ -176,17 +183,26 @@ public class MemberService {
     /**
      * @param employeePreferencesDto all employee preferences to be updated
      */
+    @Transactional(rollbackFor = Exception.class)
     public void addEmployeePreferences(EmployeePreferencesDto employeePreferencesDto) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         List<EmployeePreferences> preferencesToSave = new ArrayList<>();
+        ShiftSchedulingPreferences shiftSchedulingPreferences = new ShiftSchedulingPreferences();
         String adminUserId = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> Optional.of(userRepository.findOneByUsernameAndDeleteFlag(username, false)
-                        .flatMap(admin -> userRepository.findOneByIdAndDeleteFlag(employeePreferencesDto.getUserId(), false)
+                        .flatMap(admin -> userOrganizationRepository.findOneByIdAndDeleteFlag(employeePreferencesDto.getUserId(), false)
                                 .map(user -> {
                                     if ((!user.getOrganizationId().equals(admin.getOrganizationId()) || (StringUtils.isNotEmpty(admin.getLocationId())
                                             && !admin.getLocationId().equals(user.getLocationId())))) {
                                         throw new UnauthorizedException();
                                     }
+                                    return user.getLocationRole();
+                                })
+                                .map(locationRole -> {
+                                    shiftSchedulingPreferences.setMinHoursBetweenShifts(locationRole.getMinHoursBetweenShifts());
+                                    shiftSchedulingPreferences.setMaxConsecutiveWorkDays(locationRole.getMaxConsecutiveWorkDays());
+                                    shiftSchedulingPreferences.setTotalHoursPerDayMax(locationRole.getTotalHoursPerDayMax());
+                                    shiftSchedulingPreferences.setTotalHoursPerDayMin(locationRole.getTotalHoursPerDayMin());
                                     return admin;
                                 })
                         )
@@ -204,6 +220,9 @@ public class MemberService {
         newPreference.setCreatedBy(adminUserId);
         preferencesToSave.add(newPreference);
         employeePreferencesRepository.saveAll(preferencesToSave);
+        if (ShiftSchedulingUtils.validateEmployeePreference(shiftSchedulingPreferences, employeePreferencesDto)) {
+            // TODO notify admin about preference mismatch
+        }
         log.info("New preference saved for the employee: {}", newPreference);
     }
 
