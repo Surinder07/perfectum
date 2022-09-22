@@ -1,12 +1,12 @@
 package ca.waaw.domain;
 
+import ca.waaw.enumration.ShiftStatus;
+import ca.waaw.enumration.ShiftType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.Instant;
 
 @Data
@@ -25,10 +25,30 @@ public class Shifts extends AbstractEntity {
 
     private String notes;
 
+    @Column(name = "organization_id")
+    private String organizationId;
+
     @Column(name = "location_id")
     private String locationId;
 
     @Column(name = "location_role_id")
     private String locationRoleId;
+
+    @Column(name = "assign_to_first_claim")
+    private boolean assignToFirstClaim = false;
+
+    @Column(name = "is_conflict")
+    private boolean isConflict;
+
+    @Column(name = "conflict_reason")
+    private String conflictReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shift_type")
+    private ShiftType shiftType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "shift_status")
+    private ShiftStatus shiftStatus;
 
 }

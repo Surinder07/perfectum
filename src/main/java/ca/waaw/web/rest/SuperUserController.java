@@ -55,7 +55,7 @@ public class SuperUserController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = PromotionCodeDto.class)))},
             description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> getAllCodes(@RequestParam int pageNo, @RequestParam int pageSize,
+    public ResponseEntity<PaginationDto> getAllCodes(@RequestPart int pageNo, @RequestPart int pageSize,
                                                      @Parameter(description = "${api.swagger.param-description.getPromoCodeIncludeDeleted}")
                                                      @RequestParam(required = false) boolean includeDeleted,
                                                      @Parameter(description = "${api.swagger.param-description.getPromoCodeIncludeExpired}")

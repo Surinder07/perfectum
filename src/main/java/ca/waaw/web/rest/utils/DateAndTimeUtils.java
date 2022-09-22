@@ -71,4 +71,56 @@ public class DateAndTimeUtils {
         return (differenceInSeconds / 3600);
     }
 
+    /**
+     * Example: For Instant 2022-09-21T14:53:55 it will return [2022-09-21T00:00:00, 2022-09-21T23:59:59]
+     *
+     * @param date date for which start and end time are needed
+     * @return An array of Instants with start and end for the date
+     */
+    public static Instant[] getStartAndEndTimeForInstant(Instant date) {
+        Instant start = date.atZone(ZoneOffset.UTC)
+                .withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
+        Instant end = date.atZone(ZoneOffset.UTC)
+                .withHour(23).withMinute(59).withSecond(59).withNano(0).toInstant();
+        return new Instant[]{start, end};
+    }
+
+    /**
+     * Example: For Instant 2022-09-21T14:53:55 and day difference 2 it will return
+     * [2022-09-21T00:00:00, 2022-09-23T23:59:59]
+     *
+     * @param date       date for which start and end time are needed
+     * @param difference difference between start and end date
+     * @return An array of Instants with start and end for the dates
+     */
+    public static Instant[] getStartAndEndTimeForInstant(Instant date, int difference) {
+        Instant start = date.atZone(ZoneOffset.UTC)
+                .withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
+        Instant end = date.atZone(ZoneOffset.UTC)
+                .withHour(23).withMinute(59).withSecond(59).withNano(0).toInstant()
+                .plus(difference, ChronoUnit.DAYS);
+        return new Instant[]{start, end};
+    }
+
+    /**
+     * @param date       date to be checked
+     * @param startLimit start date for range
+     * @param endLimit   end date for range
+     * @return true if date is between start and end
+     */
+    public static boolean isInstantBetweenInstants(Instant date, Instant startLimit, Instant endLimit) {
+        return (date.isAfter(startLimit) || date.equals(startLimit)) &&
+                (date.isBefore(endLimit) || date.equals(endLimit));
+    }
+
+    /**
+     * @param date      date to be checked
+     * @param reference date to be checked against
+     * @return true if date falls on the same day as reference
+     */
+    public static boolean isInstantSameDayAsAnotherInstant(Instant date, Instant reference) {
+        Instant[] startAndEndForReferenceDate = getStartAndEndTimeForInstant(reference);
+        return isInstantBetweenInstants(date, startAndEndForReferenceDate[0], startAndEndForReferenceDate[1]);
+    }
+
 }

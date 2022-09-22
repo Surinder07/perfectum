@@ -58,14 +58,11 @@ api:
       assignShift: /v1/shifts/assign
       claimShift: /v1/shifts/claim
       approveShift: /v1/shifts/approve
+      releaseShift: /v1/shifts/release
       getAllShifts: /v1/shifts/getAll/{pageNo}/{pageSize}
-      createRecurringShift: /v1/recurringShifts/create
-      updateRecurringShift: /v1/recurringShifts/update
-      deleteRecurringShift: /v1/recurringShifts/delete
-      assignRecurringShift: /v1/recurringShifts/assign
-      claimRecurringShift: /v1/recurringShifts/claim
-      approveRecurringShift: /v1/recurringShifts/approve
-      getAllRecurringShifts: /v1/recurringShifts/getAll/{pageNo}/{pageSize}
+      createShiftsBatch: /v1/shifts/batch/create
+      releaseShiftsBatch: /v1/shifts/batch/approve
+      getAllShiftsBatch: /v1/shifts/batch/getAll/{pageNo}/{pageSize}
   description:
     authentication: |
       Authenticate login and password to get a jwt token.
@@ -134,18 +131,15 @@ api:
       deleteShift: Delete an existing shift.
       assignShift: Assign an existing shift to an user.
       claimShift: Claim an unassigned shift for the user.
-      approveShift: Admin can applrove a claim to a shift by employee.
+      approveShift: Admin can approve a claim to a shift by employee.
+      releaseShift: Admin can release a new shift to employee.
       getAllShifts: |
         Get all shifts under your authorization.
         Pass date only if a single date data is needed and pass endDate too if data between two days is needed.
         **Date format is ${api.date-format}**
-      createRecurringShift: Create a new recurring shift (assigned or unassigned).
-      updateRecurringShift: Update any recurring shift under your authorization.
-      deleteRecurringShift: Delete an existing recurring shift.
-      assignRecurringShift: Assign an existing recurring shift to an user.
-      claimRecurringShift: Claim an unassigned recurring shift for the user.
-      approveRecurringShift: Admin can applrove a claim to a recurring shift by employee.
-      getAllRecurringShifts: Get all recurring shifts under your authorization.
+      createShiftsBatch: Create a new Shift batch between two dates.
+      releaseShiftsBatch: Admin can release a batch to employees.
+      getAllShiftsBatch: Get all recurring shifts under your authorization.
   swagger:
     groups:
       auth: 1. Auth

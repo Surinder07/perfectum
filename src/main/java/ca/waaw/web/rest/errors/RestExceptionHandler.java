@@ -135,9 +135,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
     }
 
-    @ExceptionHandler(ShiftAlreadyAssignedException.class)
-    protected ResponseEntity<ErrorVM> handleShiftAlreadyAssignedException(ShiftAlreadyAssignedException ex) {
-        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.shiftAlreadyAssignedMessage,
+    @ExceptionHandler(ShiftOverlappingException.class)
+    protected ResponseEntity<ErrorVM> handleShiftOverlappingException(ShiftOverlappingException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.shiftOverlappingMessage,
                 null);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
     }

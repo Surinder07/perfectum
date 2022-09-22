@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 public class DateTimeDto {
 
     @ValidateRegex(type = RegexValidatorType.DATE, message = "Pass a valid date")
-    @Schema(description = "Date Format: <b>${api.date-format}</b>")
+    @Schema(description = "Date Format: <b>yyyy/MM/dd</b>")
     private String date;
 
     @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
-    @Schema(description = "Time Format: <b>${api.time-format}</b>")
+    @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
     private String time;
 
 }
