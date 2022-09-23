@@ -6,12 +6,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface UserOrganizationRepository extends JpaRepository<UserOrganization, String> {
 
     Optional<UserOrganization> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
+
+    List<UserOrganization> findAllByDeleteFlagAndIdIn(boolean deleteFlag, List<String> ids);
 
     Optional<UserOrganization> findOneByUsernameAndDeleteFlag(String username, boolean deleteFlag);
 

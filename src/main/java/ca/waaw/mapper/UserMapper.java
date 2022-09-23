@@ -29,9 +29,11 @@ public class UserMapper {
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
         if (source.getAuthority().equals(Authority.ADMIN)) {
             OrganizationPreferences preferences = new OrganizationPreferences();
-            BeanUtils.copyProperties(source.getOrganization(), preferences);
+            preferences.setDaysBeforeShiftsAssigned(source.getOrganization().getDaysBeforeShiftsAssigned());
+            preferences.setIsOvertimeRequestEnabled(source.getOrganization().isOvertimeRequestEnabled());
+            preferences.setIsTimeclockEnabledDefault(source.getOrganization().isTimeclockEnabledDefault());
+            preferences.setIsTimeoffEnabledDefault(source.getOrganization().isTimeoffEnabledDefault());
             target.setOrganizationPreferences(preferences);
-            AccountMessageMapper.checkTrialAndAddWarning(target, source);
         }
         return target;
     }

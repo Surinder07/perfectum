@@ -2,9 +2,6 @@ package ca.waaw.dto.userdtos;
 
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,7 +20,5 @@ public class UserDetailsDto extends BaseUserDetails {
     private Boolean isEmailNotifications;
 
     private Boolean isSmsNotifications;
-
-    private List<AccountMessagesDto> accountMessages = new ArrayList<>();
 
 }

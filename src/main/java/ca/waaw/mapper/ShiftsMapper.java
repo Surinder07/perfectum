@@ -1,6 +1,9 @@
 package ca.waaw.mapper;
 
+import ca.waaw.domain.ShiftBatchUserMapping;
 import ca.waaw.domain.Shifts;
+import ca.waaw.domain.ShiftsBatch;
+import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.ShiftStatus;
@@ -9,6 +12,7 @@ import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ShiftsMapper {
 
@@ -24,7 +28,7 @@ public class ShiftsMapper {
                                           String organizationId) {
         Shifts target = new Shifts();
         target.setId(UUID.randomUUID().toString());
-        target.setUserId(source.getUserId());
+        if (StringUtils.isNotEmpty(source.getUserId())) target.setUserId(source.getUserId());
         target.setStatus(EntityStatus.ACTIVE);
         target.setLocationId(locationAndRoleIdsAndTimeZone[0]);
         target.setLocationRoleId(locationAndRoleIdsAndTimeZone[1]);
@@ -41,6 +45,37 @@ public class ShiftsMapper {
         return target;
     }
 
+    /**
+     * @param source   new shift batch dto
+     * @param timezone timezone for location
+     * @return shift batch entity to be saved in database
+     */
+    public static ShiftsBatch dtoToEntityBatch(NewShiftBatchDto source, String timezone) {
+        ShiftsBatch target = new ShiftsBatch();
+        if (source.getUserIds() != null && source.getUserIds().size() > 0) {
+            target.setMappedUsers(source.getUserIds().stream()
+                    .map(userId -> {
+                        ShiftBatchUserMapping user = new ShiftBatchUserMapping();
+                        user.setBatchId(target.getId());
+                        user.setUserId(userId);
+                        return user;
+                    }).collect(Collectors.toList()));
+        } else if (StringUtils.isNotEmpty(source.getLocationRoleId())) {
+            target.setLocationRoleId(source.getLocationRoleId());
+        }
+        target.setLocationId(source.getLocationId());
+        try {
+            target.setStartDate(DateAndTimeUtils.getDateAtStartOrEnd(source.getStartDate(), "start", timezone));
+            target.setEndDate(DateAndTimeUtils.getDateAtStartOrEnd(source.getEndDate(), "end", timezone));
+        } catch (Exception ignored) {
+        }
+        return target;
+    }
+
+    /**
+     * @param dto new shift details
+     * @return Shift status based on details provided in dto
+     */
     private static ShiftStatus getNewShiftStatus(NewShiftDto dto) {
         if (StringUtils.isNotEmpty(dto.getUserId()) && dto.isInstantRelease()) return ShiftStatus.SCHEDULED;
         else if (StringUtils.isNotEmpty(dto.getUserId())) return ShiftStatus.CREATED_ASSIGNED;

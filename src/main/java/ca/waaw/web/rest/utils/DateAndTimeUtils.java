@@ -123,4 +123,22 @@ public class DateAndTimeUtils {
         return isInstantBetweenInstants(date, startAndEndForReferenceDate[0], startAndEndForReferenceDate[1]);
     }
 
+    /**
+     * @param date      date to be converted (Format: yyyy/MM/dd)
+     * @param timeOfDay start/end time at which Instant is required
+     * @return Instant for given date and time
+     * @throws Exception if type is invalid
+     */
+    public static Instant getDateAtStartOrEnd(String date, String timeOfDay, String timezone) throws Exception {
+        String time;
+        if (timeOfDay.equalsIgnoreCase("start")) {
+            time = "00:00:00";
+        } else if (timeOfDay.equalsIgnoreCase("end")) {
+            time = "23:59:59";
+        } else throw new Exception("Invalid timeOfDay");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime dateTime = LocalDateTime.parse(String.format("%s %s", date, time), formatter);
+        return dateTime.atZone(ZoneId.of(timezone)).toInstant();
+    }
+
 }

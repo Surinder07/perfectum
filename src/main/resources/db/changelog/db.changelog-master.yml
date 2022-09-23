@@ -22,3 +22,7 @@ databaseChangeLog:
       file: db/changelog/changelog-employee_preference.yml
   - include:
       file: db/changelog/changelog-promotion_codes.yml
+  - include:
+      file: db/changelog/changelog-shifts_batch.yml
+  - include:
+      file: db/changelog/changelog-shifts_batch_user_mapping.yml

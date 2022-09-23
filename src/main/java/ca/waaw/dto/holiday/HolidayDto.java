@@ -2,6 +2,7 @@ package ca.waaw.dto.holiday;
 
 import ca.waaw.enumration.HolidayType;
 import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ public class HolidayDto {
     @NotEmpty
     private String name;
 
+    @Schema(allowableValues = {"NATIONAL_HOLIDAY", "ORGANIZATION_HOLIDAY"})
     @ValueOfEnum(enumClass = HolidayType.class)
     private String type;
 

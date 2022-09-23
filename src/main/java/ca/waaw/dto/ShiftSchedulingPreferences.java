@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ShiftSchedulingPreferences {
 
+    private String locationRoleId;
+
     private int totalHoursPerDayMin;
 
     private int totalHoursPerDayMax;

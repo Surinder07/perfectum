@@ -2,6 +2,7 @@ package ca.waaw.web.rest;
 
 import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.locationandroledtos.AdminLocationDto;
+import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.web.rest.service.ShiftSchedulingService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
@@ -116,14 +117,14 @@ public class ShiftSchedulingController {
         return null;
     }
 
-    @SwaggerCreated
     @SwaggerBadRequest
     @SwaggerUnauthorized
     @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.CREATED)
+    @SwaggerRespondWithMessage
     @Operation(description = "${api.description.shift-management.createShiftsBatch}")
     @PostMapping("${api.endpoints.shift-management.createShiftsBatch}")
-    public void createShiftsBatch() {
+    public ResponseEntity<ApiResponseMessageDto> createShiftsBatch(@Valid @RequestBody NewShiftBatchDto newShiftBatchDto) {
+        return ResponseEntity.ok(shiftSchedulingService.createNewBatch(newShiftBatchDto));
     }
 
     @SwaggerOk
@@ -143,8 +144,8 @@ public class ShiftSchedulingController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
             implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getAllShifts}")
     public ResponseEntity<Object> getAllShiftsBatch(@RequestParam(required = false) String locationId,
-                                                        @RequestParam(required = false) String location_role_id,
-                                                        @PathVariable int pageNo, @PathVariable int pageSize) {
+                                                    @RequestParam(required = false) String location_role_id,
+                                                    @PathVariable int pageNo, @PathVariable int pageSize) {
         return null;
     }
 

@@ -18,6 +18,7 @@ public class OrganizationHolidayMapper {
     public static OrganizationHolidays newDtoToEntity(HolidayDto source) {
         OrganizationHolidays target = new OrganizationHolidays();
         BeanUtils.copyProperties(source, target);
+        if (StringUtils.isEmpty(target.getLocationId())) target.setLocationId(null);
         target.setId(UUID.randomUUID().toString());
         target.setType(HolidayType.valueOf(source.getType()));
         target.setStatus(EntityStatus.ACTIVE);
