@@ -114,6 +114,7 @@ application:
     username: waaw2020
     password: Waaw@2020
     organization: WAAW
+    timezone: Canada/Eastern
   triggers:
     location: classpath:db/sqltriggers/
   websockets:

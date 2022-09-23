@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -19,7 +20,7 @@ public class EmployeePreferences {
 
     @Id
     @Column(name = "uuid")
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @Column(name = "user_id")
     private String userId;
