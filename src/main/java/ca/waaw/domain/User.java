@@ -47,7 +47,7 @@ public class User extends AbstractEntity {
     private String waawId;
 
     @Column(name = "lang_key")
-    private String langKey;
+    private String langKey = "en";
 
     @Column(name = "organization_id")
     private String organizationId;
