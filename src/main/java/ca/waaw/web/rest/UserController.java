@@ -1,6 +1,8 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.dto.userdtos.*;
+import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
@@ -15,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 @RestController
@@ -25,6 +28,8 @@ public class UserController {
 
     private final UserService userService;
 
+    private final AppRegexConfig appRegexConfig;
+
     @SwaggerOk
     @SwaggerBadRequest
     @SwaggerAlreadyExist
@@ -32,7 +37,10 @@ public class UserController {
     @Operation(description = "${api.description.user.checkUsername}")
     @GetMapping("${api.endpoints.user.checkUsername}")
     public void checkUserNameExistence(@RequestParam String username) {
-        if (userService.checkIfUsernameExists(username)) throw new EntityAlreadyExistsException("username", username);
+        if (!Pattern.matches(appRegexConfig.getUsername(), username))
+            throw new BadRequestException("Please enter a valid username", "username");
+        if (userService.checkIfUsernameExists(username))
+            throw new EntityAlreadyExistsException("username", username);
     }
 
     @SwaggerCreated
