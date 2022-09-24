@@ -1,16 +1,21 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass;
 
-import ca.waaw.dto.NewShiftDto;
+import ca.waaw.dto.shifts.NewShiftBatchDto;
+import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.enumration.Authority;
+import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class DependentDtoFieldsValidator implements ConstraintValidator<ValidateDependentDtoField, Object> {
 
@@ -33,6 +38,9 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
      * 2. {@link DependentDtoFieldsValidatorType#SHIFT_USER_ID_TO_LOCATION_ROLE_ID}
      * Used in {@link NewShiftDto}
      * If both userId and locationRoleId are null or empty, it throws an error.
+     * 3. {@link DependentDtoFieldsValidatorType#SHIFT_BATCH_LOCATION_ID_TO_USER_ROLE}
+     * Used in {@link NewShiftBatchDto}
+     * If logged-in user is admin, locationId, locationRoleId or userIds is required
      */
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
@@ -61,9 +69,30 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
                         !String.valueOf(PARSER.parseExpression("locationRoleId").getValue(value)).equals(""))
                     locationRoleId = String.valueOf(PARSER.parseExpression("locationRoleId").getValue(value));
                 return !(userId == null && locationRoleId == null);
-            default:
-                return true;
+            case SHIFT_BATCH_LOCATION_ID_TO_USER_ROLE:
+                try {
+                    if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN)) {
+                        List<String> userIds = null;
+                        String locationId = null;
+                        locationRoleId = null;
+                        if (PARSER.parseExpression("locationId").getValue(value) != null &&
+                                !String.valueOf(PARSER.parseExpression("locationId").getValue(value)).equals(""))
+                            locationId = String.valueOf(PARSER.parseExpression("locationId").getValue(value));
+                        if (PARSER.parseExpression("locationRoleId").getValue(value) != null &&
+                                !String.valueOf(PARSER.parseExpression("locationRoleId").getValue(value)).equals(""))
+                            locationRoleId = String.valueOf(PARSER.parseExpression("locationRoleId").getValue(value));
+                        if (PARSER.parseExpression("userIds").getValue(value) != null)
+                            userIds = ((List<?>) Objects.requireNonNull(PARSER.parseExpression("userIds")
+                                    .getValue(value))).stream().map(Objects::toString).collect(Collectors.toList());
+                        return StringUtils.isNotEmpty(locationId) || StringUtils.isNotEmpty(locationRoleId) ||
+                                (userIds != null && userIds.size() > 0);
+                    }
+                    return true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
         }
+        return true;
     }
 
 }

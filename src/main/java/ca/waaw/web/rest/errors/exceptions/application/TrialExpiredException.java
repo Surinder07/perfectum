@@ -1,4 +1,4 @@
-package ca.waaw.web.rest.errors.exceptions;
+package ca.waaw.web.rest.errors.exceptions.application;
 
 import ca.waaw.enumration.Authority;
 import lombok.Getter;
@@ -8,13 +8,10 @@ public class TrialExpiredException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    private final String userId;
-
     private final Authority role;
 
-    public TrialExpiredException(String userId, Authority role) {
+    public TrialExpiredException(Authority role) {
         super();
-        this.userId = userId;
         this.role = role;
     }
 

@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-table-organization
-      author: AkhilSinghChauhan
+      author: ${author1}
       preConditions:
         - onFail: MARK_RAN
           not:
@@ -61,6 +61,9 @@ databaseChangeLog:
               - column:
                   name: waaw_custom_id
                   type: VARCHAR(25)
+              - column:
+                  name: timezone
+                  type: VARCHAR(100)
               - column:
                   name: status
                   type: VARCHAR(50)

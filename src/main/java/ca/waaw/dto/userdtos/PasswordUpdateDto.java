@@ -19,7 +19,7 @@ public class PasswordUpdateDto {
 
     @NotEmpty
     @Size(min = 8, max = 60, message = "password must be more than 8 characters")
-    @ValidateRegex(type = RegexValidatorType.PASSWORD)
+    @ValidateRegex(type = RegexValidatorType.PASSWORD, message = "Pass a valid password")
     private String newPassword;
 
 }

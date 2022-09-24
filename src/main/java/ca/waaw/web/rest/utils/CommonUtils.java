@@ -1,16 +1,23 @@
 package ca.waaw.web.rest.utils;
 
+import ca.waaw.dto.PaginationDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.Page;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CommonUtils {
 
@@ -48,6 +55,17 @@ public class CommonUtils {
         return StringUtils.isNotEmpty(lastname) ? firstname + " " + lastname : firstname;
     }
 
+    public static String combinePhoneNumber(String countryCode, String mobile) {
+        if (StringUtils.isEmpty(countryCode) && StringUtils.isEmpty(mobile)) return null;
+        return StringUtils.isNotEmpty(countryCode) ? countryCode + " " + mobile : mobile;
+    }
+
+    public static void validateStringInEnum(Class<? extends Enum<?>> enumClass, String value, String field) {
+        if (Stream.of(enumClass.getEnumConstants()).map(Enum::name).noneMatch(name -> name.equalsIgnoreCase(value))) {
+            throw new BadRequestException("Invalid value for the field", field);
+        }
+    }
+
     public static <S> S logMessageAndReturnObject(S object, String logType, Class<?> logLocation, String message,
                                                   Object... messageParams) {
         Logger log = LogManager.getLogger(logLocation);
@@ -63,6 +81,15 @@ public class CommonUtils {
                 break;
         }
         return object;
+    }
+
+    public static <M, S> PaginationDto getPaginationResponse(Page<M> page, Function<M, S> mapper) {
+        List<S> data = page.getContent().stream().map(mapper).collect(Collectors.toList());
+        return PaginationDto.builder()
+                .totalEntries((int) page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .data(data)
+                .build();
     }
 
     /**

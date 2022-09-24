@@ -16,5 +16,11 @@ public final class ErrorMessageKeys {
     public static final String entityAlreadyExistsMessage = "error.entityAlreadyExistsMessage";
     public static final String trialExpiredAdminMessage = "error.trialExpiredAdminMessage";
     public static final String trialExpiredEmployeeMessage = "error.trialExpiredEmployeeMessage";
+    public static final String pastValueNotDeletableMessage = "error.pastValueNotDeletableMessage";
+    public static final String shiftOverlappingMessage = "error.shiftOverlappingMessage";
+    public static final String missingHeadersMessage = "error.missingHeadersMessage";
+    public static final String unsupportedFileFormatMessage = "error.unsupportedFileFormatMessage";
+    public static final String futureCalenderNotAccessibleMessage = "error.futureCalenderNotAccessibleMessage";
+    public static final String fileNotReadableMessage = "error.fileNotReadableMessage";
 
 }

@@ -15,4 +15,6 @@ public class AppRegexConfig {
 
     private String password;
 
+    private String date;
+
 }

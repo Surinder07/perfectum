@@ -1,6 +1,7 @@
 package ca.waaw.security.jwt;
 
 import ca.waaw.config.applicationconfig.AppSecurityConfig;
+import ca.waaw.security.SecurityUtils;
 import io.jsonwebtoken.*;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -30,9 +31,11 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
 
+    private static final String IS_TRIAL_EXPIRED_KEY = "is_trial_expired";
+
     private final AppSecurityConfig appSecurityConfig;
 
-    public String createToken(Authentication authentication, Boolean rememberMe) {
+    public String createToken(Authentication authentication, Boolean rememberMe, Boolean isTrialExpired) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
@@ -48,6 +51,7 @@ public class TokenProvider {
         return Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
+                .claim(IS_TRIAL_EXPIRED_KEY, isTrialExpired)
                 .signWith(SignatureAlgorithm.HS512, appSecurityConfig.getJwtSecret())
                 .setExpiration(validity)
                 .compact();
@@ -101,6 +105,13 @@ public class TokenProvider {
     //retrieve expiration date from jwt token
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
+    }
+
+    //Check if associated account trial is expired
+    public Boolean checkTrialExpiry() {
+        return SecurityUtils.getCurrentUserJWT()
+                .map(token -> getClaimFromToken(token, (claims) -> claims.get(IS_TRIAL_EXPIRED_KEY, Boolean.class)))
+                .orElse(false);
     }
 
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {

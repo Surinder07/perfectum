@@ -1,15 +1,15 @@
 databaseChangeLog:
   - changeSet:
-      id: create-table-recurring_shifts
-      author: AkhilSinghChauhan
+      id: create-table-organization_holidays
+      author: ${author1}
       preConditions:
         - onFail: MARK_RAN
           not:
             tableExists:
-              tableName: recurring_shifts
+              tableName: organization_holidays
       changes:
         - createTable:
-            tableName: recurring_shifts
+            tableName: organization_holidays
             columns:
               - column:
                   name: uuid
@@ -18,41 +18,26 @@ databaseChangeLog:
                     nullable: false
                     primaryKey: true
               - column:
-                  name: user_id
+                  name: name
                   type: VARCHAR(100)
               - column:
-                  name: day_of_week
-                  type: VARCHAR(20)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: start_hour
-                  type: SMALLINT
-                  constraints:
-                    nullable: false
-              - column:
-                  name: start_minute
-                  type: SMALLINT
-                  constraints:
-                    nullable: false
-              - column:
-                  name: end_hour
-                  type: SMALLINT
-                  constraints:
-                    nullable: false
-              - column:
-                  name: end_minute
-                  type: SMALLINT
-                  constraints:
-                    nullable: false
-              - column:
-                  name: location_role_id
+                  name: organization_id
                   type: VARCHAR(100)
               - column:
-                  name: available_quantity
+                  name: location_id
+                  type: VARCHAR(100)
+              - column:
+                  name: type
+                  type: VARCHAR(100)
+              - column:
+                  name: year
                   type: SMALLINT
-                  constraints:
-                    nullable: false
+              - column:
+                  name: month
+                  type: SMALLINT
+              - column:
+                  name: date
+                  type: SMALLINT
               - column:
                   name: status
                   type: VARCHAR(50)
@@ -80,14 +65,14 @@ databaseChangeLog:
                   type: TIMESTAMP
                   defaultValueDate: now()
         - addForeignKeyConstraint:
-            baseTableName: recurring_shifts
-            baseColumnNames: location_role_id
-            constraintName: fk_recurring_shifts_location_role_id
+            baseTableName: organization_holidays
+            baseColumnNames: organization_id
+            constraintName: fk_organization_holidays_organization_id
             referencedColumnNames: uuid
-            referencedTableName: location_role
+            referencedTableName: organization
         - addForeignKeyConstraint:
-            baseTableName: recurring_shifts
-            baseColumnNames: user_id
-            constraintName: fk_recurring_shifts_user_id
+            baseTableName: organization_holidays
+            baseColumnNames: location_id
+            constraintName: fk_organization_holidays_location_id
             referencedColumnNames: uuid
-            referencedTableName: user
+            referencedTableName: location

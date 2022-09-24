@@ -20,17 +20,21 @@ public class LocationRoleMapper {
     public static LocationRoleDto entityToDto(LocationRole source) {
         LocationRoleDto target = new LocationRoleDto();
         BeanUtils.copyProperties(source, target);
+        target.setIsTimeclockEnabled(source.isTimeclockEnabled());
+        target.setIsTimeoffEnabled(source.isTimeoffEnabled());
         return target;
     }
 
     public static LocationRole dtoToEntity(LocationRoleDto source1, User source2) {
         LocationRole target = new LocationRole();
-        target.setId(UUID.randomUUID().toString());
         BeanUtils.copyProperties(source1, target);
+        target.setId(UUID.randomUUID().toString());
         target.setLocationId(source2.getAuthority().equals(Authority.ADMIN)? source1.getLocationId() : null);
         target.setOrganizationId(source2.getOrganizationId());
         target.setCreatedBy(source2.getId());
         target.setStatus(EntityStatus.ACTIVE);
+        target.setTimeclockEnabled(source1.getIsTimeclockEnabled());
+        target.setTimeoffEnabled(source1.getIsTimeoffEnabled());
         return target;
     }
 

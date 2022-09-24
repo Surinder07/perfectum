@@ -1,8 +1,10 @@
 package ca.waaw.mapper;
 
+import ca.waaw.domain.EmployeePreferences;
 import ca.waaw.domain.Organization;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.EntityStatus;
@@ -21,14 +23,18 @@ public class UserMapper {
     public static UserDetailsDto entityToDto(UserOrganization source) {
         UserDetailsDto target = new UserDetailsDto();
         BeanUtils.copyProperties(source, target);
-        target.setMobile(source.getCountryCode() + "-" + target.getMobile());
+        target.setMobile(CommonUtils.combinePhoneNumber(source.getCountryCode(), source.getMobile()));
         target.setRole(source.getAuthority());
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
-        OrganizationPreferences preferences = new OrganizationPreferences();
-        BeanUtils.copyProperties(source.getOrganization(), preferences);
-        AccountMessageMapper.checkTrialAndAddWarning(target, source);
-        target.setOrganizationPreferences(preferences);
+        if (source.getAuthority().equals(Authority.ADMIN)) {
+            OrganizationPreferences preferences = new OrganizationPreferences();
+            preferences.setDaysBeforeShiftsAssigned(source.getOrganization().getDaysBeforeShiftsAssigned());
+            preferences.setIsOvertimeRequestEnabled(source.getOrganization().isOvertimeRequestEnabled());
+            preferences.setIsTimeclockEnabledDefault(source.getOrganization().isTimeclockEnabledDefault());
+            preferences.setIsTimeoffEnabledDefault(source.getOrganization().isTimeoffEnabledDefault());
+            target.setOrganizationPreferences(preferences);
+        }
         return target;
     }
 
@@ -103,17 +109,31 @@ public class UserMapper {
     }
 
     /**
-     * @param source details for user to be invited
-     * @return entity to be saved in database
+     * @param source details for user to be mapped
+     * @return User details for Admin
      */
     public static UserDetailsForAdminDto entityToUserDetailsForAdmin(UserOrganization source) {
         UserDetailsForAdminDto target = new UserDetailsForAdminDto();
         BeanUtils.copyProperties(source, target);
-        target.setMobile(source.getCountryCode() + " " + source.getMobile());
-        target.setLocationId(source.getLocation().getId());
-        target.setLocationName(source.getLocation().getName());
-        target.setLocationRoleId(source.getLocationRole().getId());
-        target.setLocationRoleName(source.getLocationRole().getName());
+        target.setRole(source.getAuthority());
+        target.setMobile(CommonUtils.combinePhoneNumber(source.getCountryCode(), source.getMobile()));
+        target.setLocationId(source.getLocation() == null ? null : source.getLocation().getId());
+        target.setLocationName(source.getLocation() == null ? null : source.getLocation().getName());
+        target.setLocationRoleId(source.getLocationRole() == null ? null : source.getLocationRole().getId());
+        target.setLocationRoleName(source.getLocationRole() == null ? null : source.getLocationRole().getName());
+        return target;
+    }
+
+    /**
+     * @param source details for user to be mapped
+     * @return minimal details about user for a drop-down
+     */
+    public static UserInfoForDropDown entityToUserInfoForDropDown(User source) {
+        UserInfoForDropDown target = new UserInfoForDropDown();
+        target.setId(source.getId());
+        target.setFullName(CommonUtils.combineFirstAndLastName(source.getFirstName(), source.getLastName()));
+        target.setEmail(source.getEmail());
+        target.setAuthority(source.getAuthority());
         return target;
     }
 
@@ -147,6 +167,27 @@ public class UserMapper {
             target.setTimeoffEnabledDefault(source.getIsTimeoffEnabledDefault());
         if (source.getDaysBeforeShiftsAssigned() != null)
             target.setDaysBeforeShiftsAssigned(source.getDaysBeforeShiftsAssigned());
+        return target;
+    }
+
+    // Employee related mapping
+
+    /**
+     * @param source employee preference database entity
+     * @return dto containing preference info
+     */
+    public static EmployeePreferencesDto employeePreferenceToDto(EmployeePreferences source) {
+        EmployeePreferencesDto target = new EmployeePreferencesDto();
+        BeanUtils.copyProperties(source, target);
+        target.setActive(!source.isExpired());
+        return target;
+    }
+
+    public static EmployeePreferences employeePreferencesToEntity(EmployeePreferencesDto source) {
+        EmployeePreferences target = new EmployeePreferences();
+        BeanUtils.copyProperties(source, target);
+        target.setExpired(false);
+        target.setId(UUID.randomUUID().toString());
         return target;
     }
 

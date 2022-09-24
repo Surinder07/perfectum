@@ -9,6 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface LocationAndRolesRepository extends JpaRepository<LocationAndRoles, String> {
+
     Optional<LocationAndRoles> findOneByIdAndDeleteFlag(String locationId, boolean deleteFlag);
+
     List<LocationAndRoles> findAllByOrganizationIdAndDeleteFlag(String organizationId, boolean deleteFlag);
+
 }

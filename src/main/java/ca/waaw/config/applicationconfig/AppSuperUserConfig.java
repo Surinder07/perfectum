@@ -21,4 +21,6 @@ public class AppSuperUserConfig {
 
     private String organization;
 
+    private String timezone;
+
 }

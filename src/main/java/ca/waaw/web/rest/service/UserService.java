@@ -3,25 +3,25 @@ package ca.waaw.web.rest.service;
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.Organization;
+import ca.waaw.domain.PromotionCode;
 import ca.waaw.domain.User;
 import ca.waaw.dto.userdtos.*;
-import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.DaysOfWeek;
 import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.PromoCodeType;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.OrganizationRepository;
+import ca.waaw.repository.PromotionCodeRepository;
 import ca.waaw.repository.UserOrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
-import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
-import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
-import ca.waaw.web.rest.errors.exceptions.ExpiredKeyException;
-import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
+import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.io.ClassPathResource;
@@ -32,14 +32,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -50,6 +47,8 @@ public class UserService {
     private final UserRepository userRepository;
 
     private final OrganizationRepository organizationRepository;
+
+    private final PromotionCodeRepository promotionCodeRepository;
 
     private final UserOrganizationRepository userOrganizationRepository;
 
@@ -107,6 +106,13 @@ public class UserService {
     public void registerAdminAndOrganization(RegisterOrganizationDto userDTO) {
         checkUserExistence(userDTO);
 
+        int trialDays = 0;
+        if (StringUtils.isNotEmpty(userDTO.getPromoCode())) {
+            trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(userDTO.getPromoCode(), PromoCodeType.TRIAL, false)
+                    .map(PromotionCode::getPromotionValue)
+                    .orElseThrow(() -> new EntityNotFoundException("promo code"));
+        }
+
         User user = UserMapper.registerDtoToUserEntity(userDTO);
         Organization organization = new Organization();
         organization.setId(UUID.randomUUID().toString());
@@ -115,6 +121,8 @@ public class UserService {
         organization.setFirstDayOfWeek(DaysOfWeek.valueOf(userDTO.getFirstDayOfWeek()));
         organization.setName(userDTO.getOrganizationName());
         organization.setOvertimeRequestEnabled(true);
+        organization.setTimezone(userDTO.getTimezone());
+        organization.setTrialDays(trialDays);
         user.setOrganizationId(organization.getId());
         user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
 
@@ -258,38 +266,6 @@ public class UserService {
     }
 
     /**
-     * Sends an invitation to user email
-     *
-     * @param inviteUserDto new user details
-     */
-    public void inviteNewUsers(InviteUserDto inviteUserDto) {
-        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
-        userRepository.findOneByEmailAndDeleteFlag(inviteUserDto.getEmail(), false)
-                .ifPresent(user -> {
-                    log.debug("Invited email ({}) is already a member", inviteUserDto.getEmail());
-                    throw new EntityAlreadyExistsException("email", inviteUserDto.getEmail());
-                });
-        User user = UserMapper.inviteUserDtoToEntity(inviteUserDto);
-        /*
-         * Updating organization id in User object as well as getting the organization name for user invitation mail
-         */
-        String organizationName = SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(admin -> {
-                    user.setInvitedBy(admin.getId());
-                    user.setCreatedBy(admin.getId());
-                    user.setOrganizationId(admin.getOrganization().getId());
-                    return admin.getOrganization().getName();
-                })
-                .orElseThrow(UnauthorizedException::new);
-        userRepository.save(user);
-        log.info("New User added to database (pending for accepting invite): {}", user);
-        String inviteUrl = appUrlConfig.getInviteUserUrl(user.getInviteKey());
-        userMailService.sendInvitationEmail(user, inviteUrl, organizationName);
-        log.info("Invitation sent to the user");
-    }
-
-    /**
      * @return User details of the logged-in user account
      */
     public UserDetailsDto getLoggedInUserAccount() {
@@ -298,39 +274,6 @@ public class UserService {
                         .map(UserMapper::entityToDto)
                 )
                 .orElseThrow(UnauthorizedException::new);
-    }
-
-    /**
-     * @return all Employees and Admins under logged-in user
-     */
-    public List<UserDetailsForAdminDto> getAllUsers() {
-        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
-        return SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(user -> {
-                    if (user.getAuthority().equals(Authority.ADMIN)) {
-                        return userOrganizationRepository.findAllByOrganizationIdAndDeleteFlag(user.getOrganizationId(), false);
-                    } else {
-                        return userOrganizationRepository.findAllByLocationIdAndDeleteFlag(user.getLocationId(), false);
-                    }
-                }).map(users -> users.stream().map(UserMapper::entityToUserDetailsForAdmin).collect(Collectors.toList()))
-                .orElseThrow(UnauthorizedException::new);
-    }
-
-    /**
-     * Updates the preferences of logged-in admins organization
-     *
-     * @param preferences preferences to be updated
-     */
-    public void updateOrganizationPreferences(OrganizationPreferences preferences) {
-        CommonUtils.checkRoleAuthorization(Authority.ADMIN);
-        SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .flatMap(user -> organizationRepository.findOneByIdAndDeleteFlag(user.getOrganizationId(), false))
-                .map(organization -> UserMapper.updateOrganizationPreferences(organization, preferences))
-                .map(organization -> CommonUtils.logMessageAndReturnObject(organization, "info", UserService.class,
-                        "Organization Preferences for organization id ({}) updated: {}", organization.getId(), preferences))
-                .map(organizationRepository::save);
     }
 
     /**

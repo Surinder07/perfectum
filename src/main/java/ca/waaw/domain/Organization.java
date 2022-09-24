@@ -21,14 +21,14 @@ public class Organization extends AbstractEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "start_of_week")
-    private DaysOfWeek firstDayOfWeek;
+    private DaysOfWeek firstDayOfWeek = DaysOfWeek.MONDAY;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "subscription_plan")
     private SubscriptionPlans subscriptionPlan;
 
     @Column(name = "trial_days")
-    private Integer trialDays;
+    private int trialDays;
 
     @Column(name = "is_timeclock_enabled_default")
     private boolean isTimeclockEnabledDefault;
@@ -40,12 +40,15 @@ public class Organization extends AbstractEntity {
     private boolean isOvertimeRequestEnabled;
 
     @Column(name = "days_before_shifts_assigned")
-    private Integer daysBeforeShiftsAssigned;
+    private int daysBeforeShiftsAssigned = 4;
 
     @Column(name = "is_paid_until")
     private Instant isPaidUntil;
 
     @Column(name = "waaw_custom_id")
     private String waawId;
+
+    @Column
+    private String timezone;
 
 }

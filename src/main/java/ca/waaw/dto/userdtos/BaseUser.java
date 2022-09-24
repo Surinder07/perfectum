@@ -18,8 +18,8 @@ public class BaseUser {
 
     @NotEmpty
     @ToLowercase
-    @Size(min = 5, max = 100, message = "username must be more than 5 characters")
-    @ValidateRegex(type = RegexValidatorType.USERNAME)
+    @Size(min = 5, max = 100, message = "Username must be more than 5 characters")
+    @ValidateRegex(type = RegexValidatorType.USERNAME, message = "Pass a valid username")
     private String username;
 
     @NotEmpty
@@ -30,8 +30,8 @@ public class BaseUser {
     private String lastName;
 
     @NotEmpty
-    @Size(min = 8, max = 60, message = "password must be more than 8 characters")
-    @ValidateRegex(type = RegexValidatorType.PASSWORD)
+    @Size(min = 8, max = 60, message = "Password must be more than 8 characters")
+    @ValidateRegex(type = RegexValidatorType.PASSWORD, message = "Pass a valid password")
     private String password;
 
     private String countryCode;

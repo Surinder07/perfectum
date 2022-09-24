@@ -8,10 +8,9 @@ import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.jwt.JWTFilter;
 import ca.waaw.security.jwt.TokenProvider;
-import ca.waaw.web.rest.errors.PaymentErrorVM;
+import ca.waaw.web.rest.errors.ErrorVM;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
-import ca.waaw.web.rest.errors.exceptions.TrialExpiredException;
-import ca.waaw.web.rest.utils.APIConstants;
+import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,7 +42,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api")
 @AllArgsConstructor
-@Tag(name = APIConstants.TagNames.auth, description = APIConstants.TagDescription.auth)
+@Tag(name = "${api.swagger.groups.auth}")
 public class AuthController {
 
     private final Logger log = LogManager.getLogger(AuthController.class);
@@ -56,14 +55,14 @@ public class AuthController {
 
     private final OrganizationRepository organizationRepository;
 
-    @Operation(description = APIConstants.ApiDescription.Auth.authentication)
     @SwaggerBadRequest
+    @Operation(description = "${api.description.authentication}")
+    @PostMapping("${api.endpoints.authentication}")
     @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = LoginResponseDto.class))})
-    @ApiResponse(responseCode = "401", description = APIConstants.ErrorDescription.authentication, content = @Content)
-    @ApiResponse(responseCode = "402", description = APIConstants.ErrorDescription.trialOver,
-            content = {@Content(mediaType = "application/json", schema = @Schema(implementation = PaymentErrorVM.class))})
-    @PostMapping(APIConstants.ApiEndpoints.Auth.authentication)
+    @ApiResponse(responseCode = "401", description = "${api.swagger.error-description.authentication}", content = @Content)
+    @ApiResponse(responseCode = "402", description = "${api.swagger.error-description.trial-over}",
+            content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorVM.class))})
     public ResponseEntity<LoginResponseDto> authenticate(@Valid @RequestBody LoginDto loginDto) {
         Authentication authentication;
         try {
@@ -79,17 +78,23 @@ public class AuthController {
 
         Optional<User> userEntity = userRepository.findOneByUsernameOrEmail(loginDto.getLogin(), loginDto.getLogin());
 
-        userEntity.ifPresent(user -> organizationRepository.findOneByIdAndDeleteFlag(user.getOrganizationId(), false)
-                .map(organization -> {
-                    if (organization.getCreatedDate().isBefore(Instant.now().minus(organization.getTrialDays(), ChronoUnit.DAYS))
-                            && !user.getAuthority().equals(Authority.SUPER_USER)) {
-                        throw new TrialExpiredException(user.getId(), user.getAuthority());
-                    }
-                    return null;
-                })
-        );
+        boolean isTrialOver = userEntity
+                .flatMap(user -> organizationRepository.findOneByIdAndDeleteFlagAndSubscriptionPlanIsNull(user.getOrganizationId(), false)
+                        .map(organization -> {
+                            if (!user.getAuthority().equals(Authority.SUPER_USER) &&
+                                    organization.getCreatedDate().isBefore(Instant.now().minus(organization.getTrialDays(), ChronoUnit.DAYS))) {
+                                return true;
+                            }
+                            return null;
+                        })
+                ).orElse(false);
+        userEntity.ifPresent(user -> {
+            if (isTrialOver && !user.getAuthority().equals(Authority.ADMIN)) {
+                throw new TrialExpiredException(user.getAuthority());
+            }
+        });
 
-        final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe());
+        final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe(), isTrialOver);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
 

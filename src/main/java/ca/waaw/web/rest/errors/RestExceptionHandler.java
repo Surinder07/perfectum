@@ -2,6 +2,7 @@ package ca.waaw.web.rest.errors;
 
 import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.errors.exceptions.*;
+import ca.waaw.web.rest.errors.exceptions.application.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,7 +57,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                                                              HttpStatus status, WebRequest request) {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.internalServerMessage, null);
         if (HttpStatus.INTERNAL_SERVER_ERROR.equals(status)) {
-            return new ResponseEntity<>(new ErrorVM(message, ""), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new ErrorVM(message), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return new ResponseEntity<>(body, headers, status);
@@ -123,8 +125,49 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<ErrorVM> handleTrialExpiredException(TrialExpiredException ex) {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle((ex.getRole().equals(Authority.ADMIN) ?
                 ErrorMessageKeys.trialExpiredAdminMessage : ErrorMessageKeys.trialExpiredEmployeeMessage), null);
-        return new ResponseEntity<>(new PaymentErrorVM(message, ex.getRole(), ex.getUserId()),
-                HttpStatus.PAYMENT_REQUIRED);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.PAYMENT_REQUIRED);
+    }
+
+    @ExceptionHandler(PastValueNotDeletableException.class)
+    protected ResponseEntity<ErrorVM> handlePastValueNotDeletableException(PastValueNotDeletableException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.pastValueNotDeletableMessage,
+                null), ex.getEntityType());
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ShiftOverlappingException.class)
+    protected ResponseEntity<ErrorVM> handleShiftOverlappingException(ShiftOverlappingException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.shiftOverlappingMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(MissingHeadersException.class)
+    protected ResponseEntity<ErrorVM> handleMissingHeadersException(MissingHeadersException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.missingHeadersMessage,
+                null), ex.getFileType());
+        return new ResponseEntity<>(new ErrorVM(message, ex.getHeaders()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UnsupportedFileFormatException.class)
+    protected ResponseEntity<ErrorVM> handleUnsupportedFileFormatException(UnsupportedFileFormatException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.unsupportedFileFormatMessage,
+                null), Arrays.toString(ex.getAllowedFormats()));
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+    }
+
+    @ExceptionHandler(FutureCalenderNotAccessibleException.class)
+    protected ResponseEntity<ErrorVM> handleFutureCalenderNotAccessibleException(FutureCalenderNotAccessibleException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.futureCalenderNotAccessibleMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(FileNotReadableException.class)
+    protected ResponseEntity<ErrorVM> handleFileNotReadableException(FileNotReadableException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.fileNotReadableMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
     }
 
 }

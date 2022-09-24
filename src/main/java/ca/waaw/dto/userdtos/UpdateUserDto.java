@@ -1,5 +1,6 @@
 package ca.waaw.dto.userdtos;
 
+import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,8 +10,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateUserDto {
 
+    @CapitalizeFirstLetter
     private String firstName;
 
+    @CapitalizeFirstLetter
     private String lastName;
 
     private String countryCode;

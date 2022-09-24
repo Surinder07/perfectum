@@ -23,6 +23,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Service for sending mails
@@ -71,44 +72,44 @@ public class MailService {
      * @param args         any arguments if needed in the subject
      *                     example -> Subject: "{0} invites you to join", args: "Pragra"
      */
-    @Async
     public void sendEmailFromTemplate(MailDto message, String templateName, String titleKey, String... args) {
-        if (message.getEmail() == null) {
-            log.debug("Email id is required for sending email.");
-            return;
-        }
-        /*
-         * Whatever locale is chosen, respective message.properties file will be used for email body
-         */
-        Locale locale = Locale.forLanguageTag(message.getLangKey() != null ? message.getLangKey() : "en");
-        Context context = new Context(locale);
-        message.setWebsiteUrl(appMailConfig.getUiUrl());
-        message.setTwitterUrl(appMailConfig.getTwitterUrl());
-        message.setLinkedinUrl(appMailConfig.getLinkedInUrl());
-        log.info(
-                "Social Urls configured for \nwebsite: {}\ntwitter: {}\nlinkedin: {}",
-                message.getWebsiteUrl(),
-                message.getTwitterUrl(),
-                message.getLinkedinUrl()
-        );
-        /*
-         * these variables can be accessed inside the email simply like ${dto.message.name}. Here dto is the variable
-         * we have added, then message is an object inside that object and name is a String in message.
-         *
-         * By setting our images as variables we can use them inside our mail design instead of attachments
-         * inside your html set src="logo.png" th:src="|cid:${logo}|" in you img tag
-         */
-        context.setVariable(DTO, message);
-        context.setVariable("logo", logoImageResource.getFilename());
-        context.setVariable("twitter", twitterImageResource.getFilename());
-        context.setVariable("linkedin", linkedinImageResource.getFilename());
+        CompletableFuture.runAsync(() -> {
+            if (message.getEmail() == null) {
+                log.debug("Email id is required for sending email.");
+                return;
+            }
+            /*
+             * Whatever locale is chosen, respective message.properties file will be used for email body
+             */
+            Locale locale = Locale.forLanguageTag(message.getLangKey() != null ? message.getLangKey() : "en");
+            Context context = new Context(locale);
+            message.setWebsiteUrl(appMailConfig.getUiUrl());
+            message.setTwitterUrl(appMailConfig.getTwitterUrl());
+            message.setLinkedinUrl(appMailConfig.getLinkedInUrl());
+            log.info(
+                    "Social Urls configured for \nwebsite: {}\ntwitter: {}\nlinkedin: {}",
+                    message.getWebsiteUrl(),
+                    message.getTwitterUrl(),
+                    message.getLinkedinUrl()
+            );
+            /*
+             * these variables can be accessed inside the email simply like ${dto.message.name}. Here dto is the variable
+             * we have added, then message is an object inside that object and name is a String in message.
+             *
+             * By setting our images as variables we can use them inside our mail design instead of attachments
+             * inside your html set src="logo.png" th:src="|cid:${logo}|" in you img tag
+             */
+            context.setVariable(DTO, message);
+            context.setVariable("logo", logoImageResource.getFilename());
+            context.setVariable("twitter", twitterImageResource.getFilename());
+            context.setVariable("linkedin", linkedinImageResource.getFilename());
 
-        String content = templateEngine.process(templateName, context);
-        String subject = messageSource.getMessage(titleKey, args.length == 0 ? null : args, locale);
-        sendEmail(message.getEmail(), subject, content);
+            String content = templateEngine.process(templateName, context);
+            String subject = messageSource.getMessage(titleKey, args.length == 0 ? null : args, locale);
+            sendEmail(message.getEmail(), subject, content);
+        });
     }
 
-    @Async
     private void sendEmail(String to, String subject, String content) {
         log.debug("Send email to '{}' with subject '{}'", to, subject);
 

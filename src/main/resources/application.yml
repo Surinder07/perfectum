@@ -6,6 +6,8 @@ spring:
     name: ^project.name^
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
+  config:
+    import: classpath:apiinfo.yml
   jpa:
     hibernate:
       ddl-auto: none
@@ -13,6 +15,8 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+        jdbc:
+          time_zone: UTC
     show-sql: false
   liquibase:
     enabled: false
@@ -39,6 +43,7 @@ spring:
 server:
   port: 8080
   error:
+    include-stacktrace: never
     whitelabel:
       enabled: false
 
@@ -56,10 +61,10 @@ swagger:
     ### WAAW Api reference for developers.
     ##### Web-sockets are setup in the application, you can connect to websocket with the **jwt token** passed in headers as **access_token** and subscribe to the available services.
 
-    | Service               | Endpoint                                                       |
-    | --------------------- | ---------------------------------------------------------------|
-    | Connect to web-socket | **"your domain"${application.websockets.connection-endpoint}** |
-    | Notification Service  | **/user${application.websockets.notification-url}**            |
+    | Service               | Endpoint                                                                           |
+    | --------------------- | -----------------------------------------------------------------------------------|
+    | Connect to web-socket | **${application.urls.hosted-server}${application.websockets.connection-endpoint}** |
+    | Notification Service  | **/user${application.websockets.notification-url}**                                |
 
 springdoc:
   packagesToScan: ca.waaw.web.rest
@@ -75,8 +80,7 @@ application:
   version: ^project.version^
   validations:
     regex:
-      # Minimum eight characters, at least one uppercase letter, one lowercase letter,
-      # one number and one special character.
+      # Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character.
       password: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
       # Username consists of alphanumeric characters (a-zA-Z0-9), lowercase or uppercase.
       # Username allowed of the dot (.), underscore (_), and hyphen (-).
@@ -85,6 +89,7 @@ application:
       # The number of characters must be between 5 and 20.
       username: ^[a-zA-Z0-9]([._-](?![._-])|[a-zA-Z0-9]){3,18}[a-zA-Z0-9]$
       email: ^[\w-\+]+(\.[\w]+)*@[\w-]+(\.[\w]+)*(\.[a-zA-Z]{2,})$
+      date: \d{4}\/\d{2}\/\d{2}
   urls:
     activate-account: /api/v1/unAuth/activateAccount?key=
     reset-password: /resetPassword?key=
@@ -109,6 +114,7 @@ application:
     username: waaw2020
     password: Waaw@2020
     organization: WAAW
+    timezone: Canada/Eastern
   triggers:
     location: classpath:db/sqltriggers/
   websockets:
@@ -117,3 +123,25 @@ application:
     application-destination-prefix: /ws
     allowed-origins: ${security.cors-allowed-origins}
     notification-url: ${application.websockets.simple-broker}/notification
+  async:
+    thread-name-prefix: AsyncThread-
+    core-pool-size: 40
+    max-pool-size: 80
+    queue-capacity: 200
+
+######################################
+###### Files related properties ######
+######################################
+files:
+  formats-allowed:
+    excel: xls,xlsx
+    csv: csv
+  required-fields:
+    holidays: name, year, month, date
+  pojo-templates:
+    holidays:
+      name: name
+      year: year
+      month: month
+      date: date
+      holiday_type: type

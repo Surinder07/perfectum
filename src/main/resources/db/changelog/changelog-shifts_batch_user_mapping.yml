@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-shifts_batch_user_mapping
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: shifts_batch_user_mapping
+      changes:
+        - createTable:
+            tableName: shifts_batch_user_mapping
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: batch_id
+                  type: VARCHAR(100)
+              - column:
+                  name: user_id
+                  type: VARCHAR(100)
+        - addForeignKeyConstraint:
+            baseTableName: shifts_batch_user_mapping
+            baseColumnNames: batch_id
+            constraintName: fk_shifts_batch_user_mapping_batch_id
+            referencedColumnNames: uuid
+            referencedTableName: shifts_batch
+        - addForeignKeyConstraint:
+            baseTableName: shifts_batch_user_mapping
+            baseColumnNames: user_id
+            constraintName: fk_shifts_batch_user_mapping_user_id
+            referencedColumnNames: uuid
+            referencedTableName: user

@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: create-table-notification
-      author: AkhilSinghChauhan
+      author: ${author1}
       preConditions:
         - onFail: MARK_RAN
           not:
