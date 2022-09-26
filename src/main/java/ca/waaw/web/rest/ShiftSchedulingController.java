@@ -117,6 +117,8 @@ public class ShiftSchedulingController {
         return null;
     }
 
+    // TODO pagination shift api for admins
+
     @SwaggerBadRequest
     @SwaggerUnauthorized
     @SwaggerAuthenticated
@@ -135,7 +137,8 @@ public class ShiftSchedulingController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.shift-management.releaseShiftsBatch}")
     @PutMapping("${api.endpoints.shift-management.releaseShiftsBatch}")
-    public void releaseShiftsBatch() {
+    public ResponseEntity<ApiResponseMessageDto> releaseShiftsBatch(@RequestParam String batchId) {
+        return ResponseEntity.ok(shiftSchedulingService.releaseShiftBatch(batchId));
     }
 
     @SwaggerAuthenticated

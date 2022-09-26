@@ -17,4 +17,8 @@ public interface ShiftsRepository extends JpaRepository<Shifts, String> {
 
     List<Shifts> findAllByLocationIdAndStartBetween(String locationId, Instant startRange, Instant endRange);
 
+    List<Shifts> findAllByLocationRoleIdAndStartBetween(String locationRoleId, Instant startRange, Instant endRange);
+
+    List<Shifts> findAllByUserIdInAndStartBetween(List<String> userIds, Instant startRange, Instant endRange);
+
 }

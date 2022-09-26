@@ -40,7 +40,7 @@ public class ShiftsBatch implements Serializable {
 
     @OneToMany
     @NotFound(action = NotFoundAction.IGNORE)
-    @JoinColumn(name = "batch_id", referencedColumnName = "uuid", updatable = false)
+    @JoinColumn(name = "batch_id", referencedColumnName = "uuid", updatable = false, insertable = false)
     private List<ShiftBatchUserMapping> mappedUsers;
 
     @Column(name = "start_date")

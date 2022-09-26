@@ -1,6 +1,9 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.*;
+import ca.waaw.domain.Location;
+import ca.waaw.domain.OrganizationHolidays;
+import ca.waaw.domain.Shifts;
+import ca.waaw.domain.ShiftsBatch;
 import ca.waaw.domain.joined.EmployeePreferencesWithUser;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.ApiResponseMessageDto;
@@ -8,6 +11,8 @@ import ca.waaw.dto.ShiftSchedulingPreferences;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.ShiftStatus;
+import ca.waaw.enumration.ShiftType;
 import ca.waaw.mapper.ShiftsMapper;
 import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
@@ -32,7 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -175,6 +179,40 @@ public class ShiftSchedulingService {
     }
 
     /**
+     * @param batchId id for batch to be released
+     * @return general message to send
+     */
+    public ApiResponseMessageDto releaseShiftBatch(String batchId) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        UserOrganization admin = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .orElseThrow(UnauthorizedException::new);
+        CompletableFuture.runAsync(() -> {
+            List<Shifts> releasedShifts = shiftsBatchRepository.findOneByIdAndDeleteFlag(batchId, false)
+                    .map(batch -> {
+                        if (!batch.getOrganizationId().equals(admin.getOrganizationId()) ||
+                                (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) && !batch.getLocationId().equalsIgnoreCase(admin.getLocationId()))) {
+                            throw new UnauthorizedException();
+                        }
+                        return batch;
+                    })
+                    .map(this::getShiftsFromBatch)
+                    .map(shifts -> shifts.stream()
+                            .peek(shift -> {
+                                shift.setShiftStatus(ShiftStatus.SCHEDULED);
+                                shift.setLastModifiedBy(admin.getId());
+                            }).collect(Collectors.toList())
+                    )
+                    .map(shiftsRepository::saveAll)
+                    .orElseThrow(() -> new EntityNotFoundException("batch"));
+            log.info("Batch for batch id: {}, released", batchId);
+            // TODO send notifications for released shifts to employee and admin
+        });
+        return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys.releaseNewBatch,
+                new Locale(admin.getLangKey())));
+    }
+
+    /**
      * @param locationId     locationId
      * @param locationRoleId locationRoleId
      * @param userIds        list of user ids
@@ -243,7 +281,7 @@ public class ShiftSchedulingService {
     }
 
     /**
-     * @param locationId     location for which all preferences are required
+     * @param locationId     locationId
      * @param locationRoleId locationRoleId
      * @param userIds        userIds
      * @return List of shift scheduling preference based on one of these ids,
@@ -251,30 +289,36 @@ public class ShiftSchedulingService {
      */
     private List<ShiftSchedulingPreferences> getAllPreferencesForALocationOrUser(String locationId, String locationRoleId,
                                                                                  List<String> userIds) {
-        return getAllPreferencesForALocationOrUser(locationId, locationRoleId, userIds, ShiftSchedulingUtils::mappingFunction);
-    }
-
-    /**
-     * @param locationId     locationId
-     * @param locationRoleId locationRoleId
-     * @param userIds        userIds
-     * @param function       function to map location role to shift scheduling preferences
-     * @return List of shift scheduling preference based on one of these ids,
-     * hierarchy followed -> userid, locationRoleId, locationId
-     */
-    private List<ShiftSchedulingPreferences> getAllPreferencesForALocationOrUser(String locationId, String locationRoleId, List<String> userIds,
-                                                                                 Function<LocationRole, ShiftSchedulingPreferences> function) {
         if (userIds != null && userIds.size() > 0) {
             return userRepository.findAllByDeleteFlagAndIdIn(false, userIds)
-                    .stream().map(UserOrganization::getLocationRole).map(function)
+                    .stream().map(UserOrganization::getLocationRole).map(ShiftSchedulingUtils::mappingFunction)
                     .collect(Collectors.toList());
         } else if (StringUtils.isNotEmpty(locationRoleId)) {
             return locationRoleRepository.findOneByIdAndDeleteFlag(locationRoleId, false)
-                    .map(function).map(Collections::singletonList).orElse(null);
+                    .map(ShiftSchedulingUtils::mappingFunction).map(Collections::singletonList)
+                    .orElse(null);
         } else {
             return locationRoleRepository.findAllByLocationIdAndDeleteFlag(locationId, false)
-                    .stream().map(function).collect(Collectors.toList());
+                    .stream().map(ShiftSchedulingUtils::mappingFunction).collect(Collectors.toList());
         }
+    }
+
+    /**
+     * @param batch batch object
+     * @return shifts associated with the batch
+     */
+    private List<Shifts> getShiftsFromBatch(ShiftsBatch batch) {
+        List<Shifts> shifts;
+        if (batch.getUsers() != null && batch.getUsers().size() > 0) {
+            shifts = shiftsRepository.findAllByUserIdInAndStartBetween(batch.getUsers(), batch.getStartDate(), batch.getEndDate());
+        } else if (StringUtils.isNotEmpty(batch.getLocationRoleId())) {
+            shifts = shiftsRepository.findAllByLocationRoleIdAndStartBetween(batch.getLocationRoleId(), batch.getStartDate(),
+                    batch.getEndDate());
+        } else {
+            shifts = shiftsRepository.findAllByLocationIdAndStartBetween(batch.getLocationId(), batch.getStartDate(),
+                    batch.getEndDate());
+        }
+        return shifts.stream().filter(shift -> shift.getShiftType().equals(ShiftType.RECURRING)).collect(Collectors.toList());
     }
 
 }
