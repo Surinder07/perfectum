@@ -6,7 +6,6 @@ import ca.waaw.filehandler.utils.FileUtils;
 import ca.waaw.web.rest.errors.exceptions.UnsupportedFileFormatException;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -28,13 +27,12 @@ public class FileHandler {
     /**
      * @param file        Multipart file to be read
      * @param cls         class of object to be mapped
-     * @param missingData initially false boolean value that will be marked true if some data is missing,
-     *                    this will be used later to send notification in case of missing data.
+     * @param missingData an empty list to collect all missing data information
      * @param pojoToMap   pojo type that is to be mapped
      * @param <T>         return type
      * @return List of all mapped object from the file provided
      */
-    public <T> List<T> readExcelOrCsv(InputStream file, String fileName, Class<T> cls, MutableBoolean missingData,
+    public <T> List<T> readExcelOrCsv(InputStream file, String fileName, Class<T> cls, List<T> missingData,
                                       PojoToMap pojoToMap) {
         String fileExtension = FileUtils.getFileExtension(fileName);
         List<T> result;

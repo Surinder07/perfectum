@@ -33,7 +33,7 @@ public class FileToPojoUtils {
      * @param <T>             populating Object
      */
     public static <T> void excelFileToObject(InputStream file, List<T> listToPopulate, String[] requiredHeaders,
-                                             Class<T> cls, Map<String, String> pojoTemplate, MutableBoolean missingData) {
+                                             Class<T> cls, Map<String, String> pojoTemplate, List<T> missingData) {
         Workbook workbook = ExcelUtils.getWorkbook(file);
         assert workbook != null;
         workbook.forEach(sheet -> {
@@ -50,13 +50,12 @@ public class FileToPojoUtils {
      * @param sheet           sheet containing data
      * @param pojoTemplate    Map of column name to pojo field
      * @param requiredIndices List of all index on which data cannot be null
-     * @param missingData     initially false boolean value that will be marked true if some data is missing,
-     *                        this will be used later to send notification in case of missing data.
+     * @param missingData     an empty list to collect all missing data information
      * @param <T>             populating Object
      * @return List of given object
      */
     public static <T> List<T> excelSheetToObject(Class<T> cls, Sheet sheet, Map<String, String> pojoTemplate,
-                                                 List<Integer> requiredIndices, MutableBoolean missingData) {
+                                                 List<Integer> requiredIndices, List<T> missingData) {
         List<T> results = new ArrayList<>();
         List<String> headers = ExcelUtils.getExcelSheetHeaders(sheet);
         log.info("Processing excel sheet: {}", sheet.getSheetName());
@@ -71,21 +70,17 @@ public class FileToPojoUtils {
                         String fieldName = pojoTemplate.get(headers.get(cellIndex));
                         Field field = getField(cls, fieldName);
                         Object fieldValue = ExcelUtils.getCellValue(row.getCell(cellIndex), field.getType());
-                        if (requiredIndices.contains(cellIndex) && fieldValue == null) {
-                            missingData.setTrue();
-                            skipRow.setTrue();
-                        }
+                        if (requiredIndices.contains(cellIndex) && fieldValue == null) skipRow.setTrue();
                         try {
                             field.set(result, fieldValue);
                         } catch (Exception e) {
                             log.error("Error while populating {} object, {} field", cls, fieldName, e);
-                            missingData.setTrue();
                         }
                     }
                 });
                 if (skipRow.isFalse()) results.add(result);
+                else missingData.add(result);
             } catch (Exception e) {
-                missingData.setTrue();
                 log.error("Exception while creating new instance of class: {}", cls, e);
             }
         });
@@ -97,13 +92,12 @@ public class FileToPojoUtils {
      * @param cls             class of populating object
      * @param requiredHeaders List of headers that cannot be null
      * @param pojoTemplate    Map of column name to pojo field
-     * @param missingData     initially false boolean value that will be marked true if some data is missing,
-     *                        this will be used later to send notification in case of missing data.
+     * @param missingData     an empty list to collect all missing data information
      * @param <T>             populating Object
      * @return List of populated object
      */
     public static <T> List<T> csvToObject(InputStream file, String fileName, Class<T> cls, String[] requiredHeaders,
-                                          Map<String, String> pojoTemplate, MutableBoolean missingData) {
+                                          Map<String, String> pojoTemplate, List<T> missingData) {
         String[] headers = CsvUtils.getCsvHeaders(file, fileName);
         if (headers != null) {
             log.info("Processing csv file: {}", fileName);
@@ -126,19 +120,17 @@ public class FileToPojoUtils {
                                     Field field = getField(cls, fieldName);
                                     Object fieldValue = CsvUtils.getCellValue(record.get(headers[valueIndex]), field.getType());
                                     if (requiredIndices.contains(valueIndex) && fieldValue == null) {
-                                        missingData.setTrue();
                                         skipRow.setTrue();
                                     }
                                     try {
                                         field.set(result, fieldValue);
                                     } catch (Exception e) {
                                         log.error("Error while populating {} object, {} field", cls, fieldName, e);
-                                        missingData.setTrue();
                                     }
                                 });
                                 if (skipRow.isFalse()) results.add(result);
+                                else missingData.add(result);
                             } catch (Exception e) {
-                                missingData.setTrue();
                                 log.error("Exception while creating new instance of class: {}", cls, e);
                             }
                         }

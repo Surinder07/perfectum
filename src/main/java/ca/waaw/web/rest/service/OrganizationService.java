@@ -108,7 +108,7 @@ public class OrganizationService {
             throw new FileNotReadableException();
         }
         CompletableFuture.runAsync(() -> {
-            MutableBoolean missingData = new MutableBoolean(false);
+            List<OrganizationHolidays> missingData = new ArrayList<>();
             MutableBoolean pastDates = new MutableBoolean(false);
             MutableBoolean nextYearDates = new MutableBoolean(false);
             try {
