@@ -170,4 +170,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(ForDevelopmentOnlyException.class)
+    protected ResponseEntity<ErrorVM> handleForDevelopmentOnlyException(ForDevelopmentOnlyException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.forDevelopmentOnlyMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
+    }
+
 }

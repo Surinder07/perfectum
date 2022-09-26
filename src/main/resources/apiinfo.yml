@@ -34,6 +34,7 @@ api:
       getEmployeePreferences: /v1/member/getPreference
     dropdown:
       getTimezones: /vi/unAuth/timezone/get
+      getEnums: /v1/unAuth/enums/get
     super-user:
       addCode: /v1/promoCode/add
       deleteCode: /v1/promoCode/delete
@@ -108,6 +109,9 @@ api:
       getEmployeePreferences: Get an employee's preferences
     dropdown:
       getTimezones: Get a list of timezone to show for adding new location.
+      getEnums: |
+        * This Api is only available in non development environments.
+        * Developers can use the api to check possible values for different enums required for different APIs.
     super-user:
       addCode: Add a new promocode.
       deleteCode: Delete a promocode by id.

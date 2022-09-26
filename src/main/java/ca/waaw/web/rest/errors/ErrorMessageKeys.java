@@ -22,5 +22,6 @@ public final class ErrorMessageKeys {
     public static final String unsupportedFileFormatMessage = "error.unsupportedFileFormatMessage";
     public static final String futureCalenderNotAccessibleMessage = "error.futureCalenderNotAccessibleMessage";
     public static final String fileNotReadableMessage = "error.fileNotReadableMessage";
+    public static final String forDevelopmentOnlyMessage = "error.forDevelopmentOnlyMessage";
 
 }
