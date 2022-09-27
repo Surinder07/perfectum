@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 @ToString
 @EqualsAndHashCode
 @Table(name = "shifts_batch")
-@NamedQuery(name = "ShiftsBatch.getOverlappingBatchForLocationId", query = "SELECT b FROM ShiftsBatch b " +
-        "WHERE b.locationId = ?1 AND (b.startDate BETWEEN ?2 AND ?3 OR b.endDate BETWEEN ?2 AND ?3)")
 public class ShiftsBatch implements Serializable {
 
     @Id

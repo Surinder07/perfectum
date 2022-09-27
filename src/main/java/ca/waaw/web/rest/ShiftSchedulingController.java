@@ -69,7 +69,8 @@ public class ShiftSchedulingController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.shift-management.assignShift}")
     @PutMapping("${api.endpoints.shift-management.assignShift}")
-    public void assignShift() {
+    public void assignShift(@RequestParam String shiftId, @RequestParam String userId) {
+        shiftSchedulingService.assignShift(shiftId, userId);
     }
 
     @SwaggerNotFound
@@ -80,7 +81,8 @@ public class ShiftSchedulingController {
             content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponseMessageDto.class))})
     @Operation(description = "${api.description.shift-management.claimShift}")
     @PutMapping("${api.endpoints.shift-management.claimShift}")
-    public void claimShift() {
+    public void claimShift(@RequestParam String shiftId) {
+        shiftSchedulingService.claimShift(shiftId);
     }
 
     @SwaggerOk
@@ -102,7 +104,8 @@ public class ShiftSchedulingController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.shift-management.releaseShift}")
     @PutMapping("${api.endpoints.shift-management.releaseShift}")
-    public void releaseShift() {
+    public void releaseShift(@RequestParam String shiftId) {
+        shiftSchedulingService.releaseShift(shiftId);
     }
 
     @SwaggerAuthenticated

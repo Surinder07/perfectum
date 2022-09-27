@@ -111,12 +111,105 @@ public class ShiftSchedulingService {
                                 throw new UnauthorizedException();
                             }
                             shift.setDeleteFlag(true);
+                            shift.setLastModifiedBy(user.getId());
                             return shiftsRepository.save(shift);
                         }).map(shift -> CommonUtils.logMessageAndReturnObject(shift, "info", ShiftSchedulingService.class,
                                 "Shift deleted: {}", id))
                         .orElseThrow(() -> new EntityNotFoundException("shift"))
                 );
 
+    }
+
+    /**
+     * @param id for shift to be released
+     */
+    public void releaseShift(String id) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(shift -> {
+                            if (shift.getStart().isBefore(Instant.now())) {
+                                throw new PastValueNotDeletableException("Shift");
+                            }
+                            if (!shift.getOrganizationId().equals(user.getOrganizationId()) ||
+                                    (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) &&
+                                            !shift.getLocationId().equals(user.getLocationId()))) {
+                                throw new UnauthorizedException();
+                            }
+                            shift.setShiftStatus(ShiftStatus.SCHEDULED);
+                            shift.setLastModifiedBy(user.getId());
+                            return shiftsRepository.save(shift);
+                        }).map(shift -> CommonUtils.logMessageAndReturnObject(shift, "info", ShiftSchedulingService.class,
+                                "Shift released: {}", id))
+                        .orElseThrow(() -> new EntityNotFoundException("shift"))
+                );
+        // TODO send notification to employee.
+    }
+
+    /**
+     * @param id for shift to be released
+     */
+    public void claimShift(String id) {
+        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(shift -> {
+                            if (shift.getStart().isBefore(Instant.now())) {
+                                throw new PastValueNotDeletableException("Shift");
+                            }
+                            if (!shift.getLocationRoleId().equals(user.getLocationRoleId()) ||
+                                    !shift.getShiftStatus().equals(ShiftStatus.RELEASED_UNASSIGNED)) {
+                                throw new UnauthorizedException();
+                            }
+                            if (shift.isAssignToFirstClaim()) {
+                                shift.setUserId(user.getId());
+                                shift.setLastModifiedBy(user.getId());
+                                return shiftsRepository.save(shift);
+                            } else {
+                                // TODO create claims table and add claim
+                                return null;
+                            }
+                        }).map(shift -> CommonUtils.logMessageAndReturnObject(shift, "info", ShiftSchedulingService.class,
+                                "Shift deleted: {}", id))
+                        .orElseThrow(() -> new EntityNotFoundException("shift"))
+                );
+        // TODO send notification to admin.
+    }
+
+    /**
+     * @param id for shift to be released
+     */
+    public void assignShift(String id, String userId) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(admin -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(shift -> {
+                            if (shift.getStart().isBefore(Instant.now())) {
+                                throw new PastValueNotDeletableException("Shift");
+                            }
+                            if (!shift.getOrganizationId().equals(admin.getOrganizationId()) ||
+                                    (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) &&
+                                            !shift.getLocationId().equals(admin.getLocationId()))) {
+                                throw new UnauthorizedException();
+                            }
+                            return userRepository.findOneByIdAndDeleteFlag(userId, false)
+                                    .map(user -> {
+                                        if (!user.getLocationRoleId().equals(shift.getLocationRoleId())) {
+                                            throw new UnauthorizedException();
+                                        }
+                                        shift.setUserId(user.getId());
+                                        shift.setLastModifiedBy(admin.getId());
+                                        return shift;
+                                    })
+                                    .orElseThrow(() -> new EntityNotFoundException("user"));
+                        }).map(shift -> CommonUtils.logMessageAndReturnObject(shift, "info", ShiftSchedulingService.class,
+                                "Shift released: {}", id))
+                        .orElseThrow(() -> new EntityNotFoundException("shift"))
+                );
+        // TODO send notification to user.
     }
 
     /**
@@ -188,7 +281,7 @@ public class ShiftSchedulingService {
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .orElseThrow(UnauthorizedException::new);
         CompletableFuture.runAsync(() -> {
-            List<Shifts> releasedShifts = shiftsBatchRepository.findOneByIdAndDeleteFlag(batchId, false)
+            shiftsBatchRepository.findOneByIdAndDeleteFlag(batchId, false)
                     .map(batch -> {
                         if (!batch.getOrganizationId().equals(admin.getOrganizationId()) ||
                                 (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) && !batch.getLocationId().equalsIgnoreCase(admin.getLocationId()))) {
@@ -199,14 +292,14 @@ public class ShiftSchedulingService {
                     .map(this::getShiftsFromBatch)
                     .map(shifts -> shifts.stream()
                             .peek(shift -> {
-                                shift.setShiftStatus(ShiftStatus.SCHEDULED);
+                                shift.setShiftStatus(ShiftStatus.RELEASED_ASSIGNED);
                                 shift.setLastModifiedBy(admin.getId());
                             }).collect(Collectors.toList())
                     )
                     .map(shiftsRepository::saveAll)
                     .orElseThrow(() -> new EntityNotFoundException("batch"));
             log.info("Batch for batch id: {}, released", batchId);
-            // TODO send notifications for released shifts to employee and admin
+            // TODO send notifications for released shifts to admin
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys.releaseNewBatch,
                 new Locale(admin.getLangKey())));
