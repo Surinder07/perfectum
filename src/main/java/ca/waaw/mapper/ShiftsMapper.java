@@ -11,7 +11,6 @@ import ca.waaw.enumration.ShiftType;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ShiftsMapper {
@@ -27,7 +26,6 @@ public class ShiftsMapper {
     public static Shifts shiftDtoToEntity(NewShiftDto source, String[] locationAndRoleIdsAndTimeZone, String loggedInUser,
                                           String organizationId) {
         Shifts target = new Shifts();
-        target.setId(UUID.randomUUID().toString());
         if (StringUtils.isNotEmpty(source.getUserId())) target.setUserId(source.getUserId());
         target.setStatus(EntityStatus.ACTIVE);
         target.setLocationId(locationAndRoleIdsAndTimeZone[0]);

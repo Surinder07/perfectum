@@ -115,7 +115,6 @@ public class OrganizationService {
                 List<OrganizationHolidays> holidays = fileHandler.readExcelOrCsv(fileInputStream, fileName,
                                 OrganizationHolidays.class, missingData, PojoToMap.HOLIDAY)
                         .parallelStream().peek(holiday -> {
-                            holiday.setId(UUID.randomUUID().toString());
                             holiday.setOrganizationId(admin.getOrganizationId());
                             holiday.setCreatedBy(admin.getId());
                             holiday.setStatus(EntityStatus.ACTIVE);

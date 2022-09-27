@@ -64,7 +64,6 @@ public class UserMapper {
     public static User registerDtoToUserEntity(RegisterOrganizationDto source) {
         User target = new User();
         BeanUtils.copyProperties(source, target);
-        target.setId(UUID.randomUUID().toString());
         target.setCreatedBy(target.getId());
         target.setLastModifiedBy(target.getId());
         target.setStatus(EntityStatus.PENDING);
@@ -95,7 +94,6 @@ public class UserMapper {
      */
     public static User inviteUserDtoToEntity(InviteUserDto source) {
         User target = new User();
-        target.setId(UUID.randomUUID().toString());
         target.setEmail(source.getEmail());
         target.setFirstName(source.getFirstName());
         target.setLastName(source.getLastName());

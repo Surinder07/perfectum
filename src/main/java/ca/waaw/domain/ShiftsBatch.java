@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
         "WHERE b.locationId = ?1 AND (b.startDate BETWEEN ?2 AND ?3 OR b.endDate BETWEEN ?2 AND ?3)")
 public class ShiftsBatch implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Id
     @Column(name = "uuid")
     private String id = UUID.randomUUID().toString();

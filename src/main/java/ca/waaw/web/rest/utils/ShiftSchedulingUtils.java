@@ -2,9 +2,9 @@ package ca.waaw.web.rest.utils;
 
 import ca.waaw.domain.LocationRole;
 import ca.waaw.domain.OrganizationHolidays;
+import ca.waaw.domain.Shifts;
 import ca.waaw.domain.ShiftsBatch;
 import ca.waaw.domain.joined.EmployeePreferencesWithUser;
-import ca.waaw.domain.Shifts;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.ShiftSchedulingPreferences;
 import ca.waaw.enumration.ShiftStatus;
@@ -316,7 +316,6 @@ public class ShiftSchedulingUtils {
                                     .anyMatch(shift -> DateAndTimeUtils.isInstantSameDayAsAnotherInstant(date, shift.getStart()));
                             if (shiftDuration != null && !sameDayExistingShit) {
                                 Shifts newShift = new Shifts();
-                                newShift.setId(UUID.randomUUID().toString());
                                 newShift.setUserId(preference.getUserId());
                                 newShift.setStart(shiftDuration[0]);
                                 newShift.setEnd(shiftDuration[1]);
