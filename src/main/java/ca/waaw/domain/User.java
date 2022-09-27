@@ -68,21 +68,6 @@ public class User extends AbstractEntity {
     @Column(name = "sms_notification_on")
     private boolean isSmsNotifications;
 
-    @Column(name = "reset_key")
-    private String resetKey;
-
-    @Column(name = "reset_date")
-    private Instant resetDate;
-
-    @Column(name = "activation_key")
-    private String activationKey;
-
-    @Column(name = "invite_key")
-    private String inviteKey;
-
-    @Column(name = "invited_by")
-    private String invitedBy;
-
     @Column(name = "last_login")
     private Instant lastLogin;
 

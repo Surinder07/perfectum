@@ -23,12 +23,6 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findOneByUsernameOrEmail(String username, String email);
 
-    Optional<User> findOneByActivationKey(String key);
-
-    Optional<User> findOneByResetKey(String key);
-
-    Optional<User> findOneByInviteKey(String key);
-
     Optional<User> findOneByAuthority(Authority authority);
 
     Optional<List<User>> findAllByStatusAndCreatedDateBefore(EntityStatus status, Instant date);

@@ -4,6 +4,7 @@ import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.domain.EmployeePreferences;
 import ca.waaw.domain.LocationRole;
 import ca.waaw.domain.User;
+import ca.waaw.domain.UserTokens;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.PaginationDto;
@@ -11,6 +12,7 @@ import ca.waaw.dto.ShiftSchedulingPreferences;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.UserToken;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
@@ -45,6 +47,8 @@ public class MemberService {
 
     private final UserRepository userRepository;
 
+    private final UserTokenRepository userTokenRepository;
+
     private final UserOrganizationRepository userOrganizationRepository;
 
     private final AppUrlConfig appUrlConfig;
@@ -76,15 +80,18 @@ public class MemberService {
         String organizationName = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(admin -> {
-                    user.setInvitedBy(admin.getId());
                     user.setCreatedBy(admin.getId());
                     user.setOrganizationId(admin.getOrganization().getId());
                     return admin.getOrganization().getName();
                 })
                 .orElseThrow(UnauthorizedException::new);
         userRepository.save(user);
+        UserTokens token = new UserTokens(UserToken.INVITE);
+        token.setUserId(user.getId());
+        token.setCreatedBy(user.getCreatedBy());
         log.info("New User added to database (pending for accepting invite): {}", user);
-        String inviteUrl = appUrlConfig.getInviteUserUrl(user.getInviteKey());
+        log.info("New token generated for invitation: {}", token);
+        String inviteUrl = appUrlConfig.getInviteUserUrl(token.getToken());
         userMailService.sendInvitationEmail(user, inviteUrl, organizationName);
         log.info("Invitation sent to the user");
     }

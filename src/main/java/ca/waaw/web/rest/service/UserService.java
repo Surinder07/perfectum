@@ -5,20 +5,20 @@ import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.Organization;
 import ca.waaw.domain.PromotionCode;
 import ca.waaw.domain.User;
+import ca.waaw.domain.UserTokens;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.DaysOfWeek;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.PromoCodeType;
+import ca.waaw.enumration.UserToken;
 import ca.waaw.mapper.UserMapper;
-import ca.waaw.repository.OrganizationRepository;
-import ca.waaw.repository.PromotionCodeRepository;
-import ca.waaw.repository.UserOrganizationRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.utils.CommonUtils;
+import ca.waaw.web.rest.utils.HtmlTemplatesPath;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,11 +32,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -45,6 +43,8 @@ public class UserService {
     private final Logger log = LogManager.getLogger(UserService.class);
 
     private final UserRepository userRepository;
+
+    private final UserTokenRepository userTokenRepository;
 
     private final OrganizationRepository organizationRepository;
 
@@ -77,24 +77,33 @@ public class UserService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void registerUser(RegisterUserDto userDTO) {
-        String userId = userRepository.findOneByInviteKey(userDTO.getInviteKey())
-                .filter(user -> user.getCreatedDate().isAfter(Instant.now()
-                        .minus(appValidityTimeConfig.getUserInvite(), ChronoUnit.DAYS)))
-                .map(user -> {
-                    UserMapper.updateInvitedUser(userDTO, user);
-                    user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
-                    return user;
+        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(userDTO.getInviteKey(),
+                        UserToken.INVITE, false)
+                .map(token -> {
+                    if (token.getCreatedDate().isAfter(Instant.now()
+                            .minus(appValidityTimeConfig.getUserInvite(), ChronoUnit.DAYS))) {
+                        token.setExpired(true);
+                        userTokenRepository.save(token);
+                        return null;
+                    }
+                    return token;
                 })
-                .map(userRepository::save)
-                .map(User::getId)
+                .flatMap(token -> userOrganizationRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
+                        .map(user -> {
+                            UserMapper.updateInvitedUser(userDTO, user);
+                            user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
+                            return user;
+                        })
+                        .map(userOrganizationRepository::save)
+                        .flatMap(user -> userRepository.findOneByIdAndDeleteFlag(token.getCreatedBy(), false)
+                                .map(admin -> {
+                                    // Sending notification to admin
+                                    notificationInternalService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl());
+                                    return user;
+                                })
+                        )
+                )
                 .orElseThrow(() -> new ExpiredKeyException("invite"));
-
-        // Sending notification to admin
-        userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
-                .ifPresent(user -> userRepository.findOneByIdAndDeleteFlag(user.getInvitedBy(), false)
-                        .ifPresent(admin ->
-                                notificationInternalService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl()))
-                );
     }
 
     /**
@@ -105,7 +114,6 @@ public class UserService {
     @Transactional(rollbackFor = Exception.class)
     public void registerAdminAndOrganization(RegisterOrganizationDto userDTO) {
         checkUserExistence(userDTO);
-
         int trialDays = 0;
         if (StringUtils.isNotEmpty(userDTO.getPromoCode())) {
             trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(userDTO.getPromoCode(), PromoCodeType.TRIAL, false)
@@ -115,7 +123,6 @@ public class UserService {
 
         User user = UserMapper.registerDtoToUserEntity(userDTO);
         Organization organization = new Organization();
-        organization.setId(UUID.randomUUID().toString());
         organization.setCreatedBy(user.getId());
         organization.setLastModifiedBy(user.getId());
         organization.setFirstDayOfWeek(DaysOfWeek.valueOf(userDTO.getFirstDayOfWeek()));
@@ -125,12 +132,17 @@ public class UserService {
         organization.setTrialDays(trialDays);
         user.setOrganizationId(organization.getId());
         user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
+        UserTokens token = new UserTokens(UserToken.ACTIVATION);
+        token.setUserId(user.getId());
+        token.setCreatedBy("SYSTEM");
 
         organizationRepository.save(organization);
         userRepository.save(user);
+        userTokenRepository.save(token);
         log.info("New Organization created: {}", organization);
-        log.info("new User registered: {}", user);
-        String activationUrl = appUrlConfig.getActivateAccountUrl(user.getActivationKey());
+        log.info("New User registered: {}", user);
+        log.info("New activation token generated: {}", token);
+        String activationUrl = appUrlConfig.getActivateAccountUrl(token.getToken());
         userMailService.sendActivationEmail(user, activationUrl);
     }
 
@@ -179,26 +191,52 @@ public class UserService {
      */
     public ResponseEntity<String> activateUser(String key) {
         log.info("Activating user for activation key {}", key);
-        userRepository.findOneByActivationKey(key)
-                .map(user -> {
-                    user.setStatus(EntityStatus.ACTIVE);
-                    user.setActivationKey(null);
-                    user.setLastModifiedDate(Instant.now());
-                    return user;
-                })
-                .map(userRepository::save)
-                .orElseThrow(() -> new ExpiredKeyException("activation"));
-        String responseTemplate;
-        try {
-            InputStreamReader stream = new InputStreamReader(new ClassPathResource("templates/mail/SuccessPage.html",
-                    this.getClass().getClassLoader()).getInputStream());
-            responseTemplate = IOUtils.toString(stream);
-        } catch (IOException e) {
-            log.error("Error while loading success page, sending plain Success message");
-            responseTemplate = "<h1>Success</h1><p>Redirecting you to the login page...</p>";
-        }
+        String errorMessage = "Your activation url has been expired.";
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Refresh", String.format("2;url=%s", appUrlConfig.getLoginUrl()));
+        String responseTemplate = userTokenRepository
+                .findOneByTokenAndTokenTypeAndIsExpired(key, UserToken.ACTIVATION, false)
+                .map(userTokens -> {
+                    InputStreamReader stream;
+                    if (userTokens.getCreatedDate().isAfter(Instant.now()
+                            .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
+                        userTokens.setExpired(true);
+                        userTokenRepository.save(userTokens);
+                        try {
+                            // TODO create error HTML page and add path here.
+                            stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
+                                    this.getClass().getClassLoader()).getInputStream());
+                            return IOUtils.toString(stream).replace("message", errorMessage);
+                        } catch (Exception e) {
+                            return "<h1>Activation key is expired</h1>";
+                        }
+                    } else {
+                        httpHeaders.add("Refresh", String.format("2;url=%s", appUrlConfig.getLoginUrl()));
+                        userRepository.findOneByIdAndDeleteFlag(userTokens.getUserId(), false)
+                                .map(user -> {
+                                    user.setStatus(EntityStatus.ACTIVE);
+                                    user.setLastModifiedDate(Instant.now());
+                                    return user;
+                                })
+                                .map(userRepository::save);
+                        try {
+                            stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.successPage,
+                                    this.getClass().getClassLoader()).getInputStream());
+                            return IOUtils.toString(stream);
+                        } catch (Exception e) {
+                            return "<h1>Success</h1><p>Redirecting you to the login page...</p>";
+                        }
+                    }
+                })
+                .orElseGet(() -> {
+                    try {
+                        // TODO create error HTML page and add path here.
+                        InputStreamReader stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
+                                this.getClass().getClassLoader()).getInputStream());
+                        return IOUtils.toString(stream).replace("message", errorMessage);
+                    } catch (Exception e) {
+                        return "<h1>Activation key is expired</h1>";
+                    }
+                });
         return new ResponseEntity<>(responseTemplate, httpHeaders, HttpStatus.OK);
     }
 
@@ -209,12 +247,35 @@ public class UserService {
      */
     public ResponseEntity<String> acceptInvite(String key) {
         log.info("Getting details for user with invitation key: {}", key);
-        String registerUrl = userRepository.findOneByInviteKey(key)
-                .map(user -> UserMapper.buildRegisterThroughInviteUrl(user, appUrlConfig.getRegisterUrl()))
-                .orElseThrow(() -> new ExpiredKeyException("invitation"));
+        String registerUrl = userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(key, UserToken.INVITE, false)
+                .map(token -> {
+                    if (token.getCreatedDate().isAfter(Instant.now()
+                            .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
+                        token.setExpired(true);
+                        userTokenRepository.save(token);
+                        return null;
+                    }
+                    return token;
+                })
+                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
+                        .map(user -> UserMapper.buildRegisterThroughInviteUrl(user, appUrlConfig.getRegisterUrl(), token.getToken()))
+                ).orElse(null);
+        String body = null;
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Refresh", String.format("1;url=%s", registerUrl));
-        return new ResponseEntity<>(null, httpHeaders, HttpStatus.OK);
+        if (registerUrl == null) {
+            // TODO get failed html body without redirect
+            try {
+                String message = "Your invitation url seems to be expired, Please contact admin.";
+                InputStreamReader stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
+                        this.getClass().getClassLoader()).getInputStream());
+                body = IOUtils.toString(stream).replace("message", message);
+            } catch (Exception e) {
+                body = "<h1>Invitation key is expired</h1>";
+            }
+        } else {
+            httpHeaders.add("Refresh", String.format("1;url=%s", registerUrl));
+        }
+        return new ResponseEntity<>(body, httpHeaders, HttpStatus.OK);
     }
 
     /**
@@ -223,19 +284,19 @@ public class UserService {
      * @param email user email
      */
     public void requestPasswordReset(String email) {
-        User user = userRepository
+        userRepository
                 .findOneByEmailAndDeleteFlag(email, false)
                 .filter(localUser -> localUser.getStatus().equals(EntityStatus.ACTIVE))
-                .map(localUser -> {
-                    localUser.setResetKey(CommonUtils.Random.generateRandomKey());
-                    localUser.setResetDate(Instant.now());
-                    localUser.setLastModifiedBy(localUser.getId());
-                    return localUser;
+                .map(user -> {
+                    UserTokens token = new UserTokens(UserToken.RESET);
+                    token.setUserId(user.getId());
+                    token.setCreatedBy("SYSTEM");
+                    userTokenRepository.save(token);
+                    String resetUrl = appUrlConfig.getResetPasswordUrl(token.getToken());
+                    userMailService.sendPasswordResetMail(user, resetUrl);
+                    return user;
                 })
-                .map(userRepository::save)
                 .orElseThrow(() -> new EntityNotFoundException("email"));
-        String resetUrl = appUrlConfig.getResetPasswordUrl(user.getResetKey());
-        userMailService.sendPasswordResetMail(user, resetUrl);
         log.info("Sent a password rest email to {}", email);
     }
 
@@ -246,22 +307,26 @@ public class UserService {
      */
     public void completePasswordReset(PasswordResetDto passwordResetDto) {
         log.debug("Reset user password for reset key {}", passwordResetDto.getKey());
-        userRepository
-                .findOneByResetKey(passwordResetDto.getKey())
-                .filter(user -> user.getResetDate().isAfter(Instant.now()
-                        .minus(appValidityTimeConfig.getPasswordReset(), ChronoUnit.DAYS)))
+        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(passwordResetDto.getKey(), UserToken.RESET,
+                        false)
+                .map(token -> {
+                    if (token.getCreatedDate().isAfter(Instant.now()
+                            .minus(appValidityTimeConfig.getPasswordReset(), ChronoUnit.DAYS))) {
+                        token.setExpired(true);
+                        userTokenRepository.save(token);
+                        throw new ExpiredKeyException("password reset");
+                    }
+                    return token;
+                })
+                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false))
                 .map(user -> {
                     user.setPasswordHash(passwordEncoder.encode(passwordResetDto.getNewPassword()));
-                    user.setResetKey(null);
-                    user.setResetDate(null);
                     user.setLastModifiedBy(user.getId());
                     return user;
                 })
                 .map(userRepository::save)
-                .map(user -> {
-                    log.info("Finished reset password request for user : {}", user);
-                    return user;
-                })
+                .map(user -> CommonUtils.logMessageAndReturnObject(user, "info", UserService.class,
+                            "Finished reset password request for user : {}", user))
                 .orElseThrow(() -> new ExpiredKeyException("password reset"));
     }
 
