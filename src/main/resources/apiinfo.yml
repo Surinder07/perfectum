@@ -27,6 +27,7 @@ api:
       deleteHoliday: /v1/organization/holiday/delete
     member:
       sendInvite: /v1/member/sendInvite
+      sendInviteByUpload: /v1/member/sendInvite/upload
       getAllMembers: /v1/member/getAll
       listAllMembers: /v1/member/listAll
       getMemberById: /v1/member/getById
@@ -100,6 +101,12 @@ api:
       deleteHoliday: Delete a holiday.
     member:
       sendInvite: Invite new users to join logged in admins organization.
+      sendInviteByUpload: |
+        Upload excel or csv to add new members and send invite.
+        * Include location name and location role if you are global admin, include only location role if you are location admin.
+        * If no role is mentioned, user will be added as an employee; if no language is mentioned, default will be 'en'.
+        * Use Form Data.
+        * Allowed file formats: ${files.formats-allowed.excel},${files.formats-allowed.csv}
       getAllMembers: Get all Employees and Admins under logged-in user.
       listAllMembers: |
         Get all members under one locationId with search. *Limited info will be returned.*

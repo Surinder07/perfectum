@@ -93,7 +93,7 @@ public class UserMapper {
      */
     public static User inviteUserDtoToEntity(InviteUserDto source) {
         User target = new User();
-        target.setEmail(source.getEmail());
+        target.setEmail(source.getEmail().toLowerCase());
         target.setFirstName(source.getFirstName());
         target.setLastName(source.getLastName());
         target.setEmployeeId(source.getEmployeeId());

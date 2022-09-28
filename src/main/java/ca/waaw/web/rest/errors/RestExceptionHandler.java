@@ -84,8 +84,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     protected ResponseEntity<ErrorVM> handleEntityNotFoundException(EntityNotFoundException ex) {
-        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotFoundMessage,
-                null), ex.getEntity());
+        String message = ex.getValue() == null ? String.format(CommonUtils
+                .getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotFoundMessage,
+                        null), ex.getEntity()) : String.format(CommonUtils
+                .getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotFoundWithValueMessage,
+                        null), ex.getEntity(), ex.getValue());
         return new ResponseEntity<>(new ErrorVM(message, ex.getEntity()), HttpStatus.NOT_FOUND);
     }
 
@@ -147,6 +150,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.missingHeadersMessage,
                 null), ex.getFileType());
         return new ResponseEntity<>(new ErrorVM(message, ex.getHeaders()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingHeadersException.class)
+    protected ResponseEntity<ErrorVM> handleMissingRequiredFieldsException(MissingRequiredFieldsException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.missingRequiredFieldsMessage,
+                null), ex.getFileType());
+        return new ResponseEntity<>(new ErrorVM(message, ex.getField()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UnsupportedFileFormatException.class)

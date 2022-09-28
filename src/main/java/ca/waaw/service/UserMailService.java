@@ -2,12 +2,15 @@ package ca.waaw.service;
 
 import ca.waaw.domain.User;
 import ca.waaw.dto.MailDto;
+import ca.waaw.dto.emailmessagedtos.InviteUserMailDto;
 import ca.waaw.service.email.javamailsender.MailService;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -17,7 +20,6 @@ public class UserMailService {
 
     private final MailService mailService;
 
-    @Async
     public void sendActivationEmail(User userMessage, String activationLink) {
         MailDto messageDto = MailDto.builder()
                 .email(userMessage.getEmail())
@@ -29,21 +31,22 @@ public class UserMailService {
         mailService.sendEmailFromTemplate(messageDto, "mail/activationEmail", "email.activation.title");
     }
 
-    @Async
-    public void sendInvitationEmail(User userMessage, String inviteLink, String organizationName) {
-        MailDto messageDto = MailDto.builder()
-                .email(userMessage.getEmail())
-                .actionUrl(inviteLink)
-                .langKey("en")
-                .message(userMessage)
-                .organizationName(organizationName)
-                .build();
-        log.debug("Sending invitation email to '{}'", userMessage.getEmail());
-        mailService.sendEmailFromTemplate(messageDto, "mail/invitationEmail", "email.invitation.title",
-                organizationName);
+    public void sendInvitationEmail(List<InviteUserMailDto> mailDtoList, String organizationName) {
+        List<MailDto> messageDtoList = mailDtoList.stream()
+                        .map(mailDto -> MailDto.builder()
+                                .email(mailDto.getUser().getEmail())
+                                .actionUrl(mailDto.getInviteUrl())
+                                .langKey(mailDto.getUser().getLangKey())
+                                .message(mailDto.getUser())
+                                .organizationName(organizationName)
+                                .build()
+                        ).collect(Collectors.toList());
+        log.debug("Sending invitation email to '{}'", mailDtoList.stream()
+                .map(dto -> dto.getUser().getEmail()).collect(Collectors.toList()));
+        messageDtoList.forEach(messageDto -> mailService.sendEmailFromTemplate(messageDto, "mail/invitationEmail",
+                "email.invitation.title", organizationName));
     }
 
-    @Async
     public void sendPasswordResetMail(User userMessage, String resetLink) {
         MailDto messageDto = MailDto.builder()
                 .email(userMessage.getEmail())

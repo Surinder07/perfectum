@@ -20,6 +20,7 @@ import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.errors.exceptions.FileNotReadableException;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import ca.waaw.web.rest.errors.exceptions.application.FutureCalenderNotAccessibleException;
+import ca.waaw.web.rest.errors.exceptions.application.MissingRequiredFieldsException;
 import ca.waaw.web.rest.errors.exceptions.application.PastValueNotDeletableException;
 import ca.waaw.web.rest.utils.ApiResponseMessageKeys;
 import ca.waaw.web.rest.utils.CommonUtils;
@@ -30,6 +31,7 @@ import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -77,6 +79,7 @@ public class OrganizationService {
      * @param file       excel or csv file containing holidays
      * @param locationId if holidays are for a particular location, id is required
      */
+    @Transactional(rollbackFor = Exception.class)
     public ApiResponseMessageDto uploadHolidaysByExcel(MultipartFile file, String locationId) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         AtomicReference<String> timezone = new AtomicReference<>();
@@ -107,34 +110,33 @@ public class OrganizationService {
             log.error("Exception while reading file.", e);
             throw new FileNotReadableException();
         }
+        Set<String> missingFields = new HashSet<>();
+        MutableBoolean pastDates = new MutableBoolean(false);
+        MutableBoolean nextYearDates = new MutableBoolean(false);
+        List<OrganizationHolidays> holidays = fileHandler.readExcelOrCsv(fileInputStream, fileName,
+                        OrganizationHolidays.class, missingFields, PojoToMap.HOLIDAY)
+                .parallelStream().peek(holiday -> {
+                    holiday.setOrganizationId(admin.getOrganizationId());
+                    holiday.setCreatedBy(admin.getId());
+                    holiday.setStatus(EntityStatus.ACTIVE);
+                    if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) || StringUtils.isNotEmpty(locationId)) {
+                        holiday.setLocationId(SecurityUtils.isCurrentUserInRole(Authority.MANAGER) ?
+                                admin.getLocationId() : locationId);
+                    }
+                }).filter(holiday -> {
+                    boolean isPastDate = isPastDate(holiday.getYear(), holiday.getMonth(), holiday.getDate(), timezone.get());
+                    boolean isNextYearDate = isNextYearDate(holiday.getYear(), holiday.getMonth(), timezone.get());
+                    if (isPastDate) pastDates.setTrue();
+                    if (isNextYearDate) nextYearDates.setTrue();
+                    return !isNextYearDate && !isPastDate;
+                })
+                .collect(Collectors.toList());
+        if (missingFields.size() > 0) {
+            throw new MissingRequiredFieldsException("excel/csv", missingFields.toArray(missingFields.toArray(new String[0])));
+        }
         CompletableFuture.runAsync(() -> {
-            List<OrganizationHolidays> missingData = new ArrayList<>();
-            MutableBoolean pastDates = new MutableBoolean(false);
-            MutableBoolean nextYearDates = new MutableBoolean(false);
-            try {
-                List<OrganizationHolidays> holidays = fileHandler.readExcelOrCsv(fileInputStream, fileName,
-                                OrganizationHolidays.class, missingData, PojoToMap.HOLIDAY)
-                        .parallelStream().peek(holiday -> {
-                            holiday.setOrganizationId(admin.getOrganizationId());
-                            holiday.setCreatedBy(admin.getId());
-                            holiday.setStatus(EntityStatus.ACTIVE);
-                            if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) || StringUtils.isNotEmpty(locationId)) {
-                                holiday.setLocationId(SecurityUtils.isCurrentUserInRole(Authority.MANAGER) ?
-                                        admin.getLocationId() : locationId);
-                            }
-                        }).filter(holiday -> {
-                            boolean isPastDate = isPastDate(holiday.getYear(), holiday.getMonth(), holiday.getDate(), timezone.get());
-                            boolean isNextYearDate = isNextYearDate(holiday.getYear(), holiday.getMonth(), timezone.get());
-                            if (isPastDate) pastDates.setTrue();
-                            if (isNextYearDate) nextYearDates.setTrue();
-                            return !isNextYearDate && !isPastDate;
-                        })
-                        .collect(Collectors.toList());
-                holidayRepository.saveAll(holidays);
-                // TODO Send notification including on missingData, pastDate & nextYearDate
-            } catch (Exception e) {
-                // TODO Send the failure notification
-            }
+            holidayRepository.saveAll(holidays);
+            // TODO Send notification pastDate & nextYearDate
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
                 .fileUploadProcessing, new Locale(admin.getLangKey())));
