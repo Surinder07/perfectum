@@ -1,12 +1,17 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.locationandroledtos.AdminLocationDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
+import ca.waaw.dto.shifts.ShiftDetailsDto;
+import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.service.ShiftSchedulingService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -17,6 +22,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 @RestController
@@ -26,6 +35,8 @@ import javax.validation.Valid;
 public class ShiftSchedulingController {
 
     private final ShiftSchedulingService shiftSchedulingService;
+
+    private final AppRegexConfig appRegexConfig;
 
     @SwaggerCreated
     @SwaggerBadRequest
@@ -73,29 +84,6 @@ public class ShiftSchedulingController {
         shiftSchedulingService.assignShift(shiftId, userId);
     }
 
-    @SwaggerNotFound
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @ApiResponse(responseCode = "200", description = "Success. Show the response message to user.",
-            content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponseMessageDto.class))})
-    @Operation(description = "${api.description.shift-management.claimShift}")
-    @PutMapping("${api.endpoints.shift-management.claimShift}")
-    public void claimShift(@RequestParam String shiftId) {
-        shiftSchedulingService.claimShift(shiftId);
-    }
-
-    @SwaggerOk
-    @SwaggerNotFound
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.shift-management.approveShift}")
-    @PutMapping("${api.endpoints.shift-management.approveShift}")
-    public void approveClaimedShift() {
-    }
-
     @SwaggerOk
     @SwaggerNotFound
     @SwaggerBadRequest
@@ -111,13 +99,24 @@ public class ShiftSchedulingController {
     @SwaggerAuthenticated
     @Operation(description = "${api.description.shift-management.getAllShifts}")
     @GetMapping("${api.endpoints.shift-management.getAllShifts}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
-            implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getAllShifts}")
-    public ResponseEntity<Object> getAllShifts(@RequestParam(required = false) String locationId,
-                                               @RequestParam(required = false) String location_role_id,
-                                               @RequestParam String date, @RequestParam(required = false) String endDate,
-                                               @PathVariable int pageNo, @PathVariable int pageSize) {
-        return null;
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
+            schema = @Schema(implementation = ShiftDetailsDto.class)))})
+    public ResponseEntity<List<ShiftDetailsDto>> getAllShifts(@Parameter(description = "${api.swagger.param-description.getShift-batchId}")
+                                               @RequestParam(required = false) String batchId,
+                                                              @Parameter(description = "${api.swagger.param-description.getShift-shiftStatus}")
+                                               @RequestParam(required = false) String shiftStatus,
+                                                              @RequestParam String date,
+                                                              @Parameter(description = "${api.swagger.param-description.getShift-endDate}")
+                                               @RequestParam(required = false) String endDate) {
+        List<String> field = new ArrayList<>();
+        if (!Pattern.matches(appRegexConfig.getDate(), date)) field.add("date");
+        if (!Pattern.matches(appRegexConfig.getDate(), endDate)) field.add("endDate");
+        if (Arrays.stream(new String[]{"ASSIGNED", "UNASSIGNED", "SCHEDULED"})
+                .noneMatch(status -> status.equalsIgnoreCase(shiftStatus))) field.add("shiftStatus");
+        if (!field.isEmpty()) {
+            throw new BadRequestException("Invalid value", field.toArray(new String[0]));
+        }
+        return ResponseEntity.ok(shiftSchedulingService.getAllShifts(batchId, shiftStatus, date, endDate));
     }
 
     // TODO pagination shift api for admins

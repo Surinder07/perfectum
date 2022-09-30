@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -64,6 +65,15 @@ public class CommonUtils {
         if (Stream.of(enumClass.getEnumConstants()).map(Enum::name).noneMatch(name -> name.equalsIgnoreCase(value))) {
             throw new BadRequestException("Invalid value for the field", field);
         }
+    }
+
+    /**
+     * @param commaSeparatedString comma separated string to be converted to list
+     * @return List containing all comma separated values
+     */
+    public static List<String> commaSeparatedStringToList(String commaSeparatedString) {
+        return Arrays.asList(commaSeparatedString.replace("[", "").replace("]", "")
+                .replaceAll(", ", ",").split(","));
     }
 
     public static <S> S logMessageAndReturnObject(S object, String logType, Class<?> logLocation, String message,

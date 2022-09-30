@@ -3,11 +3,16 @@ package ca.waaw.mapper;
 import ca.waaw.domain.ShiftBatchUserMapping;
 import ca.waaw.domain.Shifts;
 import ca.waaw.domain.ShiftsBatch;
+import ca.waaw.domain.joined.DetailedShift;
+import ca.waaw.dto.locationandroledtos.LocationAndRoleDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
+import ca.waaw.dto.shifts.ShiftDetailsDto;
+import ca.waaw.dto.userdtos.UserInfoForDropDown;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.ShiftStatus;
 import ca.waaw.enumration.ShiftType;
+import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -69,6 +74,53 @@ public class ShiftsMapper {
             target.setEndDate(DateAndTimeUtils.getDateAtStartOrEnd(source.getEndDate(), "end", timezone));
         } catch (Exception ignored) {
         }
+        return target;
+    }
+
+    /**
+     * @param source shift details
+     * @return dto object
+     */
+    public static ShiftDetailsDto entityToDetailedDto(Shifts source, String timezone) {
+        ShiftDetailsDto target = new ShiftDetailsDto();
+        target.setId(source.getId());
+        target.setStart(DateAndTimeUtils.getDateTimeObject(source.getStart(), timezone));
+        target.setEnd(DateAndTimeUtils.getDateTimeObject(source.getEnd(), timezone));
+        target.setNotes(source.getNotes());
+        target.setShiftType(source.getShiftType());
+        target.setShiftStatus(source.getShiftStatus());
+        target.setConflicts(CommonUtils.commaSeparatedStringToList(source.getConflictReason()));
+        return target;
+    }
+
+    /**
+     * @param source Detailed shift details
+     * @return dto object
+     */
+    public static ShiftDetailsDto detailedEntityToDto(DetailedShift source) {
+        ShiftDetailsDto target = new ShiftDetailsDto();
+        target.setId(source.getId());
+        target.setStart(DateAndTimeUtils.getDateTimeObject(source.getStart(), source.getLocation().getTimezone()));
+        target.setEnd(DateAndTimeUtils.getDateTimeObject(source.getEnd(), source.getLocation().getTimezone()));
+        target.setNotes(source.getNotes());
+        target.setShiftType(source.getShiftType());
+        target.setShiftStatus(source.getShiftStatus());
+        target.setConflicts(CommonUtils.commaSeparatedStringToList(source.getConflictReason()));
+        if (source.getUser() != null) {
+            UserInfoForDropDown user = new UserInfoForDropDown();
+            user.setId(source.getUser().getId());
+            user.setEmail(source.getUser().getEmail());
+            user.setFullName(CommonUtils.combineFirstAndLastName(source.getUser().getFirstName(), source.getUser().getLastName()));
+            user.setAuthority(source.getUser().getAuthority());
+            target.setUser(user);
+        }
+        LocationAndRoleDto locationAndRoleInfo = new LocationAndRoleDto();
+        locationAndRoleInfo.setLocationId(source.getLocation().getId());
+        locationAndRoleInfo.setLocationName(source.getLocation().getName());
+        locationAndRoleInfo.setLocationTimezone(source.getLocation().getTimezone());
+        locationAndRoleInfo.setLocationRoleId(source.getLocationRole().getId());
+        locationAndRoleInfo.setLocationRoleName(source.getLocationRole().getName());
+        target.setLocationAndRoleDetails(locationAndRoleInfo);
         return target;
     }
 

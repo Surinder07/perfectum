@@ -1,24 +1,26 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.Location;
-import ca.waaw.domain.OrganizationHolidays;
-import ca.waaw.domain.Shifts;
-import ca.waaw.domain.ShiftsBatch;
+import ca.waaw.config.applicationconfig.AppCustomIdConfig;
+import ca.waaw.domain.*;
+import ca.waaw.domain.joined.DetailedShift;
 import ca.waaw.domain.joined.EmployeePreferencesWithUser;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.ShiftSchedulingPreferences;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
+import ca.waaw.dto.shifts.ShiftDetailsDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.ShiftStatus;
 import ca.waaw.enumration.ShiftType;
 import ca.waaw.mapper.ShiftsMapper;
 import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.service.CachingService;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import ca.waaw.web.rest.errors.exceptions.application.PastValueNotDeletableException;
+import ca.waaw.web.rest.errors.exceptions.application.ShiftOverlappingException;
 import ca.waaw.web.rest.utils.ApiResponseMessageKeys;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
@@ -46,6 +48,8 @@ public class ShiftSchedulingService {
     private final Logger log = LogManager.getLogger(ShiftSchedulingService.class);
 
     private final ShiftsRepository shiftsRepository;
+
+    private final DetailedShiftRepository detailedShiftRepository;
 
     private final ShiftsBatchRepository shiftsBatchRepository;
 
@@ -154,37 +158,6 @@ public class ShiftSchedulingService {
     /**
      * @param id for shift to be released
      */
-    public void claimShift(String id) {
-        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE);
-        SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(user -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
-                        .map(shift -> {
-                            if (shift.getStart().isBefore(Instant.now())) {
-                                throw new PastValueNotDeletableException("Shift");
-                            }
-                            if (!shift.getLocationRoleId().equals(user.getLocationRoleId()) ||
-                                    !shift.getShiftStatus().equals(ShiftStatus.RELEASED_UNASSIGNED)) {
-                                throw new UnauthorizedException();
-                            }
-                            if (shift.isAssignToFirstClaim()) {
-                                shift.setUserId(user.getId());
-                                shift.setLastModifiedBy(user.getId());
-                                return shiftsRepository.save(shift);
-                            } else {
-                                // TODO create claims table and add claim
-                                return null;
-                            }
-                        }).map(shift -> CommonUtils.logMessageAndReturnObject(shift, "info", ShiftSchedulingService.class,
-                                "Shift deleted: {}", id))
-                        .orElseThrow(() -> new EntityNotFoundException("shift"))
-                );
-        // TODO send notification to admin.
-    }
-
-    /**
-     * @param id for shift to be released
-     */
     public void assignShift(String id, String userId) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
@@ -204,6 +177,9 @@ public class ShiftSchedulingService {
                                         if (!user.getLocationRoleId().equals(shift.getLocationRoleId())) {
                                             throw new UnauthorizedException();
                                         }
+                                        if (isShiftOverlapping(shift, userId)) {
+                                            throw new ShiftOverlappingException();
+                                        }
                                         shift.setUserId(user.getId());
                                         shift.setLastModifiedBy(admin.getId());
                                         return shift;
@@ -214,6 +190,57 @@ public class ShiftSchedulingService {
                         .orElseThrow(() -> new EntityNotFoundException("shift"))
                 );
         // TODO send notification to user.
+    }
+
+    /**
+     * @param batchId     If shifts for a particular batch are required
+     * @param shiftStatus If shifts with a particular batch are required
+     * @param date        date for start range, if single day shifts are required don't pass endDate
+     * @param endDate     date for end range
+     * @return Object depending on role of logged-in user containing all shifts info.
+     */
+    public List<ShiftDetailsDto> getAllShifts(String batchId, String shiftStatus, String date, String endDate) {
+        if (StringUtils.isNotEmpty(batchId) && !SecurityUtils.isCurrentUserInRole(Authority.ADMIN, Authority.MANAGER)) {
+            throw new UnauthorizedException();
+        }
+        if (StringUtils.isNotEmpty(batchId)) {
+            return shiftsBatchRepository.findOneByIdAndDeleteFlag(batchId, false)
+                    .map(this::getDetailedShiftsFromBatch)
+                    .map(shifts -> shifts.stream().map(ShiftsMapper::detailedEntityToDto).collect(Collectors.toList()))
+                    .orElseThrow(() -> new EntityNotFoundException("batch"));
+        }
+        String timezone = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> SecurityUtils.isCurrentUserInRole(Authority.ADMIN) ?
+                        user.getOrganization().getTimezone() : user.getLocation().getTimezone())
+                .orElse(null);
+        Instant[] startEnd = StringUtils.isEmpty(endDate) ?
+                DateAndTimeUtils.getStartAndEndTimeForInstant(date, "") :
+                DateAndTimeUtils.getStartAndEndTimeForInstant(date, endDate, "");
+        if (SecurityUtils.isCurrentUserInRole(Authority.EMPLOYEE)) {
+            return SecurityUtils.getCurrentUserLogin()
+                    .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                    .map(UserOrganization::getId)
+                    .map(id -> shiftsRepository.findAllByUserIdAndDeleteFlagAndStartBetween(id, false, startEnd[0], startEnd[1]))
+                    .map(shifts -> shifts.stream().map(shift -> ShiftsMapper.entityToDetailedDto(shift, timezone))
+                            .collect(Collectors.toList()))
+                    .orElseThrow(UnauthorizedException::new);
+        } else {
+            // TODO USE SHIFT STATUS FOR ADMINS AND EMPLOYEES
+            return SecurityUtils.getCurrentUserLogin()
+                    .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                    .map(user -> {
+                        if (StringUtils.isEmpty(user.getLocationId()))
+                            return detailedShiftRepository.findAllByOrganizationIdAndDeleteFlagAndStartBetween(user.getOrganizationId(),
+                                    false, startEnd[0], startEnd[1]);
+                        else
+                            return detailedShiftRepository.findAllByLocation_idAndDeleteFlagAndStartBetween(user.getLocationId(),
+                                    false, startEnd[0], startEnd[1]);
+                    })
+                    .map(detailedShift -> detailedShift.stream().map(ShiftsMapper::detailedEntityToDto)
+                            .collect(Collectors.toList()))
+                    .orElseThrow(UnauthorizedException::new);
+        }
     }
 
     /**
@@ -423,6 +450,34 @@ public class ShiftSchedulingService {
         return shifts.stream().filter(shift -> shift.getShiftType().equals(ShiftType.RECURRING)).collect(Collectors.toList());
     }
 
+    /**
+     * @param batch batch object
+     * @return shifts associated with the batch
+     */
+    private List<DetailedShift> getDetailedShiftsFromBatch(ShiftsBatch batch) {
+        List<DetailedShift> shifts;
+        if (batch.getUsers() != null && batch.getUsers().size() > 0) {
+            shifts = detailedShiftRepository.findAllByUser_idInAndDeleteFlagAndStartBetween(batch.getUsers(),
+                    false, batch.getStartDate(), batch.getEndDate());
+        } else if (StringUtils.isNotEmpty(batch.getLocationRoleId())) {
+            shifts = detailedShiftRepository.findAllByLocationRole_idAndDeleteFlagAndStartBetween(batch.getLocationRoleId(),
+                    false, batch.getStartDate(), batch.getEndDate());
+        } else {
+            shifts = detailedShiftRepository.findAllByLocation_idAndDeleteFlagAndStartBetween(batch.getLocationId(),
+                    false, batch.getStartDate(), batch.getEndDate());
+        }
+        return shifts.stream().filter(shift -> shift.getShiftType().equals(ShiftType.RECURRING)).collect(Collectors.toList());
+    }
+
+    /**
+     * @param shift  shift details to be checked
+     * @param userId user for whom overlapping is to be checked
+     * @return true is there is shift overlapping
+     */
+    private boolean isShiftOverlapping(Shifts shift, String userId) {
+        return !shiftsRepository.findAllByUserIdAndStartBetween(userId, shift.getStart(), shift.getEnd())
+                .isEmpty();
+    }
 
     private String updateBatchName(Organization organization) {
         int orgPrefix = cachingService.getOrganizationPrefix(organization.getId(), organization.getName());
@@ -433,4 +488,5 @@ public class ShiftSchedulingService {
                 - newNumber.length(), '0');
         return organization.getName().substring(0, 3) + orgPrefix + nameSuffix;
     }
+
 }
