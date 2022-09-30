@@ -61,6 +61,10 @@ public class ShiftSchedulingService {
 
     private final EmployeePreferencesWithUserRepository employeePreferencesWithUserRepository;
 
+    private final CachingService cachingService;
+
+    private final AppCustomIdConfig appCustomIdConfig;
+
     /**
      * Create a new Shift
      *
@@ -237,6 +241,7 @@ public class ShiftSchedulingService {
                 .map(Location::getTimezone)
                 .orElse(null);
         ShiftsBatch batch = ShiftsMapper.dtoToEntityBatch(newShiftBatchDto, timezone);
+        batch.setName(updateBatchName(admin.getOrganization()));
         batch.setCreatedBy(admin.getId());
         batch.setOrganizationId(admin.getOrganizationId());
         shiftsBatchRepository.save(batch);
@@ -264,8 +269,12 @@ public class ShiftSchedulingService {
             List<String> employeeWithoutPreferences = new ArrayList<>();
             List<Shifts> newShifts = ShiftSchedulingUtils.validateAndCreateShiftsForBatch(batch, existingShifts,
                     holidays, preferences, employeePreferenceWithUsers, timezone, admin.getId(), employeeWithoutPreferences);
-            shiftsRepository.saveAll(newShifts);
-            // TODO use employeeWithoutPreferences to send notification to admin
+            if (newShifts.size() > 0) {
+                shiftsRepository.saveAll(newShifts);
+                // TODO use employeeWithoutPreferences to send notification to admin
+            } else {
+                log.info("No new shifts wew created for batch: {}", batch.getName());
+            }
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
                 .createNewBatch, new Locale(admin.getLangKey())));
@@ -414,4 +423,14 @@ public class ShiftSchedulingService {
         return shifts.stream().filter(shift -> shift.getShiftType().equals(ShiftType.RECURRING)).collect(Collectors.toList());
     }
 
+
+    private String updateBatchName(Organization organization) {
+        int orgPrefix = cachingService.getOrganizationPrefix(organization.getId(), organization.getName());
+        String lastName = shiftsBatchRepository.getLastUsedName(organization.getId())
+                .orElse("xxx0000000000");
+        String newNumber = String.valueOf(Integer.parseInt(lastName.substring(4)) + 1);
+        String nameSuffix = StringUtils.leftPad(newNumber, appCustomIdConfig.getLength()
+                - newNumber.length(), '0');
+        return organization.getName().substring(0, 3) + orgPrefix + nameSuffix;
+    }
 }

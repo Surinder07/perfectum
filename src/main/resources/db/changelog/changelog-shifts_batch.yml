@@ -20,6 +20,9 @@ databaseChangeLog:
               - column:
                   name: name
                   type: VARCHAR(100)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: ux_batch_name
               - column:
                   name: organization_id
                   type: VARCHAR(100)
@@ -72,3 +75,10 @@ databaseChangeLog:
             constraintName: fk_shifts_batch_location_id
             referencedColumnNames: uuid
             referencedTableName: location
+        - createIndex:
+            indexName: idx_batch_name
+            tableName: shifts_batch
+            unique: true
+            column:
+              name: name
+              type: VARCHAR(100)
