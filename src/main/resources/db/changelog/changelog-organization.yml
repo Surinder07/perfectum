@@ -61,6 +61,9 @@ databaseChangeLog:
               - column:
                   name: waaw_custom_id
                   type: VARCHAR(25)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: ux_waaw_organization_id
               - column:
                   name: timezone
                   type: VARCHAR(100)
@@ -90,3 +93,10 @@ databaseChangeLog:
                   name: last_modified_date
                   type: TIMESTAMP
                   defaultValueDate: now()
+        - createIndex:
+            indexName: idx_waaw_organization_id
+            tableName: organization
+            unique: true
+            column:
+              name: waaw_custom_id
+              type: VARCHAR(25)

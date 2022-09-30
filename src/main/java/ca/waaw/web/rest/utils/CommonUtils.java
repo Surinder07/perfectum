@@ -93,6 +93,18 @@ public class CommonUtils {
     }
 
     /**
+     * @param currentCustomId current id
+     * @param numericLength   numeric length in the id
+     * @return next id in the sequence
+     */
+    public static String getNextCustomId(String currentCustomId, int numericLength) {
+        String newNumber = String.valueOf(Integer.parseInt(currentCustomId.substring(3)) + 1);
+        String nameSuffix = StringUtils.leftPad(newNumber, numericLength
+                - newNumber.length(), '0');
+        return currentCustomId.substring(0, 3) + nameSuffix;
+    }
+
+    /**
      * {@link #generateRandomKey()} will generate a random 20 character key that we are mostly using for
      * activation, invite, etc. type of links
      * Number of character for key is defined in {@link #DEF_COUNT}

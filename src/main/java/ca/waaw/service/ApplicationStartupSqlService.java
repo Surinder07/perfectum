@@ -1,12 +1,14 @@
 package ca.waaw.service;
 
 import ca.waaw.WaawApplication;
+import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.config.applicationconfig.AppSuperUserConfig;
 import ca.waaw.domain.*;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.SubscriptionPlans;
 import ca.waaw.repository.*;
+import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,6 +44,8 @@ public class ApplicationStartupSqlService {
 
     private final AppSuperUserConfig appSuperUserConfig;
 
+    private final AppCustomIdConfig appCustomIdConfig;
+
     private final PasswordEncoder passwordEncoder;
 
     private final DataSource dataSource;
@@ -62,7 +66,10 @@ public class ApplicationStartupSqlService {
         userRepository.findOneByAuthority(Authority.SUPER_USER)
                 .ifPresentOrElse(user -> log.info("A super-user is already present in the database: {}", user),
                         () -> {
+                            String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
+                                    .orElse(appCustomIdConfig.getOrganizationPrefix() + "000000000");
                             Organization organization = new Organization();
+                            organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
                             organization.setName(appSuperUserConfig.getOrganization());
                             organization.setSubscriptionPlan(SubscriptionPlans.UNLIMITED);
                             organization.setStatus(EntityStatus.ACTIVE);
@@ -70,10 +77,13 @@ public class ApplicationStartupSqlService {
                             organization.setCreatedBy("SYSTEM");
                             organizationRepository.save(organization);
                             log.info("Created a new organization: {}", organization);
-                            saveNewUser(appSuperUserConfig.getFirstName(), appSuperUserConfig.getLastName(),
+                            String currentCustomId = userRepository.getLastUsedCustomId()
+                                    .orElse(appCustomIdConfig.getUserPrefix() + "000000000");
+                            User superUser = saveNewUser(appSuperUserConfig.getFirstName(), appSuperUserConfig.getLastName(),
                                     appSuperUserConfig.getUsername(), appSuperUserConfig.getEmail(), appSuperUserConfig.getPassword(),
+                                    CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()),
                                     Authority.SUPER_USER, organization.getId(), null, null);
-                            createDemoUsersAndLocations(organization.getId());
+                            createDemoUsersAndLocations(organization.getId(), superUser.getWaawId());
                         }
                 );
 
@@ -99,36 +109,41 @@ public class ApplicationStartupSqlService {
         }
     }
 
-    public void createDemoUsersAndLocations(String organizationId) {
+    public void createDemoUsersAndLocations(String organizationId, String currentCustomId) {
         if (Boolean.parseBoolean(env.getProperty("application.create-dummy-data-on-startup"))) {
             // Create an organization admin
-            saveNewUser("Global", "Admin", "gAdmin", "gadmin@waaw.ca", "Admin123$",
+            User admin = saveNewUser("Global", "Admin", "gAdmin", "gadmin@waaw.ca", "Admin123$",
+                    CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()),
                     Authority.ADMIN, organizationId, null, null);
             // Create a new location
             String locationId = createNewLocation(organizationId);
             // Create a location admin
-            saveNewUser("Location", "Admin", "lAdmin", "ladmin@waaw.ca", "Admin123$",
+            User manager = saveNewUser("Location", "Admin", "lAdmin", "ladmin@waaw.ca", "Admin123$",
+                    CommonUtils.getNextCustomId(admin.getWaawId(), appCustomIdConfig.getLength()),
                     Authority.MANAGER, organizationId, locationId, null);
             // Create a new location role
             String locationRoleId = createNewLocationRole(organizationId, locationId);
             // Create new Employees
-            String employee1 = saveNewUser("First", "Employee", "employee1", "employee1@waaw.ca",
-                    "EMPL123$", Authority.EMPLOYEE, organizationId, locationId, locationRoleId);
-            String employee2 = saveNewUser("Second", "Employee", "employee2", "employee2@waaw.ca",
-                    "EMPL123$", Authority.EMPLOYEE, organizationId, locationId, locationRoleId);
+            User employee1 = saveNewUser("First", "Employee", "employee1", "employee1@waaw.ca",
+                    "EMPL123$", CommonUtils.getNextCustomId(manager.getWaawId(), appCustomIdConfig.getLength()),
+                    Authority.EMPLOYEE, organizationId, locationId, locationRoleId);
+            User employee2 = saveNewUser("Second", "Employee", "employee2", "employee2@waaw.ca",
+                    "EMPL123$", CommonUtils.getNextCustomId(employee1.getWaawId(), appCustomIdConfig.getLength()),
+                    Authority.EMPLOYEE, organizationId, locationId, locationRoleId);
             // Create Employee Preferences
-            createEmployeePreferences(employee1);
-            createEmployeePreferences(employee2);
+            createEmployeePreferences(employee1.getId());
+            createEmployeePreferences(employee2.getId());
         }
     }
 
-    private String saveNewUser(String fName, String lName, String username, String email, String password,
+    private User saveNewUser(String fName, String lName, String username, String email, String password, String customId,
                                Authority role, String organizationId, String locationId, String locationRoleId) {
         User user = new User();
         user.setFirstName(fName);
         user.setLastName(lName);
         user.setEmail(email);
         user.setUsername(username);
+        user.setWaawId(customId);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setStatus(EntityStatus.ACTIVE);
         user.setCreatedBy("SYSTEM");
@@ -138,7 +153,7 @@ public class ApplicationStartupSqlService {
         user.setLocationRoleId(locationRoleId);
         userRepository.save(user);
         log.info("Created a new {}: {}", role, user);
-        return user.getId();
+        return user;
     }
 
     private String createNewLocation(String organizationId) {
