@@ -2,7 +2,7 @@ package ca.waaw.web.rest;
 
 import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.dto.ApiResponseMessageDto;
-import ca.waaw.dto.locationandroledtos.AdminLocationDto;
+import ca.waaw.dto.shifts.BatchDetailsDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.shifts.ShiftDetailsDto;
@@ -102,12 +102,12 @@ public class ShiftSchedulingController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = ShiftDetailsDto.class)))})
     public ResponseEntity<List<ShiftDetailsDto>> getAllShifts(@Parameter(description = "${api.swagger.param-description.getShift-batchId}")
-                                               @RequestParam(required = false) String batchId,
+                                                              @RequestParam(required = false) String batchId,
                                                               @Parameter(description = "${api.swagger.param-description.getShift-shiftStatus}")
-                                               @RequestParam(required = false) String shiftStatus,
+                                                              @RequestParam(required = false) String shiftStatus,
                                                               @RequestParam String date,
                                                               @Parameter(description = "${api.swagger.param-description.getShift-endDate}")
-                                               @RequestParam(required = false) String endDate) {
+                                                              @RequestParam(required = false) String endDate) {
         List<String> field = new ArrayList<>();
         if (!Pattern.matches(appRegexConfig.getDate(), date)) field.add("date");
         if (!Pattern.matches(appRegexConfig.getDate(), endDate)) field.add("endDate");
@@ -118,8 +118,6 @@ public class ShiftSchedulingController {
         }
         return ResponseEntity.ok(shiftSchedulingService.getAllShifts(batchId, shiftStatus, date, endDate));
     }
-
-    // TODO pagination shift api for admins
 
     @SwaggerBadRequest
     @SwaggerUnauthorized
@@ -146,12 +144,10 @@ public class ShiftSchedulingController {
     @SwaggerAuthenticated
     @Operation(description = "${api.description.shift-management.getAllShiftsBatch}")
     @GetMapping("${api.endpoints.shift-management.getAllShiftsBatch}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
-            implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getAllShifts}")
-    public ResponseEntity<Object> getAllShiftsBatch(@RequestParam(required = false) String locationId,
-                                                    @RequestParam(required = false) String location_role_id,
-                                                    @PathVariable int pageNo, @PathVariable int pageSize) {
-        return null;
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
+            schema = @Schema(implementation = BatchDetailsDto.class)))})
+    public ResponseEntity<List<BatchDetailsDto>> getAllShiftsBatch() {
+        return ResponseEntity.ok(shiftSchedulingService.getAllBatchDetails());
     }
 
 }

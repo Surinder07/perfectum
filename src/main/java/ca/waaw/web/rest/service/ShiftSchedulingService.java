@@ -7,6 +7,7 @@ import ca.waaw.domain.joined.EmployeePreferencesWithUser;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.ShiftSchedulingPreferences;
+import ca.waaw.dto.shifts.BatchDetailsDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.shifts.ShiftDetailsDto;
@@ -55,7 +56,9 @@ public class ShiftSchedulingService {
 
     private final ShiftBatchMappedUserRepository shiftBatchMappedUserRepository;
 
-    private final UserOrganizationRepository userRepository;
+    private final UserRepository userRepository;
+
+    private final UserOrganizationRepository userOrganizationRepository;
 
     private final LocationRepository locationRepository;
 
@@ -77,7 +80,7 @@ public class ShiftSchedulingService {
     public void createShift(NewShiftDto newShiftDto) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> {
                     String[] ids = getAllLocationIdsAndTimezone(newShiftDto.getUserId(), newShiftDto.getLocationRoleId(),
                             user.getOrganizationId());
@@ -107,7 +110,7 @@ public class ShiftSchedulingService {
     public void deleteShift(String id) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(shift -> {
                             if (shift.getStart().isBefore(Instant.now())) {
@@ -134,7 +137,7 @@ public class ShiftSchedulingService {
     public void releaseShift(String id) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(shift -> {
                             if (shift.getStart().isBefore(Instant.now())) {
@@ -161,7 +164,7 @@ public class ShiftSchedulingService {
     public void assignShift(String id, String userId) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(admin -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(shift -> {
                             if (shift.getStart().isBefore(Instant.now())) {
@@ -172,7 +175,7 @@ public class ShiftSchedulingService {
                                             !shift.getLocationId().equals(admin.getLocationId()))) {
                                 throw new UnauthorizedException();
                             }
-                            return userRepository.findOneByIdAndDeleteFlag(userId, false)
+                            return userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
                                     .map(user -> {
                                         if (!user.getLocationRoleId().equals(shift.getLocationRoleId())) {
                                             throw new UnauthorizedException();
@@ -210,7 +213,7 @@ public class ShiftSchedulingService {
                     .orElseThrow(() -> new EntityNotFoundException("batch"));
         }
         String timezone = SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> SecurityUtils.isCurrentUserInRole(Authority.ADMIN) ?
                         user.getOrganization().getTimezone() : user.getLocation().getTimezone())
                 .orElse(null);
@@ -219,7 +222,7 @@ public class ShiftSchedulingService {
                 DateAndTimeUtils.getStartAndEndTimeForInstant(date, endDate, "");
         if (SecurityUtils.isCurrentUserInRole(Authority.EMPLOYEE)) {
             return SecurityUtils.getCurrentUserLogin()
-                    .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                    .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                     .map(UserOrganization::getId)
                     .map(id -> shiftsRepository.findAllByUserIdAndDeleteFlagAndStartBetween(id, false, startEnd[0], startEnd[1]))
                     .map(shifts -> shifts.stream().map(shift -> ShiftsMapper.entityToDetailedDto(shift, timezone))
@@ -228,7 +231,7 @@ public class ShiftSchedulingService {
         } else {
             // TODO USE SHIFT STATUS FOR ADMINS AND EMPLOYEES
             return SecurityUtils.getCurrentUserLogin()
-                    .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                    .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                     .map(user -> {
                         if (StringUtils.isEmpty(user.getLocationId()))
                             return detailedShiftRepository.findAllByOrganizationIdAndDeleteFlagAndStartBetween(user.getOrganizationId(),
@@ -251,7 +254,7 @@ public class ShiftSchedulingService {
     public ApiResponseMessageDto createNewBatch(NewShiftBatchDto newShiftBatchDto) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         UserOrganization admin = SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> {
                     if (user.getAuthority().equals(Authority.MANAGER))
                         newShiftBatchDto.setLocationId(user.getLocationId());
@@ -299,6 +302,7 @@ public class ShiftSchedulingService {
             if (newShifts.size() > 0) {
                 shiftsRepository.saveAll(newShifts);
                 // TODO use employeeWithoutPreferences to send notification to admin
+                // TODO send notification to admin for gaps if any
             } else {
                 log.info("No new shifts wew created for batch: {}", batch.getName());
             }
@@ -311,10 +315,11 @@ public class ShiftSchedulingService {
      * @param batchId id for batch to be released
      * @return general message to send
      */
+    @Transactional(rollbackFor = Exception.class)
     public ApiResponseMessageDto releaseShiftBatch(String batchId) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         UserOrganization admin = SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .orElseThrow(UnauthorizedException::new);
         CompletableFuture.runAsync(() -> {
             shiftsBatchRepository.findOneByIdAndDeleteFlag(batchId, false)
@@ -323,7 +328,9 @@ public class ShiftSchedulingService {
                                 (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) && !batch.getLocationId().equalsIgnoreCase(admin.getLocationId()))) {
                             throw new UnauthorizedException();
                         }
-                        return batch;
+                        batch.setLastModifiedBy(admin.getId());
+                        batch.setReleased(true);
+                        return shiftsBatchRepository.save(batch);
                     })
                     .map(this::getShiftsFromBatch)
                     .map(shifts -> shifts.stream()
@@ -339,6 +346,31 @@ public class ShiftSchedulingService {
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys.releaseNewBatch,
                 new Locale(admin.getLangKey())));
+    }
+
+    /**
+     * @return All batches under the logged-in user
+     */
+    public List<BatchDetailsDto> getAllBatchDetails() {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        UserOrganization admin = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .orElseThrow(UnauthorizedException::new);
+        List<ShiftsBatch> batchList;
+        if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN)) {
+            batchList = shiftsBatchRepository.findAllByOrganizationIdAndDeleteFlag(admin.getOrganizationId(), false);
+        } else {
+            batchList = shiftsBatchRepository.findAllByLocationIdAndDeleteFlag(admin.getLocationId(), false);
+        }
+        return batchList.stream()
+                .map(batch -> {
+                    List<User> users = null;
+                    if (batch.getUsers() != null && batch.getUsers().size() > 0) {
+                        users = userRepository.findAllByIdInAndDeleteFlag(batch.getUsers(), false);
+                    }
+                    return ShiftsMapper.batchEntityToDto(batch, admin, users);
+                })
+                .collect(Collectors.toList());
     }
 
     /**
@@ -368,7 +400,7 @@ public class ShiftSchedulingService {
     private String[] getAllLocationIdsAndTimezone(String userId, String locationRoleId, String loggedInOrganizationId) {
         String[] ids = new String[3];
         if (StringUtils.isNotEmpty(userId)) {
-            userRepository.findOneByIdAndDeleteFlag(userId, false)
+            userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
                     .map(user -> {
                         if (user.getOrganizationId().equals(loggedInOrganizationId)) return user;
                         throw new UnauthorizedException();
@@ -419,7 +451,7 @@ public class ShiftSchedulingService {
     private List<ShiftSchedulingPreferences> getAllPreferencesForALocationOrUser(String locationId, String locationRoleId,
                                                                                  List<String> userIds) {
         if (userIds != null && userIds.size() > 0) {
-            return userRepository.findAllByDeleteFlagAndIdIn(false, userIds)
+            return userOrganizationRepository.findAllByDeleteFlagAndIdIn(false, userIds)
                     .stream().map(UserOrganization::getLocationRole).map(ShiftSchedulingUtils::mappingFunction)
                     .collect(Collectors.toList());
         } else if (StringUtils.isNotEmpty(locationRoleId)) {

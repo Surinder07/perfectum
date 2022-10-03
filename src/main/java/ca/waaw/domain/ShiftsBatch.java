@@ -7,7 +7,6 @@ import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -15,10 +14,10 @@ import java.util.stream.Collectors;
 
 @Data
 @Entity
-@ToString
-@EqualsAndHashCode
+@ToString(callSuper = true)
 @Table(name = "shifts_batch")
-public class ShiftsBatch implements Serializable {
+@EqualsAndHashCode(callSuper = true)
+public class ShiftsBatch extends AbstractEntity {
 
     @Id
     @Column(name = "uuid")
@@ -30,8 +29,18 @@ public class ShiftsBatch implements Serializable {
     @Column(name = "organization_id")
     private String organizationId;
 
+    @OneToOne
+    @NotFound(action = NotFoundAction.IGNORE)
+    @JoinColumn(name = "location_id", referencedColumnName = "uuid", updatable = false, insertable = false)
+    private Location location;
+
     @Column(name = "location_id")
     private String locationId;
+
+    @OneToOne
+    @NotFound(action = NotFoundAction.IGNORE)
+    @JoinColumn(name = "location_role_id", referencedColumnName = "uuid", updatable = false, insertable = false)
+    private LocationRole locationRole;
 
     @Column(name = "location_role_id")
     private String locationRoleId;
@@ -47,14 +56,8 @@ public class ShiftsBatch implements Serializable {
     @Column(name = "end_date")
     private Instant endDate;
 
-    @Column(name = "del_flg")
-    private boolean deleteFlag;
-
-    @Column(name = "created_by")
-    private String createdBy;
-
-    @Column(name = "created_date")
-    private Instant createdDate = Instant.now();
+    @Column(name = "is_released")
+    private boolean isReleased;
 
     public List<String> getUsers() {
         if (mappedUsers != null)

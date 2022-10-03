@@ -3,8 +3,11 @@ package ca.waaw.mapper;
 import ca.waaw.domain.ShiftBatchUserMapping;
 import ca.waaw.domain.Shifts;
 import ca.waaw.domain.ShiftsBatch;
+import ca.waaw.domain.User;
 import ca.waaw.domain.joined.DetailedShift;
+import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.locationandroledtos.LocationAndRoleDto;
+import ca.waaw.dto.shifts.BatchDetailsDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.shifts.ShiftDetailsDto;
@@ -16,6 +19,7 @@ import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -121,6 +125,43 @@ public class ShiftsMapper {
         locationAndRoleInfo.setLocationRoleId(source.getLocationRole().getId());
         locationAndRoleInfo.setLocationRoleName(source.getLocationRole().getName());
         target.setLocationAndRoleDetails(locationAndRoleInfo);
+        return target;
+    }
+
+    public static BatchDetailsDto batchEntityToDto(ShiftsBatch source, UserOrganization admin, List<User> users) {
+        BatchDetailsDto target = new BatchDetailsDto();
+        target.setId(source.getId());
+        target.setBatchName(source.getName());
+        String timezone = StringUtils.isNotEmpty(admin.getLocation().getTimezone()) ? admin.getLocation().getTimezone() :
+                admin.getOrganization().getTimezone();
+        target.setStartDate(DateAndTimeUtils.getDateTimeObject(source.getStartDate(), timezone).getDate());
+        target.setEndDate(DateAndTimeUtils.getDateTimeObject(source.getEndDate(), timezone).getDate());
+        LocationAndRoleDto locationAndRoleDto = new LocationAndRoleDto();
+        if (users != null) {
+            target.setUsers(users.stream().map(user -> {
+                UserInfoForDropDown targetUser = new UserInfoForDropDown();
+                targetUser.setId(user.getId());
+                targetUser.setEmail(user.getEmail());
+                targetUser.setFullName(CommonUtils.combineFirstAndLastName(user.getFirstName(), user.getLastName()));
+                targetUser.setAuthority(user.getAuthority());
+                return targetUser;
+            }).collect(Collectors.toList()));
+        } else if (source.getLocationRole() != null) {
+            locationAndRoleDto.setLocationRoleName(source.getLocationRole().getName());
+            locationAndRoleDto.setLocationRoleId(source.getLocationRole().getId());
+        } else if (source.getLocation() != null) {
+            locationAndRoleDto.setLocationName(source.getLocation().getName());
+            locationAndRoleDto.setLocationId(source.getLocation().getId());
+            locationAndRoleDto.setLocationTimezone(source.getLocation().getTimezone());
+        }
+        target.setLocationAndRoleDetails(locationAndRoleDto);
+        target.setReleased(source.isReleased());
+        UserInfoForDropDown targetCreatedBy = new UserInfoForDropDown();
+        targetCreatedBy.setId(admin.getId());
+        targetCreatedBy.setEmail(admin.getEmail());
+        targetCreatedBy.setFullName(CommonUtils.combineFirstAndLastName(admin.getFirstName(), admin.getLastName()));
+        targetCreatedBy.setAuthority(admin.getAuthority());
+        target.setBatchCreatedBy(targetCreatedBy);
         return target;
     }
 

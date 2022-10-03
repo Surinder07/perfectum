@@ -42,6 +42,8 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     List<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag);
 
+    List<User> findAllByIdInAndDeleteFlag(List<String> id, boolean deleteFlag);
+
     Page<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag, Pageable pageable);
 
     Page<User> searchUsersWithLocationRoleIdAndDeleteFlag(String searchKey, String locationRoleId, boolean deleteFlag, Pageable pageable);
