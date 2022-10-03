@@ -1,5 +1,6 @@
 package ca.waaw.web.rest.service;
 
+import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.Organization;
@@ -62,6 +63,8 @@ public class UserService {
 
     private final NotificationInternalService notificationInternalService;
 
+    private final AppCustomIdConfig appCustomIdConfig;
+
     /**
      * @param username username to check in database
      * @return true if username is present in database
@@ -90,7 +93,10 @@ public class UserService {
                 })
                 .flatMap(token -> userOrganizationRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
                         .map(user -> {
+                            String currentCustomId = userRepository.getLastUsedCustomId()
+                                    .orElse(appCustomIdConfig.getUserPrefix() + "0000000000");
                             UserMapper.updateInvitedUser(userDTO, user);
+                            user.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
                             user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
                             return user;
                         })
@@ -121,16 +127,22 @@ public class UserService {
                     .orElseThrow(() -> new EntityNotFoundException("promo code"));
         }
 
+        String currentCustomId = userRepository.getLastUsedCustomId()
+                .orElse(appCustomIdConfig.getUserPrefix() + "0000000000");
+        String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
+                .orElse(appCustomIdConfig.getOrganizationPrefix() + "0000000000");
+
         User user = UserMapper.registerDtoToUserEntity(userDTO);
         Organization organization = new Organization();
         organization.setCreatedBy(user.getId());
         organization.setLastModifiedBy(user.getId());
         organization.setFirstDayOfWeek(DaysOfWeek.valueOf(userDTO.getFirstDayOfWeek()));
         organization.setName(userDTO.getOrganizationName());
-        organization.setOvertimeRequestEnabled(true);
+        organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
         organization.setTimezone(userDTO.getTimezone());
         organization.setTrialDays(trialDays);
         user.setOrganizationId(organization.getId());
+        user.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
         user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
         UserTokens token = new UserTokens(UserToken.ACTIVATION);
         token.setUserId(user.getId());

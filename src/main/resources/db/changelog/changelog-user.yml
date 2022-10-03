@@ -51,6 +51,9 @@ databaseChangeLog:
               - column:
                   name: waaw_custom_id
                   type: VARCHAR(25)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: ux_waaw_user_id
               - column:
                   name: image_url
                   type: VARCHAR(500)
@@ -127,6 +130,13 @@ databaseChangeLog:
             column:
               name: email
               type: VARCHAR(100)
+        - createIndex:
+            indexName: idx_waaw_user_id
+            tableName: user
+            unique: true
+            column:
+              name: waaw_custom_id
+              type: VARCHAR(25)
         - addForeignKeyConstraint:
             baseTableName: user
             baseColumnNames: organization_id

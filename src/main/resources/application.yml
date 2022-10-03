@@ -128,6 +128,10 @@ application:
     core-pool-size: 40
     max-pool-size: 80
     queue-capacity: 200
+  custom-id:
+    length: 10
+    user-prefix: USR
+    organization-prefix: ORG
 
 ######################################
 ###### Files related properties ######

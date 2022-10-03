@@ -58,8 +58,6 @@ api:
       updateShift: /v1/shifts/update
       deleteShift: /v1/shifts/delete
       assignShift: /v1/shifts/assign
-      claimShift: /v1/shifts/claim
-      approveShift: /v1/shifts/approve
       releaseShift: /v1/shifts/release
       getAllShifts: /v1/shifts/getAll/{pageNo}/{pageSize}
       createShiftsBatch: /v1/shifts/batch/create
@@ -141,8 +139,6 @@ api:
       updateShift: Update any shift under your authorization.
       deleteShift: Delete an existing shift.
       assignShift: Assign an existing shift to an user.
-      claimShift: Claim an unassigned shift for the user.
-      approveShift: Admin can approve a claim to a shift by employee.
       releaseShift: Admin can release a new shift to employee.
       getAllShifts: |
         Get all shifts under your authorization.
@@ -213,6 +209,9 @@ api:
       getPreferencesUserId: Not needed if logged-in user is an employee.
       getPromoCodeIncludeDeleted: If true will include deleted codes also in response.
       getPromoCodeIncludeExpired: If true will include expired codes also in response.
+      getShift-batchId: Provide to get shits for a particular batch (Not available for EMPLOYEES). <b>If batchId is provided other parameters will be ignored.</b>
+      getShift-shiftStatus: If provided only shifts with given status will be returned. Allowed values:[ASSIGNED, UNASSIGNED, SCHEDULED]
+      getShift-endDate: If end date is passed, results between date and endDate will be returned, else results for just the date will be returned.
 regex:
   explaination:
     email: xx@xx.xx

@@ -6,6 +6,7 @@ import ca.waaw.enumration.EntityStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -14,6 +15,10 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
+
+    @Query(value = "SELECT name from shifts_batch WHERE name IS NOT NULL ORDER BY created_date DESC LIMIT 1",
+            nativeQuery = true)
+    Optional<String> getLastUsedCustomId();
 
     Optional<User> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
 
@@ -32,6 +37,8 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<User> findAllByEmailInAndDeleteFlag(List<String> email, boolean deleteFlag);
 
     List<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag);
+
+    List<User> findAllByIdInAndDeleteFlag(List<String> id, boolean deleteFlag);
 
     Page<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag, Pageable pageable);
 

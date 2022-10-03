@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -76,6 +77,16 @@ public class CommonUtils {
         }
     }
 
+
+    /**
+     * @param commaSeparatedString comma separated string to be converted to list
+     * @return List containing all comma separated values
+     */
+    public static List<String> commaSeparatedStringToList(String commaSeparatedString) {
+        return Arrays.asList(commaSeparatedString.replace("[", "").replace("]", "")
+                .replaceAll(", ", ",").split(","));
+    }
+
     /**
      * @param object        Object to return after logging
      * @param logType       log type (info, debug, etc..)
@@ -116,6 +127,18 @@ public class CommonUtils {
                 .totalPages(page.getTotalPages())
                 .data(data)
                 .build();
+    }
+
+    /**
+     * @param currentCustomId current id
+     * @param numericLength   numeric length in the id
+     * @return next id in the sequence
+     */
+    public static String getNextCustomId(String currentCustomId, int numericLength) {
+        String newNumber = String.valueOf(Integer.parseInt(currentCustomId.substring(3)) + 1);
+        String nameSuffix = StringUtils.leftPad(newNumber, numericLength
+                - newNumber.length(), '0');
+        return currentCustomId.substring(0, 3) + nameSuffix;
     }
 
     /**
