@@ -76,21 +76,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: activation_key
-                  type: VARCHAR(20)
-              - column:
-                  name: invite_key
-                  type: VARCHAR(20)
-              - column:
-                  name: invited_by
-                  type: VARCHAR(100)
-              - column:
-                  name: reset_key
-                  type: VARCHAR(20)
-              - column:
-                  name: reset_date
-                  type: TIMESTAMP
-              - column:
                   name: status
                   type: VARCHAR(50)
                   defaultValue: PENDING
@@ -170,9 +155,3 @@ databaseChangeLog:
             constraintName: fk_user_location_role_id
             referencedColumnNames: uuid
             referencedTableName: location_role
-        - addForeignKeyConstraint:
-            baseTableName: user
-            baseColumnNames: invited_by
-            constraintName: fk_user_invited_by
-            referencedColumnNames: uuid
-            referencedTableName: user

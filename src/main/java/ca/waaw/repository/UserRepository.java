@@ -28,17 +28,13 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findOneByUsernameOrEmail(String username, String email);
 
-    Optional<User> findOneByActivationKey(String key);
-
-    Optional<User> findOneByResetKey(String key);
-
-    Optional<User> findOneByInviteKey(String key);
-
     Optional<User> findOneByAuthority(Authority authority);
 
     Optional<List<User>> findAllByStatusAndCreatedDateBefore(EntityStatus status, Instant date);
 
     List<User> findAllByLocationIdAndDeleteFlag(String locationId, boolean deleteFlag);
+
+    List<User> findAllByEmailInAndDeleteFlag(List<String> email, boolean deleteFlag);
 
     List<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag);
 

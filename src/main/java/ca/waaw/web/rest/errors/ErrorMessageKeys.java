@@ -8,6 +8,7 @@ public final class ErrorMessageKeys {
     public static final String userNotActivatedMessage = "error.userNotActivatedMessage";
     public static final String usernameNotFoundMessage = "error.usernameNotFoundMessage";
     public static final String entityNotFoundMessage = "error.entityNotFoundMessage";
+    public static final String entityNotFoundWithValueMessage = "error.entityNotFoundWithValueMessage";
     public static final String expiredKeyMessage = "error.expiredKeyMessage";
     public static final String disabledAccountMessage = "error.disabledAccountMessage";
     public static final String unauthorizedMessage = "error.unauthorizedMessage";
@@ -19,8 +20,10 @@ public final class ErrorMessageKeys {
     public static final String pastValueNotDeletableMessage = "error.pastValueNotDeletableMessage";
     public static final String shiftOverlappingMessage = "error.shiftOverlappingMessage";
     public static final String missingHeadersMessage = "error.missingHeadersMessage";
+    public static final String missingRequiredFieldsMessage = "error.missingRequiredFieldsMessage";
     public static final String unsupportedFileFormatMessage = "error.unsupportedFileFormatMessage";
     public static final String futureCalenderNotAccessibleMessage = "error.futureCalenderNotAccessibleMessage";
     public static final String fileNotReadableMessage = "error.fileNotReadableMessage";
+    public static final String forDevelopmentOnlyMessage = "error.forDevelopmentOnlyMessage";
 
 }

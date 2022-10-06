@@ -22,7 +22,7 @@ import javax.validation.Valid;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api")
-@Tag(name = "${api.swagger.groups.super-user}")
+@Tag(name = "${api.swagger.groups.super-user}", description = "APIs for an additional role i.e. SUPER_USER (application admin)")
 public class SuperUserController {
 
     private final SuperUserService superUserService;

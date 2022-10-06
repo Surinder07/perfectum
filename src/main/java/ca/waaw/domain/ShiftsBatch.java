@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 public class ShiftsBatch extends AbstractEntity {
 
+    private static final long serialVersionUID = 1L;
+
     @Id
     @Column(name = "uuid")
     private String id = UUID.randomUUID().toString();

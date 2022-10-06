@@ -1,5 +1,6 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
@@ -22,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.util.Locale;
@@ -44,6 +46,17 @@ public class MemberController {
     @PostMapping("${api.endpoints.member.sendInvite}")
     public void sendInvite(@Valid @RequestBody InviteUserDto inviteUserDto) {
         memberService.inviteNewUsers(inviteUserDto);
+    }
+
+    @SwaggerCreated
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "${api.description.member.sendInviteByUpload}")
+    @PostMapping("${api.endpoints.member.sendInviteByUpload}")
+    public ResponseEntity<ApiResponseMessageDto> sendInviteByUpload(@RequestPart MultipartFile file) {
+        return ResponseEntity.ok(memberService.inviteNewUsersByUpload(file));
     }
 
     @SwaggerBadRequest

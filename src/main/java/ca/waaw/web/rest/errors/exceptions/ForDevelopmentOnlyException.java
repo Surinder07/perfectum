@@ -1,10 +1,10 @@
 package ca.waaw.web.rest.errors.exceptions;
 
-public class FileNotReadableException extends RuntimeException {
+public class ForDevelopmentOnlyException  extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public FileNotReadableException() {
+    public ForDevelopmentOnlyException() {
         super();
     }
 

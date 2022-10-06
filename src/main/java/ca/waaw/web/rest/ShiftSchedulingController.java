@@ -17,13 +17,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -103,20 +103,17 @@ public class ShiftSchedulingController {
             schema = @Schema(implementation = ShiftDetailsDto.class)))})
     public ResponseEntity<List<ShiftDetailsDto>> getAllShifts(@Parameter(description = "${api.swagger.param-description.getShift-batchId}")
                                                               @RequestParam(required = false) String batchId,
-                                                              @Parameter(description = "${api.swagger.param-description.getShift-shiftStatus}")
-                                                              @RequestParam(required = false) String shiftStatus,
                                                               @RequestParam String date,
                                                               @Parameter(description = "${api.swagger.param-description.getShift-endDate}")
                                                               @RequestParam(required = false) String endDate) {
         List<String> field = new ArrayList<>();
         if (!Pattern.matches(appRegexConfig.getDate(), date)) field.add("date");
-        if (!Pattern.matches(appRegexConfig.getDate(), endDate)) field.add("endDate");
-        if (Arrays.stream(new String[]{"ASSIGNED", "UNASSIGNED", "SCHEDULED"})
-                .noneMatch(status -> status.equalsIgnoreCase(shiftStatus))) field.add("shiftStatus");
+        if (StringUtils.isNotEmpty(endDate) && !Pattern.matches(appRegexConfig.getDate(), endDate))
+            field.add("endDate");
         if (!field.isEmpty()) {
             throw new BadRequestException("Invalid value", field.toArray(new String[0]));
         }
-        return ResponseEntity.ok(shiftSchedulingService.getAllShifts(batchId, shiftStatus, date, endDate));
+        return ResponseEntity.ok(shiftSchedulingService.getAllShifts(batchId, date, endDate));
     }
 
     @SwaggerBadRequest

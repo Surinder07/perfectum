@@ -1,7 +1,7 @@
 package ca.waaw.service;
 
 import ca.waaw.dto.MailDto;
-import ca.waaw.dto.emailmessagedtos.InviteAcceptedMessageDto;
+import ca.waaw.dto.emailmessagedtos.InviteAcceptedMailDto;
 import ca.waaw.service.email.javamailsender.MailService;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +16,7 @@ public class NotificationMailService {
 
     private final MailService mailService;
 
-    public void sendNewUserMailToAdmin(InviteAcceptedMessageDto message, String organizationName, String loginUrl) {
+    public void sendNewUserMailToAdmin(InviteAcceptedMailDto message, String organizationName, String loginUrl) {
         MailDto messageDto = MailDto.builder()
                 .email(message.getEmail())
                 .actionUrl(loginUrl)

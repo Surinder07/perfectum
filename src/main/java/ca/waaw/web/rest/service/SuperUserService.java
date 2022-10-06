@@ -38,7 +38,6 @@ public class SuperUserService {
                     throw new EntityAlreadyExistsException("promo code", code.getCode());
                 });
         PromotionCode promotionCode = new PromotionCode();
-        promotionCode.setId(UUID.randomUUID().toString());
         promotionCode.setType(PromoCodeType.valueOf(promotionCodeDto.getType()));
         promotionCode.setCode(promotionCodeDto.getCode());
         promotionCode.setExpiryDate(Instant.now().plus(promotionCodeDto.getExpireAfterDays(), ChronoUnit.DAYS));

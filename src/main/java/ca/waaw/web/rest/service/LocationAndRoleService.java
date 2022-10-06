@@ -10,10 +10,7 @@ import ca.waaw.mapper.LocationMapper;
 import ca.waaw.mapper.LocationRoleMapper;
 import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
-import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
-import ca.waaw.web.rest.errors.exceptions.BadRequestException;
-import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
-import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
+import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -75,6 +72,13 @@ public class LocationAndRoleService {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN);
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(admin -> {
+                    locationRepository.getByNameAndOrganizationId(newLocationDto.getName(), admin.getOrganizationId())
+                            .map(location -> {
+                                throw new EntityAlreadyExistsException("Location.name", newLocationDto.getName());
+                            });
+                    return admin;
+                })
                 .map(admin -> LocationMapper.dtoToEntity(newLocationDto, admin))
                 .map(locationRepository::save)
                 .map(location -> CommonUtils.logMessageAndReturnObject(location, "info", LocationAndRoleService.class,
@@ -114,6 +118,13 @@ public class LocationAndRoleService {
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(admin -> checkLocationIdForAdminRole(admin, locationRoleDto))
+                .map(admin -> {
+                    locationRoleRepository.getByNameAndLocationId(locationRoleDto.getName(), locationRoleDto.getLocationId())
+                            .map(location -> {
+                                throw new EntityAlreadyExistsException("LocationRole.name", locationRoleDto.getName());
+                            });
+                    return admin;
+                })
                 .map(admin -> checkOrganizationDefaultAndMapDtoToEntity(admin, locationRoleDto))
                 .map(locationRoleRepository::save)
                 .map(locationRole -> CommonUtils.logMessageAndReturnObject(locationRole, "info", LocationAndRoleService.class,

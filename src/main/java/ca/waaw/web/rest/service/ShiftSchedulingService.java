@@ -101,7 +101,7 @@ public class ShiftSchedulingService {
                         "New Shift created: {}", shift))
                 .orElseThrow(() -> new EntityNotFoundException("user"));
         // TODO Send Notification to employee if shift is released.
-        // TODO Send notification to admin if conflicting shifts are there.
+        // TODO Send Notification to admin if conflicting shifts are there.
     }
 
     /**
@@ -197,12 +197,11 @@ public class ShiftSchedulingService {
 
     /**
      * @param batchId     If shifts for a particular batch are required
-     * @param shiftStatus If shifts with a particular batch are required
      * @param date        date for start range, if single day shifts are required don't pass endDate
      * @param endDate     date for end range
      * @return Object depending on role of logged-in user containing all shifts info.
      */
-    public List<ShiftDetailsDto> getAllShifts(String batchId, String shiftStatus, String date, String endDate) {
+    public List<ShiftDetailsDto> getAllShifts(String batchId, String date, String endDate) {
         if (StringUtils.isNotEmpty(batchId) && !SecurityUtils.isCurrentUserInRole(Authority.ADMIN, Authority.MANAGER)) {
             throw new UnauthorizedException();
         }
@@ -229,7 +228,6 @@ public class ShiftSchedulingService {
                             .collect(Collectors.toList()))
                     .orElseThrow(UnauthorizedException::new);
         } else {
-            // TODO USE SHIFT STATUS FOR ADMINS AND EMPLOYEES
             return SecurityUtils.getCurrentUserLogin()
                     .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                     .map(user -> {
@@ -342,7 +340,7 @@ public class ShiftSchedulingService {
                     .map(shiftsRepository::saveAll)
                     .orElseThrow(() -> new EntityNotFoundException("batch"));
             log.info("Batch for batch id: {}, released", batchId);
-            // TODO send notifications for released shifts to admin
+            // TODO send notifications for released shifts to admin and employee
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys.releaseNewBatch,
                 new Locale(admin.getLangKey())));
@@ -445,8 +443,8 @@ public class ShiftSchedulingService {
      * @param locationId     locationId
      * @param locationRoleId locationRoleId
      * @param userIds        userIds
-     * @return List of shift scheduling preference based on one of these ids,
-     * hierarchy followed -> userid, locationRoleId, locationId
+     * @return List of shift scheduling preference based on one of these ids, hierarchy followed ->
+     * userid, locationRoleId, locationId
      */
     private List<ShiftSchedulingPreferences> getAllPreferencesForALocationOrUser(String locationId, String locationRoleId,
                                                                                  List<String> userIds) {

@@ -15,6 +15,8 @@ import java.util.UUID;
 @Table(name = "shifts_batch_user_mapping")
 public class ShiftBatchUserMapping implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Id
     @Column(name = "uuid")
     private String id = UUID.randomUUID().toString();
