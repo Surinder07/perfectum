@@ -152,7 +152,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorVM(message, ex.getHeaders()), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(MissingHeadersException.class)
+    @ExceptionHandler(MissingRequiredFieldsException.class)
     protected ResponseEntity<ErrorVM> handleMissingRequiredFieldsException(MissingRequiredFieldsException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.missingRequiredFieldsMessage,
                 null), ex.getFileType());

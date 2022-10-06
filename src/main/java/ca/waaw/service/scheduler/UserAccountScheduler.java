@@ -2,6 +2,7 @@ package ca.waaw.service.scheduler;
 
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.User;
+import ca.waaw.domain.UserTokens;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.UserToken;
 import ca.waaw.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -49,10 +51,19 @@ public class UserAccountScheduler {
                 });
     }
 
-    // TODO expire reset password token
-//    @Scheduled(cron = "0 5 1 * * ?")
-
-    // TODO expire invite token
-//    @Scheduled(cron = "0 10 1 * * ?")
+    @Scheduled(cron = "0 5 1 * * ?")
+    public void expireInviteAndPasswordRestToken() {
+        List<UserTokens> expiredTokens = userTokenRepository.findAllByIsExpired(false)
+                .stream()
+                .filter(token -> (token.getTokenType().equals(UserToken.INVITE) && token.getCreatedDate().isBefore(Instant.now()
+                        .minus(appValidityTimeConfig.getUserInvite(), ChronoUnit.DAYS))) ||
+                        (token.getTokenType().equals(UserToken.RESET) && token.getCreatedDate().isBefore(Instant.now()
+                                .minus(appValidityTimeConfig.getPasswordReset(), ChronoUnit.DAYS)))
+                )
+                .peek(token -> token.setExpired(true))
+                .collect(Collectors.toList());
+        userTokenRepository.saveAll(expiredTokens);
+        log.info("Expired tokens updated: {}", expiredTokens);
+    }
 
 }

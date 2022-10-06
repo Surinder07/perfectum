@@ -225,7 +225,7 @@ public class MemberService {
                                             && !admin.getLocationId().equals(user.getLocationId())))) {
                                         throw new UnauthorizedException();
                                     }
-                                    return user; // TODO use filter to make code simple
+                                    return user;
                                 })
                                 .orElseThrow(() -> new EntityNotFoundException("user")))
                         )

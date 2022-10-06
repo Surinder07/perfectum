@@ -210,8 +210,8 @@ api:
       getPromoCodeIncludeDeleted: If true will include deleted codes also in response.
       getPromoCodeIncludeExpired: If true will include expired codes also in response.
       getShift-batchId: Provide to get shits for a particular batch (Not available for EMPLOYEES). <b>If batchId is provided other parameters will be ignored.</b>
-      getShift-shiftStatus: If provided only shifts with given status will be returned. Allowed values:[ASSIGNED, UNASSIGNED, SCHEDULED]
       getShift-endDate: If end date is passed, results between date and endDate will be returned, else results for just the date will be returned.
+
 regex:
   explaination:
     email: xx@xx.xx

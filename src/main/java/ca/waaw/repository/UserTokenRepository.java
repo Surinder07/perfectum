@@ -13,4 +13,6 @@ public interface UserTokenRepository extends JpaRepository<UserTokens, String> {
 
     Optional<List<UserTokens>> findAllByUserIdInAndTokenType(List<String> userIds, UserToken type);
 
+    List<UserTokens> findAllByIsExpired(boolean isExpired);
+
 }
