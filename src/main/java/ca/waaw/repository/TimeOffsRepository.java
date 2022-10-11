@@ -1,9 +1,9 @@
 package ca.waaw.repository;
 
-import ca.waaw.domain.ShiftBatchUserMapping;
+import ca.waaw.domain.TimeOffs;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ShiftBatchMappedUserRepository extends JpaRepository<ShiftBatchUserMapping, String> {
+public interface TimeOffsRepository extends JpaRepository<TimeOffs, String> {
 }
