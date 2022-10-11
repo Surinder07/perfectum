@@ -42,9 +42,9 @@ public class UserMapper {
      * This mapper is used for first time registration Dto for invited users
      *
      * @param source {@link RegisterUserDto} containing new user details
-     * @param target {@link User} entity to be saved in database
+     * @param target {@link UserOrganization} entity to be saved in database
      */
-    public static void updateInvitedUser(RegisterUserDto source, User target) {
+    public static void updateInvitedUser(RegisterUserDto source, UserOrganization target) {
         target.setLastModifiedBy(target.getId());
         target.setUsername(source.getUsername());
         if (StringUtils.isNotEmpty(source.getFirstName())) target.setFirstName(source.getFirstName());
@@ -64,12 +64,10 @@ public class UserMapper {
     public static User registerDtoToUserEntity(RegisterOrganizationDto source) {
         User target = new User();
         BeanUtils.copyProperties(source, target);
-        target.setId(UUID.randomUUID().toString());
         target.setCreatedBy(target.getId());
         target.setLastModifiedBy(target.getId());
         target.setStatus(EntityStatus.PENDING);
         target.setAuthority(Authority.ADMIN);
-        target.setActivationKey(CommonUtils.Random.generateRandomKey());
         return target;
     }
 
@@ -95,8 +93,7 @@ public class UserMapper {
      */
     public static User inviteUserDtoToEntity(InviteUserDto source) {
         User target = new User();
-        target.setId(UUID.randomUUID().toString());
-        target.setEmail(source.getEmail());
+        target.setEmail(source.getEmail().toLowerCase());
         target.setFirstName(source.getFirstName());
         target.setLastName(source.getLastName());
         target.setEmployeeId(source.getEmployeeId());
@@ -104,7 +101,6 @@ public class UserMapper {
         target.setLocationRoleId(source.getLocationRoleId());
         target.setAuthority(Authority.valueOf(source.getRole()));
         target.setStatus(EntityStatus.PENDING);
-        target.setInviteKey(CommonUtils.Random.generateRandomKey());
         return target;
     }
 
@@ -142,11 +138,11 @@ public class UserMapper {
      * @param registrationUrl Registration url set in {@code application.yml}
      * @return Registration url with known user info as query params
      */
-    public static String buildRegisterThroughInviteUrl(User user, String registrationUrl) {
+    public static String buildRegisterThroughInviteUrl(User user, String registrationUrl, String inviteKey) {
         return String.format(
                 "%s?key=%s" + (StringUtils.isNotEmpty(user.getFirstName()) ? "?firstName=%s" : "%s")
                         + (StringUtils.isNotEmpty(user.getLastName()) ? "?lastName=%s" : "%s"),
-                registrationUrl, user.getInviteKey(), StringUtils.isNotEmpty(user.getFirstName()) ? user.getFirstName() : "",
+                registrationUrl, inviteKey, StringUtils.isNotEmpty(user.getFirstName()) ? user.getFirstName() : "",
                 StringUtils.isNotEmpty(user.getLastName()) ? user.getLastName() : ""
         );
     }
@@ -187,7 +183,6 @@ public class UserMapper {
         EmployeePreferences target = new EmployeePreferences();
         BeanUtils.copyProperties(source, target);
         target.setExpired(false);
-        target.setId(UUID.randomUUID().toString());
         return target;
     }
 

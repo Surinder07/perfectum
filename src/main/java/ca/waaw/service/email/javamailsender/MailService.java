@@ -13,7 +13,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
@@ -27,7 +26,6 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Service for sending mails
- * We use the {@link Async} annotation to send mail asynchronously
  */
 @SuppressWarnings("unused")
 @Service

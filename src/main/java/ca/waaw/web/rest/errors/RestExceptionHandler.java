@@ -84,8 +84,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     protected ResponseEntity<ErrorVM> handleEntityNotFoundException(EntityNotFoundException ex) {
-        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotFoundMessage,
-                null), ex.getEntity());
+        String message = ex.getValue() == null ? String.format(CommonUtils
+                .getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotFoundMessage,
+                        null), ex.getEntity()) : String.format(CommonUtils
+                .getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotFoundWithValueMessage,
+                        null), ex.getEntity(), ex.getValue());
         return new ResponseEntity<>(new ErrorVM(message, ex.getEntity()), HttpStatus.NOT_FOUND);
     }
 
@@ -149,6 +152,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorVM(message, ex.getHeaders()), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(MissingRequiredFieldsException.class)
+    protected ResponseEntity<ErrorVM> handleMissingRequiredFieldsException(MissingRequiredFieldsException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.missingRequiredFieldsMessage,
+                null), ex.getFileType());
+        return new ResponseEntity<>(new ErrorVM(message, ex.getField()), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(UnsupportedFileFormatException.class)
     protected ResponseEntity<ErrorVM> handleUnsupportedFileFormatException(UnsupportedFileFormatException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.unsupportedFileFormatMessage,
@@ -166,6 +176,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(FileNotReadableException.class)
     protected ResponseEntity<ErrorVM> handleFileNotReadableException(FileNotReadableException ex) {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.fileNotReadableMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ForDevelopmentOnlyException.class)
+    protected ResponseEntity<ErrorVM> handleForDevelopmentOnlyException(ForDevelopmentOnlyException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.forDevelopmentOnlyMessage,
                 null);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
     }

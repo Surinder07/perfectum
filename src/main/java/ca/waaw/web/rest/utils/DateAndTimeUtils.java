@@ -86,6 +86,35 @@ public class DateAndTimeUtils {
     }
 
     /**
+     * @param date     date in string format(yyyy/MM/dd)
+     * @param timezone timezone required
+     * @return start and end time
+     */
+    public static Instant[] getStartAndEndTimeForInstant(String date, String timezone) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        Instant start = LocalDateTime.parse(String.format("%s %s", date, "00:00:00"), formatter)
+                .atZone(ZoneId.of(timezone)).toInstant();
+        Instant end = LocalDateTime.parse(String.format("%s %s", date, "23:59:59"), formatter)
+                .atZone(ZoneId.of(timezone)).toInstant();
+        return new Instant[]{start, end};
+    }
+
+    /**
+     * @param startDate start date in string format(yyyy/MM/dd)
+     * @param endDate   end date in string format(yyyy/MM/dd)
+     * @param timezone  timezone required
+     * @return start and end time
+     */
+    public static Instant[] getStartAndEndTimeForInstant(String startDate, String endDate, String timezone) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        Instant start = LocalDateTime.parse(String.format("%s %s", startDate, "00:00:00"), formatter)
+                .atZone(ZoneId.of(timezone)).toInstant();
+        Instant end = LocalDateTime.parse(String.format("%s %s", endDate, "23:59:59"), formatter)
+                .atZone(ZoneId.of(timezone)).toInstant();
+        return new Instant[]{start, end};
+    }
+
+    /**
      * Example: For Instant 2022-09-21T14:53:55 and day difference 2 it will return
      * [2022-09-21T00:00:00, 2022-09-23T23:59:59]
      *

@@ -6,18 +6,22 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Entity
 @ToString
 @EqualsAndHashCode
 @Table(name = "notification")
-public class Notification {
+public class Notification implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @Column(name = "uuid")
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @Column
     private String title;

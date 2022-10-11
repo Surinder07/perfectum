@@ -20,6 +20,9 @@ databaseChangeLog:
               - column:
                   name: name
                   type: VARCHAR(100)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: ux_batch_name
               - column:
                   name: organization_id
                   type: VARCHAR(100)
@@ -37,6 +40,12 @@ databaseChangeLog:
               - column:
                   name: end_date
                   type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_released
+                  type: BOOLEAN
+                  defaultValue: false
                   constraints:
                     nullable: false
               - column:
@@ -72,3 +81,10 @@ databaseChangeLog:
             constraintName: fk_shifts_batch_location_id
             referencedColumnNames: uuid
             referencedTableName: location
+        - createIndex:
+            indexName: idx_batch_name
+            tableName: shifts_batch
+            unique: true
+            column:
+              name: name
+              type: VARCHAR(100)

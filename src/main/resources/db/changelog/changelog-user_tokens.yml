@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-user_tokens
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: user_tokens
+      changes:
+        - createTable:
+            tableName: user_tokens
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: VARCHAR(100)
+              - column:
+                  name: token
+                  type: VARCHAR(20)
+              - column:
+                  name: token_type
+                  type: VARCHAR(50)
+              - column:
+                  name: is_expired
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+        - addForeignKeyConstraint:
+            baseTableName: user_tokens
+            baseColumnNames: user_id
+            constraintName: fk_user_token_user_id
+            referencedColumnNames: uuid
+            referencedTableName: user

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -55,17 +56,46 @@ public class CommonUtils {
         return StringUtils.isNotEmpty(lastname) ? firstname + " " + lastname : firstname;
     }
 
+    /**
+     * @param countryCode country code
+     * @param mobile      mobile
+     * @return combined string without any white spaces
+     */
     public static String combinePhoneNumber(String countryCode, String mobile) {
         if (StringUtils.isEmpty(countryCode) && StringUtils.isEmpty(mobile)) return null;
         return StringUtils.isNotEmpty(countryCode) ? countryCode + " " + mobile : mobile;
     }
 
+    /**
+     * @param enumClass Enum class to match string with
+     * @param value     value to be matched with enum
+     * @param field     field that will be shown in exception thrown
+     */
     public static void validateStringInEnum(Class<? extends Enum<?>> enumClass, String value, String field) {
         if (Stream.of(enumClass.getEnumConstants()).map(Enum::name).noneMatch(name -> name.equalsIgnoreCase(value))) {
             throw new BadRequestException("Invalid value for the field", field);
         }
     }
 
+
+    /**
+     * @param commaSeparatedString comma separated string to be converted to list
+     * @return List containing all comma separated values
+     */
+    public static List<String> commaSeparatedStringToList(String commaSeparatedString) {
+        return Arrays.asList(commaSeparatedString.replace("[", "").replace("]", "")
+                .replaceAll(", ", ",").split(","));
+    }
+
+    /**
+     * @param object        Object to return after logging
+     * @param logType       log type (info, debug, etc..)
+     * @param logLocation   Class to show with logging
+     * @param message       message to log
+     * @param messageParams params to be passed in message
+     * @param <S>           Class type for return object
+     * @return Object passed as parameter
+     */
     public static <S> S logMessageAndReturnObject(S object, String logType, Class<?> logLocation, String message,
                                                   Object... messageParams) {
         Logger log = LogManager.getLogger(logLocation);
@@ -83,6 +113,13 @@ public class CommonUtils {
         return object;
     }
 
+    /**
+     * @param page   Page object containing all data
+     * @param mapper mapper function to convert to dto list
+     * @param <M>    Class type for Page entity
+     * @param <S>    Class type for DTO response
+     * @return PaginationDto containing list of dto and page info
+     */
     public static <M, S> PaginationDto getPaginationResponse(Page<M> page, Function<M, S> mapper) {
         List<S> data = page.getContent().stream().map(mapper).collect(Collectors.toList());
         return PaginationDto.builder()
@@ -90,6 +127,18 @@ public class CommonUtils {
                 .totalPages(page.getTotalPages())
                 .data(data)
                 .build();
+    }
+
+    /**
+     * @param currentCustomId current id
+     * @param numericLength   numeric length in the id
+     * @return next id in the sequence
+     */
+    public static String getNextCustomId(String currentCustomId, int numericLength) {
+        String newNumber = String.valueOf(Integer.parseInt(currentCustomId.substring(3)) + 1);
+        String nameSuffix = StringUtils.leftPad(newNumber, numericLength
+                - newNumber.length(), '0');
+        return currentCustomId.substring(0, 3) + nameSuffix;
     }
 
     /**

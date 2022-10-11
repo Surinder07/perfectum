@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class InviteAcceptedMessageDto {
+public class InviteAcceptedMailDto {
 
     private String name;
 

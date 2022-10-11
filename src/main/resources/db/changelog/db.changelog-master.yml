@@ -26,3 +26,5 @@ databaseChangeLog:
       file: db/changelog/changelog-shifts_batch.yml
   - include:
       file: db/changelog/changelog-shifts_batch_user_mapping.yml
+  - include:
+      file: db/changelog/changelog-user_tokens.yml

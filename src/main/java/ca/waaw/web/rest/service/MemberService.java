@@ -1,24 +1,26 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppUrlConfig;
-import ca.waaw.domain.EmployeePreferences;
-import ca.waaw.domain.LocationRole;
-import ca.waaw.domain.User;
+import ca.waaw.domain.*;
 import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.ShiftSchedulingPreferences;
+import ca.waaw.dto.emailmessagedtos.InviteUserMailDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.UserToken;
+import ca.waaw.filehandler.FileHandler;
+import ca.waaw.filehandler.enumration.PojoToMap;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.UserMailService;
-import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
-import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
-import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
-import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
+import ca.waaw.web.rest.errors.exceptions.*;
+import ca.waaw.web.rest.errors.exceptions.application.MissingRequiredFieldsException;
+import ca.waaw.web.rest.utils.ApiResponseMessageKeys;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.ShiftSchedulingUtils;
 import lombok.AllArgsConstructor;
@@ -31,10 +33,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +49,8 @@ public class MemberService {
     private final Logger log = LogManager.getLogger(MemberService.class);
 
     private final UserRepository userRepository;
+
+    private final UserTokenRepository userTokenRepository;
 
     private final UserOrganizationRepository userOrganizationRepository;
 
@@ -57,36 +64,86 @@ public class MemberService {
 
     private final EmployeePreferencesRepository employeePreferencesRepository;
 
+    private final FileHandler fileHandler;
+
     /**
      * Sends an invitation to user email
      *
      * @param inviteUserDto new user details
      */
+    @Transactional(rollbackFor = Exception.class)
     public void inviteNewUsers(InviteUserDto inviteUserDto) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
-        userRepository.findOneByEmailAndDeleteFlag(inviteUserDto.getEmail(), false)
-                .ifPresent(user -> {
-                    log.debug("Invited email ({}) is already a member", inviteUserDto.getEmail());
-                    throw new EntityAlreadyExistsException("email", inviteUserDto.getEmail());
-                });
-        User user = UserMapper.inviteUserDtoToEntity(inviteUserDto);
-        /*
-         * Updating organization id in User object as well as getting the organization name for user invitation mail
-         */
-        String organizationName = SecurityUtils.getCurrentUserLogin()
+        UserOrganization admin = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(admin -> {
-                    user.setInvitedBy(admin.getId());
-                    user.setCreatedBy(admin.getId());
-                    user.setOrganizationId(admin.getOrganization().getId());
-                    return admin.getOrganization().getName();
-                })
                 .orElseThrow(UnauthorizedException::new);
-        userRepository.save(user);
-        log.info("New User added to database (pending for accepting invite): {}", user);
-        String inviteUrl = appUrlConfig.getInviteUserUrl(user.getInviteKey());
-        userMailService.sendInvitationEmail(user, inviteUrl, organizationName);
-        log.info("Invitation sent to the user");
+        inviteNewUsers(Collections.singletonList(inviteUserDto), true, admin);
+    }
+
+    /**
+     * @param file Multipart file containing new users information
+     * @return Generic message
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ApiResponseMessageDto inviteNewUsersByUpload(MultipartFile file) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        // Converting file to Input Stream so that it is available in the async process below
+        InputStream fileInputStream;
+        String fileName;
+        try {
+            fileInputStream = file.getInputStream();
+            fileName = file.getOriginalFilename();
+        } catch (IOException e) {
+            log.error("Exception while reading file.", e);
+            throw new FileNotReadableException();
+        }
+        UserOrganization admin = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .orElseThrow(UnauthorizedException::new);
+        String role = SecurityUtils.isCurrentUserInRole(Authority.ADMIN) ? "ADMIN" : "MANAGER";
+
+        Set<String> missingFields = new HashSet<>();
+        /*
+         * Location and locationId here contains names coming from excel/csv sheet, we will fetch Ids from
+         * database and replace them.
+         */
+        List<InviteUserDto> inviteUserDtoList = fileHandler.readExcelOrCsv(fileInputStream, fileName,
+                InviteUserDto.class, missingFields, PojoToMap.INVITE_USERS);
+        List<Location> locations = locationRepository.getListByNameAndOrganization(inviteUserDtoList
+                        .stream().map(InviteUserDto::getLocationId).map(String::toLowerCase).collect(Collectors.toList()),
+                admin.getOrganizationId());
+        List<LocationRole> locationRoles = locationRoleRepository.getListByNameAndLocation(inviteUserDtoList
+                        .stream().map(InviteUserDto::getLocationRoleId).map(String::toLowerCase).collect(Collectors.toList()),
+                locations.stream().map(Location::getId).collect(Collectors.toList()));
+        inviteUserDtoList.forEach(inviteUserDto -> {
+            if (StringUtils.isEmpty(inviteUserDto.getLocationId()) && role.equals("ADMIN")) {
+                missingFields.add("location");
+                inviteUserDtoList.remove(inviteUserDto);
+            } else {
+                Location location = role.equals("ADMIN") ? locations.stream().filter(loc -> loc.getName()
+                                .equalsIgnoreCase(inviteUserDto.getLocationId())).findFirst()
+                        .orElse(null) : admin.getLocation();
+                LocationRole locationRole = locationRoles.stream().filter(locRole -> locRole.getName()
+                                .equalsIgnoreCase(inviteUserDto.getLocationRoleId())).findFirst()
+                        .orElse(null);
+                if (location == null)
+                    throw new EntityNotFoundException("location", inviteUserDto.getLocationId());
+                if (locationRole == null)
+                    throw new EntityNotFoundException("locationRole", inviteUserDto.getLocationRoleId());
+                inviteUserDto.setLocationId(location.getId());
+                inviteUserDto.setLocationRoleId(locationRole.getLocationId());
+            }
+        });
+        if (missingFields.size() > 0) {
+            throw new MissingRequiredFieldsException("excel/csv", missingFields.toArray(missingFields.toArray(new String[0])));
+        }
+        CompletableFuture.runAsync(() -> {
+            inviteNewUsers(inviteUserDtoList, false, admin);
+            // TODO send notification
+        });
+        return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
+                .uploadNewEmployees, new Locale(admin.getLangKey())));
+
     }
 
     /**
@@ -140,10 +197,7 @@ public class MemberService {
 
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(user -> {
-                    if (user.getOrganizationId().equals(locationRole.getOrganizationId())) return user;
-                    return null;
-                })
+                .filter(user -> user.getOrganizationId().equals(locationRole.getOrganizationId()))
                 .orElseThrow(UnauthorizedException::new);
 
         Page<User> userPage;
@@ -187,7 +241,7 @@ public class MemberService {
     public void addEmployeePreferences(EmployeePreferencesDto employeePreferencesDto) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         List<EmployeePreferences> preferencesToSave = new ArrayList<>();
-        ShiftSchedulingPreferences shiftSchedulingPreferences = new ShiftSchedulingPreferences();
+        AtomicReference<ShiftSchedulingPreferences> shiftSchedulingPreferences = new AtomicReference<>();
         String adminUserId = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> Optional.of(userRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .flatMap(admin -> userOrganizationRepository.findOneByIdAndDeleteFlag(employeePreferencesDto.getUserId(), false)
@@ -199,10 +253,7 @@ public class MemberService {
                                     return user.getLocationRole();
                                 })
                                 .map(locationRole -> {
-                                    shiftSchedulingPreferences.setMinHoursBetweenShifts(locationRole.getMinHoursBetweenShifts());
-                                    shiftSchedulingPreferences.setMaxConsecutiveWorkDays(locationRole.getMaxConsecutiveWorkDays());
-                                    shiftSchedulingPreferences.setTotalHoursPerDayMax(locationRole.getTotalHoursPerDayMax());
-                                    shiftSchedulingPreferences.setTotalHoursPerDayMin(locationRole.getTotalHoursPerDayMin());
+                                    shiftSchedulingPreferences.set(ShiftSchedulingUtils.mappingFunction(locationRole));
                                     return admin;
                                 })
                         )
@@ -220,7 +271,7 @@ public class MemberService {
         newPreference.setCreatedBy(adminUserId);
         preferencesToSave.add(newPreference);
         employeePreferencesRepository.saveAll(preferencesToSave);
-        if (ShiftSchedulingUtils.validateEmployeePreference(shiftSchedulingPreferences, employeePreferencesDto)) {
+        if (ShiftSchedulingUtils.validateEmployeePreference(shiftSchedulingPreferences.get(), employeePreferencesDto)) {
             // TODO notify admin about preference mismatch
         }
         log.info("New preference saved for the employee: {}", newPreference);
@@ -249,6 +300,50 @@ public class MemberService {
                     .map(UserMapper::employeePreferenceToDto)
                     .orElseThrow(() -> new EntityNotFoundException("preferences"));
         }
+    }
+
+    /**
+     * Sends an invitation to user email
+     *
+     * @param inviteUserDtoList new user details list
+     * @param throwError        If an email already exist, should throw error?
+     * @param admin             {@link UserOrganization} object containing admin info
+     */
+    private void inviteNewUsers(List<InviteUserDto> inviteUserDtoList, boolean throwError, UserOrganization admin) {
+        List<String> emails = inviteUserDtoList.stream().map(InviteUserDto::getEmail).collect(Collectors.toList());
+        List<String> emailAlreadyExist = userRepository.findAllByEmailInAndDeleteFlag(emails, false)
+                .stream().map(User::getEmail).map(String::toLowerCase).collect(Collectors.toList());
+        if (emailAlreadyExist.size() > 0 && throwError)
+            throw new EntityAlreadyExistsException("email", emails.get(0));
+        List<UserTokens> tokenList = new ArrayList<>();
+        List<InviteUserMailDto> mailDtoList = inviteUserDtoList.stream()
+                .filter(user -> emailAlreadyExist.contains(user.getEmail()))
+                .map(UserMapper::inviteUserDtoToEntity)
+                .map(user -> {
+                    user.setCreatedBy(admin.getId());
+                    user.setOrganizationId(admin.getOrganization().getId());
+                    if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER)) {
+                        user.setLocationId(admin.getLocationId());
+                    }
+                    UserTokens token = new UserTokens(UserToken.INVITE);
+                    token.setUserId(user.getId());
+                    token.setCreatedBy(admin.getId());
+                    tokenList.add(token);
+                    InviteUserMailDto mailDto = new InviteUserMailDto();
+                    mailDto.setUser(user);
+                    mailDto.setInviteUrl(appUrlConfig.getInviteUserUrl(token.getToken()));
+                    return mailDto;
+                })
+                .collect(Collectors.toList());
+        List<User> users = mailDtoList.stream().map(InviteUserMailDto::getUser).collect(Collectors.toList());
+        String organizationName = admin.getOrganization().getName();
+        userRepository.saveAll(users);
+        userTokenRepository.saveAll(tokenList);
+        log.info("New User(s) added to database (pending for accepting invite): {}", users);
+        CompletableFuture.runAsync(() -> {
+            userMailService.sendInvitationEmail(mailDtoList, organizationName);
+            log.info("Invitation successfully sent to the user(s)");
+        });
     }
 
 }

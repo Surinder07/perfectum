@@ -27,6 +27,7 @@ api:
       deleteHoliday: /v1/organization/holiday/delete
     member:
       sendInvite: /v1/member/sendInvite
+      sendInviteByUpload: /v1/member/sendInvite/upload
       getAllMembers: /v1/member/getAll
       listAllMembers: /v1/member/listAll
       getMemberById: /v1/member/getById
@@ -34,6 +35,7 @@ api:
       getEmployeePreferences: /v1/member/getPreference
     dropdown:
       getTimezones: /vi/unAuth/timezone/get
+      getEnums: /v1/unAuth/enums/get
     super-user:
       addCode: /v1/promoCode/add
       deleteCode: /v1/promoCode/delete
@@ -56,8 +58,6 @@ api:
       updateShift: /v1/shifts/update
       deleteShift: /v1/shifts/delete
       assignShift: /v1/shifts/assign
-      claimShift: /v1/shifts/claim
-      approveShift: /v1/shifts/approve
       releaseShift: /v1/shifts/release
       getAllShifts: /v1/shifts/getAll/{pageNo}/{pageSize}
       createShiftsBatch: /v1/shifts/batch/create
@@ -99,6 +99,12 @@ api:
       deleteHoliday: Delete a holiday.
     member:
       sendInvite: Invite new users to join logged in admins organization.
+      sendInviteByUpload: |
+        Upload excel or csv to add new members and send invite.
+        * Include location name and location role if you are global admin, include only location role if you are location admin.
+        * If no role is mentioned, user will be added as an employee; if no language is mentioned, default will be 'en'.
+        * Use Form Data.
+        * Allowed file formats: ${files.formats-allowed.excel},${files.formats-allowed.csv}
       getAllMembers: Get all Employees and Admins under logged-in user.
       listAllMembers: |
         Get all members under one locationId with search. *Limited info will be returned.*
@@ -108,6 +114,9 @@ api:
       getEmployeePreferences: Get an employee's preferences
     dropdown:
       getTimezones: Get a list of timezone to show for adding new location.
+      getEnums: |
+        * This Api is only available in non development environments.
+        * Developers can use the api to check possible values for different enums required for different APIs.
     super-user:
       addCode: Add a new promocode.
       deleteCode: Delete a promocode by id.
@@ -130,8 +139,6 @@ api:
       updateShift: Update any shift under your authorization.
       deleteShift: Delete an existing shift.
       assignShift: Assign an existing shift to an user.
-      claimShift: Claim an unassigned shift for the user.
-      approveShift: Admin can approve a claim to a shift by employee.
       releaseShift: Admin can release a new shift to employee.
       getAllShifts: |
         Get all shifts under your authorization.
@@ -202,6 +209,9 @@ api:
       getPreferencesUserId: Not needed if logged-in user is an employee.
       getPromoCodeIncludeDeleted: If true will include deleted codes also in response.
       getPromoCodeIncludeExpired: If true will include expired codes also in response.
+      getShift-batchId: Provide to get shits for a particular batch (Not available for EMPLOYEES). <b>If batchId is provided other parameters will be ignored.</b>
+      getShift-endDate: If end date is passed, results between date and endDate will be returned, else results for just the date will be returned.
+
 regex:
   explaination:
     email: xx@xx.xx
