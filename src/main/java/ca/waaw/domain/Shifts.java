@@ -14,6 +14,8 @@ import java.time.Instant;
 @Table(name = "shifts")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+@NamedQuery(name = "Shifts.getByUserIdBetweenDates", query = "SELECT s FROM Shifts s WHERE" +
+        "s.userId = ?1 AND (s.start IS BETWEEN ?2 AND ?3 OR s.end IS BETWEEN ?2 AND ?3)")
 public class Shifts extends AbstractEntity {
 
     @Column(name = "user_id")
