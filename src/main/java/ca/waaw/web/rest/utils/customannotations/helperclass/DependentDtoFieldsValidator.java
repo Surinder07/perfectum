@@ -1,6 +1,6 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass;
 
-import ca.waaw.dto.NewTimeOffDto;
+import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.userdtos.InviteUserDto;

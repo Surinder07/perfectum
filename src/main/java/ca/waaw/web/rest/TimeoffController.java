@@ -1,13 +1,21 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.dto.NewTimeOffDto;
+import ca.waaw.dto.PaginationDto;
+import ca.waaw.dto.timeoff.NewTimeOffDto;
+import ca.waaw.dto.timeoff.TimeOffInfoDto;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.service.TimeOffsService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -21,7 +29,26 @@ public class TimeoffController {
 
     private final TimeOffsService timeOffsService;
 
-    // See all timeoff requests with extra option to see allowed ones for admin TODO
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.timeoff.get}")
+    @GetMapping("${api.endpoints.timeoff.get}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
+            schema = @Schema(implementation = TimeOffInfoDto.class)))},
+            description = "${api.swagger.schema-description.pagination}")
+    public ResponseEntity<PaginationDto> getAllTimeOff(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                       @Parameter(description = "${api.swagger.param-description.timeoff-showAll}")
+                                                       @RequestParam(required = false) boolean showAll,
+                                                       @Parameter(description = "${api.swagger.param-description.timeoff-date}")
+                                                       @RequestParam(required = false) String startDate,
+                                                       @RequestParam(required = false) String endDate) {
+        try {
+            return ResponseEntity.ok(timeOffsService.getAllTimeOff(pageNo, pageSize, showAll, startDate, endDate));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     @SwaggerCreated
     @SwaggerBadRequest

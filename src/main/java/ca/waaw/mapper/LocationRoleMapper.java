@@ -1,9 +1,11 @@
 package ca.waaw.mapper;
 
+import ca.waaw.domain.Location;
 import ca.waaw.domain.LocationRole;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.LocationRolesUser;
 import ca.waaw.dto.locationandroledtos.BaseLocationRole;
+import ca.waaw.dto.locationandroledtos.LocationAndRoleDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleWithUsersDto;
 import ca.waaw.dto.userdtos.BaseUserDetails;
@@ -62,6 +64,16 @@ public class LocationRoleMapper {
         if (source.getTotalHoursPerDayMax() != 0) target.setTotalHoursPerDayMax(source.getTotalHoursPerDayMax());
         if (source.getMinHoursBetweenShifts() != 0) target.setMinHoursBetweenShifts(source.getMinHoursBetweenShifts());
         if (source.getMaxConsecutiveWorkDays() != 0) target.setMaxConsecutiveWorkDays(source.getMaxConsecutiveWorkDays());
+    }
+
+    public static LocationAndRoleDto locationEntityToDetailDto(Location locationSource, LocationRole locationRoleSource) {
+        LocationAndRoleDto locationAndRoleInfo = new LocationAndRoleDto();
+        locationAndRoleInfo.setLocationId(locationSource.getId());
+        locationAndRoleInfo.setLocationName(locationSource.getName());
+        locationAndRoleInfo.setLocationTimezone(locationSource.getTimezone());
+        locationAndRoleInfo.setLocationRoleId(locationRoleSource.getId());
+        locationAndRoleInfo.setLocationRoleName(locationRoleSource.getName());
+        return locationAndRoleInfo;
     }
 
 }

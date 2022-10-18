@@ -196,9 +196,9 @@ public class ShiftSchedulingService {
     }
 
     /**
-     * @param batchId     If shifts for a particular batch are required
-     * @param date        date for start range, if single day shifts are required don't pass endDate
-     * @param endDate     date for end range
+     * @param batchId If shifts for a particular batch are required
+     * @param date    date for start range, if single day shifts are required don't pass endDate
+     * @param endDate date for end range
      * @return Object depending on role of logged-in user containing all shifts info.
      */
     public List<ShiftDetailsDto> getAllShifts(String batchId, String date, String endDate) {
@@ -227,6 +227,7 @@ public class ShiftSchedulingService {
                     .map(shifts -> shifts.stream().map(shift -> ShiftsMapper.entityToDetailedDto(shift, timezone))
                             .collect(Collectors.toList()))
                     .orElseThrow(UnauthorizedException::new);
+            // TODO for employee filter shifts with conflicts
         } else {
             return SecurityUtils.getCurrentUserLogin()
                     .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))

@@ -64,6 +64,7 @@ api:
       releaseShiftsBatch: /v1/shifts/batch/approve
       getAllShiftsBatch: /v1/shifts/batch/getAll/{pageNo}/{pageSize}
     timeoff:
+      get: /v1/timeoff/get/{pageNo}/{pageSize}
       add: /v1/timeoff/add
       respond: /v1/timeoff/respond
       delete: /v1/timeoff/delete
@@ -152,6 +153,7 @@ api:
       releaseShiftsBatch: Admin can release a batch to employees.
       getAllShiftsBatch: Get all recurring shifts under your authorization.
     timeoff:
+      get: Pagination api to get all timeoffs and requests
       add: Add a new timeoff request, admin can diectly add timeoff for any employee, time will be taken for employee's location timezone.
       respond: Respond to a timeoff request (for admins only)
       delete: Delete a timeoff request (for employee only)
@@ -220,6 +222,8 @@ api:
       getPromoCodeIncludeExpired: If true will include expired codes also in response.
       getShift-batchId: Provide to get shits for a particular batch (Not available for EMPLOYEES). <b>If batchId is provided other parameters will be ignored.</b>
       getShift-endDate: If end date is passed, results between date and endDate will be returned, else results for just the date will be returned.
+      timeoff-showAll: If showAll is true, all pending, allowed and rejected requests will be shown, otherwile only pending requests will be shown (For admins only)
+      timeoff-date: Send start and end date to see requests for particular range, otherwise only future requests will be shown. **Date format is ${api.date-format}**
 
 regex:
   explaination:
