@@ -1,5 +1,6 @@
-package ca.waaw.dto;
+package ca.waaw.dto.timeoff;
 
+import ca.waaw.dto.DateTimeDto;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
 import io.swagger.v3.oas.annotations.media.Schema;

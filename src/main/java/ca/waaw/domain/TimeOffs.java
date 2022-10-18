@@ -12,16 +12,21 @@ import java.time.Instant;
 @Table(name = "time_offs")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@NamedQuery(name = "TimeOffs.getByUserIdBetweenDates", query = "SELECT to FROM TimeOffs to WHERE" +
-        "to.userId = ?1 AND (to.startDate IS BETWEEN ?2 AND ?3 OR to.endDate IS BETWEEN ?2 AND ?3)")
+@NamedQueries({
+        @NamedQuery(name = "TimeOffs.getByUserIdBetweenDates", query = "SELECT to FROM TimeOffs to WHERE " +
+                "to.userId = ?1 AND (to.startDate BETWEEN ?2 AND ?3 OR to.endDate BETWEEN ?2 AND ?3)")
+})
 public class TimeOffs extends AbstractEntity {
 
+    @Column(name = "start_date")
     private Instant startDate;
 
+    @Column(name = "end_date")
     private Instant endDate;
 
-    private String note;
+    private String notes;
 
+    @Column(name = "user_id")
     private String userId;
 
 }
