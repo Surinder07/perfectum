@@ -116,12 +116,8 @@ public class ShiftsMapper {
             user.setAuthority(source.getUser().getAuthority());
             target.setUser(user);
         }
-        LocationAndRoleDto locationAndRoleInfo = new LocationAndRoleDto();
-        locationAndRoleInfo.setLocationId(source.getLocation().getId());
-        locationAndRoleInfo.setLocationName(source.getLocation().getName());
-        locationAndRoleInfo.setLocationTimezone(source.getLocation().getTimezone());
-        locationAndRoleInfo.setLocationRoleId(source.getLocationRole().getId());
-        locationAndRoleInfo.setLocationRoleName(source.getLocationRole().getName());
+        LocationAndRoleDto locationAndRoleInfo = LocationRoleMapper.locationEntityToDetailDto(source.getLocation(),
+                source.getLocationRole());
         target.setLocationAndRoleDetails(locationAndRoleInfo);
         return target;
     }

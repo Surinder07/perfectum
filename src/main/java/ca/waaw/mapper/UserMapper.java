@@ -12,8 +12,6 @@ import ca.waaw.web.rest.utils.CommonUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
-import java.util.UUID;
-
 public class UserMapper {
 
     /**
@@ -179,6 +177,10 @@ public class UserMapper {
         return target;
     }
 
+    /**
+     * @param source employee preference dto
+     * @return employee preference entity to save in the database
+     */
     public static EmployeePreferences employeePreferencesToEntity(EmployeePreferencesDto source) {
         EmployeePreferences target = new EmployeePreferences();
         BeanUtils.copyProperties(source, target);

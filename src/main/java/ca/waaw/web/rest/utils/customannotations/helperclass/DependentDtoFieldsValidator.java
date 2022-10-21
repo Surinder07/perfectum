@@ -1,5 +1,6 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass;
 
+import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
@@ -38,9 +39,14 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
      * 2. {@link DependentDtoFieldsValidatorType#SHIFT_USER_ID_TO_LOCATION_ROLE_ID}
      * Used in {@link NewShiftDto}
      * If both userId and locationRoleId are null or empty, it throws an error.
+     * <p>
      * 3. {@link DependentDtoFieldsValidatorType#SHIFT_BATCH_LOCATION_ID_TO_USER_ROLE}
      * Used in {@link NewShiftBatchDto}
      * If logged-in user is admin, locationId, locationRoleId or userIds is required
+     * <p>
+     * 4. {@link DependentDtoFieldsValidatorType#TIME_OFF_USER_ID_TO_USER_ROLE}
+     * Used in {@link NewTimeOffDto}
+     * If logged-in user is admin or manager, userId cannot be null
      */
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
@@ -90,6 +96,11 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
                     return true;
                 } catch (Exception e) {
                     e.printStackTrace();
+                }
+            case TIME_OFF_USER_ID_TO_USER_ROLE:
+                if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN, Authority.MANAGER)) {
+                    return PARSER.parseExpression("userId").getValue(value) != null &&
+                            !String.valueOf(PARSER.parseExpression("userId").getValue(value)).equals("");
                 }
         }
         return true;
