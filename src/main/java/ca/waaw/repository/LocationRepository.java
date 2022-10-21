@@ -12,6 +12,10 @@ public interface LocationRepository extends JpaRepository<Location, String> {
 
     Optional<Location> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
 
+    Optional<Location> getByNameAndOrganizationId(String name, String organizationId);
+
+    List<Location> getListByNameAndOrganization(List<String> name, String organizationId);
+
     List<Location> findAllByIdIn(List<String> ids);
 
 }

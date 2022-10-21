@@ -11,6 +11,12 @@ import javax.persistence.*;
 @Table(name = "location_role")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+@NamedQueries({
+        @NamedQuery(name = "LocationRole.getListByNameAndLocation", query = "SELECT lr FROM LocationRole lr " +
+                "WHERE LOWER(lr.name) IN ?1 AND lr.locationId IN ?2 AND lr.deleteFlag = false"),
+        @NamedQuery(name = "LocationRole.getByNameAndLocationId", query = "SELECT lr FROM LocationRole lr " +
+                "WHERE LOWER(lr.name) = ?1 AND lr.locationId = ?2 AND lr.deleteFlag = false")
+})
 public class LocationRole extends AbstractEntity {
 
     @Column

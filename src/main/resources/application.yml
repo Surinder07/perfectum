@@ -128,6 +128,10 @@ application:
     core-pool-size: 40
     max-pool-size: 80
     queue-capacity: 200
+  custom-id:
+    length: 10
+    user-prefix: USR
+    organization-prefix: ORG
 
 ######################################
 ###### Files related properties ######
@@ -138,6 +142,7 @@ files:
     csv: csv
   required-fields:
     holidays: name, year, month, date
+    invite-users: email, location_role, first_name
   pojo-templates:
     holidays:
       name: name
@@ -145,3 +150,11 @@ files:
       month: month
       date: date
       holiday_type: type
+    invite-users:
+      email: email
+      location: locationId
+      location_role: locationRoleId
+      role: role
+      first_name: firstName
+      last_name: lastName
+      employee_id: employeeId

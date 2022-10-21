@@ -13,7 +13,6 @@ import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class LocationMapper {
 
@@ -24,7 +23,6 @@ public class LocationMapper {
      */
     public static Location dtoToEntity(NewLocationDto source, User userSource) {
         Location target = new Location();
-        target.setId(UUID.randomUUID().toString());
         target.setName(source.getName());
         target.setTimezone(source.getTimezone());
         target.setOrganizationId(userSource.getOrganizationId());

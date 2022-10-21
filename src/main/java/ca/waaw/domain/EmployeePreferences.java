@@ -8,6 +8,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -16,7 +17,9 @@ import java.util.UUID;
 @ToString
 @EqualsAndHashCode
 @Table(name = "employee_preferences")
-public class EmployeePreferences {
+public class EmployeePreferences implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @Column(name = "uuid")

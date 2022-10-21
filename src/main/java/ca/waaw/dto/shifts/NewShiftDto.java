@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 @Data
@@ -20,9 +21,11 @@ public class NewShiftDto {
     @Schema(description = "Required for assigned shifts")
     private String userId;
 
+    @Valid
     @NotNull
     private DateTimeDto start;
 
+    @Valid
     @NotNull
     private DateTimeDto end;
 

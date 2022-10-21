@@ -56,6 +56,9 @@ public class UserOrganization extends AbstractEntity {
     @Column
     private String mobile;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
     @Column(name = "lang_key")
     private String langKey;
 
@@ -98,21 +101,6 @@ public class UserOrganization extends AbstractEntity {
 
     @Column(name = "sms_notification_on")
     private Boolean isSmsNotifications;
-
-    @Column(name = "reset_key")
-    private String resetKey;
-
-    @Column(name = "reset_date")
-    private Instant resetDate;
-
-    @Column(name = "activation_key")
-    private String activationKey;
-
-    @Column(name = "invite_key")
-    private String inviteKey;
-
-    @Column(name = "invited_by")
-    private String invitedBy;
 
     @Column(name = "last_login")
     private Instant lastLogin;

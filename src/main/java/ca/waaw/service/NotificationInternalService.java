@@ -3,7 +3,7 @@ package ca.waaw.service;
 import ca.waaw.domain.Notification;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
-import ca.waaw.dto.emailmessagedtos.InviteAcceptedMessageDto;
+import ca.waaw.dto.emailmessagedtos.InviteAcceptedMailDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.NotificationType;
 import ca.waaw.mapper.NotificationMapper;
@@ -33,7 +33,7 @@ public class NotificationInternalService {
      * @param loginUrl Login url for the application
      */
     public void notifyAdminAboutNewUser(UserOrganization user, User admin, String loginUrl) {
-        InviteAcceptedMessageDto message = new InviteAcceptedMessageDto();
+        InviteAcceptedMailDto message = new InviteAcceptedMailDto();
         populateInviteAcceptedMessageLocationAndRole(message, user);
         if (admin.isEmailNotifications()) {
             message.setAdminName(CommonUtils.combineFirstAndLastName(admin.getFirstName(), admin.getLastName()));
@@ -45,7 +45,6 @@ public class NotificationInternalService {
         }
         // Internal Notification
         Notification notification = new Notification();
-        notification.setId(UUID.randomUUID().toString());
         notification.setUserId(admin.getId());
         notification.setType(NotificationType.USER);
         notification.setTitle(CommonUtils.getPropertyFromMessagesResourceBundle("notification.invite.accepted.title", null));
@@ -60,10 +59,10 @@ public class NotificationInternalService {
     /**
      * Will update location_role and location information in message based on user roles
      *
-     * @param message {@link InviteAcceptedMessageDto} object
+     * @param message {@link InviteAcceptedMailDto} object
      * @param user    invited user details
      */
-    private void populateInviteAcceptedMessageLocationAndRole(InviteAcceptedMessageDto message, UserOrganization user) {
+    private void populateInviteAcceptedMessageLocationAndRole(InviteAcceptedMailDto message, UserOrganization user) {
         String role;
         String location;
         if (user.getAuthority().equals(Authority.ADMIN) || user.getAuthority().equals(Authority.SUPER_USER )) {

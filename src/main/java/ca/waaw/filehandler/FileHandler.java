@@ -6,16 +6,12 @@ import ca.waaw.filehandler.utils.FileUtils;
 import ca.waaw.web.rest.errors.exceptions.UnsupportedFileFormatException;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -26,25 +22,24 @@ public class FileHandler {
     private final FileConfig fileConfig;
 
     /**
-     * @param file        Multipart file to be read
-     * @param cls         class of object to be mapped
-     * @param missingData initially false boolean value that will be marked true if some data is missing,
-     *                    this will be used later to send notification in case of missing data.
-     * @param pojoToMap   pojo type that is to be mapped
-     * @param <T>         return type
+     * @param file          Multipart file to be read
+     * @param cls           class of object to be mapped
+     * @param missingFields an empty set to collect header for any missing data
+     * @param pojoToMap     pojo type that is to be mapped
+     * @param <T>           return type
      * @return List of all mapped object from the file provided
      */
-    public <T> List<T> readExcelOrCsv(InputStream file, String fileName, Class<T> cls, MutableBoolean missingData,
+    public <T> List<T> readExcelOrCsv(InputStream file, String fileName, Class<T> cls, Set<String> missingFields,
                                       PojoToMap pojoToMap) {
         String fileExtension = FileUtils.getFileExtension(fileName);
         List<T> result;
         if (Arrays.asList(fileConfig.getFormatsAllowed().getExcel()).contains(fileExtension)) {
             result = new ArrayList<>();
             FileToPojoUtils.excelFileToObject(file, result, getRequiredHeaders(pojoToMap), cls,
-                    getPojoTemplates(pojoToMap), missingData);
+                    getPojoTemplates(pojoToMap), missingFields);
         } else if (Arrays.asList(fileConfig.getFormatsAllowed().getCsv()).contains(fileExtension)) {
             result = FileToPojoUtils.csvToObject(file, fileName, cls, getRequiredHeaders(pojoToMap),
-                    getPojoTemplates(pojoToMap), missingData);
+                    getPojoTemplates(pojoToMap), missingFields);
         } else {
             log.error("File {} is of unsupported format: {}", fileName, fileExtension);
             throw new UnsupportedFileFormatException(ArrayUtils.addAll(fileConfig.getFormatsAllowed().getExcel(),
@@ -60,6 +55,8 @@ public class FileHandler {
     private String[] getRequiredHeaders(PojoToMap pojoToMap) {
         if (pojoToMap.equals(PojoToMap.HOLIDAY)) {
             return fileConfig.getRequiredFields().getHolidays();
+        } else if (pojoToMap.equals(PojoToMap.INVITE_USERS)) {
+            return fileConfig.getRequiredFields().getInviteUsers();
         }
         return null;
     }
@@ -71,6 +68,8 @@ public class FileHandler {
     private Map<String, String> getPojoTemplates(PojoToMap pojoToMap) {
         if (pojoToMap.equals(PojoToMap.HOLIDAY)) {
             return fileConfig.getPojoTemplates().getHolidays();
+        } else if (pojoToMap.equals(PojoToMap.INVITE_USERS)) {
+            return fileConfig.getPojoTemplates().getInviteUsers();
         }
         return null;
     }

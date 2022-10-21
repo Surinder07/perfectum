@@ -8,6 +8,7 @@ import lombok.ToString;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -18,9 +19,11 @@ import java.time.Instant;
         " WHERE (?1 = true OR c.deleteFlag = false) AND (?2 = true or c.expiryDate > NOW())")
 public class PromotionCode implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Id
     @Column(name = "uuid")
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @Column
     @Enumerated(EnumType.STRING)

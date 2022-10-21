@@ -28,12 +28,14 @@ public class FileConfig {
     @Configuration
     public static class RequiredFields {
         private String[] holidays;
+        private String[] inviteUsers;
     }
 
     @Data
     @Configuration
     public static class PojoTemplates {
         private Map<String, String> holidays;
+        private Map<String, String> inviteUsers;
     }
 
 }

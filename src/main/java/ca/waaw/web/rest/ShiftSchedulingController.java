@@ -1,22 +1,32 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.dto.ApiResponseMessageDto;
-import ca.waaw.dto.locationandroledtos.AdminLocationDto;
+import ca.waaw.dto.OvertimeDto;
+import ca.waaw.dto.shifts.BatchDetailsDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
+import ca.waaw.dto.shifts.ShiftDetailsDto;
+import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.service.ShiftSchedulingService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 @RestController
@@ -26,6 +36,8 @@ import javax.validation.Valid;
 public class ShiftSchedulingController {
 
     private final ShiftSchedulingService shiftSchedulingService;
+
+    private final AppRegexConfig appRegexConfig;
 
     @SwaggerCreated
     @SwaggerBadRequest
@@ -47,6 +59,7 @@ public class ShiftSchedulingController {
     @Operation(description = "${api.description.shift-management.updateShift}")
     @PutMapping("${api.endpoints.shift-management.updateShift}")
     public void updateShift() {
+        // TODO
     }
 
     @SwaggerOk
@@ -69,29 +82,8 @@ public class ShiftSchedulingController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.shift-management.assignShift}")
     @PutMapping("${api.endpoints.shift-management.assignShift}")
-    public void assignShift() {
-    }
-
-    @SwaggerNotFound
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @ApiResponse(responseCode = "200", description = "Success. Show the response message to user.",
-            content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponseMessageDto.class))})
-    @Operation(description = "${api.description.shift-management.claimShift}")
-    @PutMapping("${api.endpoints.shift-management.claimShift}")
-    public void claimShift() {
-    }
-
-    @SwaggerOk
-    @SwaggerNotFound
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.shift-management.approveShift}")
-    @PutMapping("${api.endpoints.shift-management.approveShift}")
-    public void approveClaimedShift() {
+    public void assignShift(@RequestParam String shiftId, @RequestParam String userId) {
+        shiftSchedulingService.assignShift(shiftId, userId);
     }
 
     @SwaggerOk
@@ -102,19 +94,28 @@ public class ShiftSchedulingController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.shift-management.releaseShift}")
     @PutMapping("${api.endpoints.shift-management.releaseShift}")
-    public void releaseShift() {
+    public void releaseShift(@RequestParam String shiftId) {
+        shiftSchedulingService.releaseShift(shiftId);
     }
 
     @SwaggerAuthenticated
     @Operation(description = "${api.description.shift-management.getAllShifts}")
     @GetMapping("${api.endpoints.shift-management.getAllShifts}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
-            implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getAllShifts}")
-    public ResponseEntity<Object> getAllShifts(@RequestParam(required = false) String locationId,
-                                               @RequestParam(required = false) String location_role_id,
-                                               @RequestParam String date, @RequestParam(required = false) String endDate,
-                                               @PathVariable int pageNo, @PathVariable int pageSize) {
-        return null;
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
+            schema = @Schema(implementation = ShiftDetailsDto.class)))})
+    public ResponseEntity<List<ShiftDetailsDto>> getAllShifts(@Parameter(description = "${api.swagger.param-description.getShift-batchId}")
+                                                              @RequestParam(required = false) String batchId,
+                                                              @RequestParam String date,
+                                                              @Parameter(description = "${api.swagger.param-description.getShift-endDate}")
+                                                              @RequestParam(required = false) String endDate) {
+        List<String> field = new ArrayList<>();
+        if (!Pattern.matches(appRegexConfig.getDate(), date)) field.add("date");
+        if (StringUtils.isNotEmpty(endDate) && !Pattern.matches(appRegexConfig.getDate(), endDate))
+            field.add("endDate");
+        if (!field.isEmpty()) {
+            throw new BadRequestException("Invalid value", field.toArray(new String[0]));
+        }
+        return ResponseEntity.ok(shiftSchedulingService.getAllShifts(batchId, date, endDate));
     }
 
     @SwaggerBadRequest
@@ -135,18 +136,50 @@ public class ShiftSchedulingController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.shift-management.releaseShiftsBatch}")
     @PutMapping("${api.endpoints.shift-management.releaseShiftsBatch}")
-    public void releaseShiftsBatch() {
+    public ResponseEntity<ApiResponseMessageDto> releaseShiftsBatch(@RequestParam String batchId) {
+        return ResponseEntity.ok(shiftSchedulingService.releaseShiftBatch(batchId));
     }
 
     @SwaggerAuthenticated
     @Operation(description = "${api.description.shift-management.getAllShiftsBatch}")
     @GetMapping("${api.endpoints.shift-management.getAllShiftsBatch}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
-            implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getAllShifts}")
-    public ResponseEntity<Object> getAllShiftsBatch(@RequestParam(required = false) String locationId,
-                                                    @RequestParam(required = false) String location_role_id,
-                                                    @PathVariable int pageNo, @PathVariable int pageSize) {
-        return null;
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
+            schema = @Schema(implementation = BatchDetailsDto.class)))})
+    public ResponseEntity<List<BatchDetailsDto>> getAllShiftsBatch() {
+        return ResponseEntity.ok(shiftSchedulingService.getAllBatchDetails());
+    }
+
+    @SwaggerCreated
+    @SwaggerBadRequest
+    @SwaggerAlreadyExist
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "${api.description.shift-management.requestOvertime}")
+    @PostMapping("${api.endpoints.shift-management.requestOvertime}")
+    public void addNewOvertime(@Valid @RequestBody OvertimeDto overtimeDto) {
+        shiftSchedulingService.requestOvertime(overtimeDto);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.shift-management.respondToOvertime}")
+    @PutMapping("${api.endpoints.shift-management.respondToOvertime}")
+    public void respondToOvertime(@RequestParam String requestId, @RequestParam boolean accept) {
+        shiftSchedulingService.respondToOvertime(requestId, accept);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.shift-management.deleteOvertime}")
+    @PutMapping("${api.endpoints.shift-management.deleteOvertime}")
+    public void deleteOvertime(@RequestParam String requestId) {
+        shiftSchedulingService.deleteOvertimeRequest(requestId);
     }
 
 }

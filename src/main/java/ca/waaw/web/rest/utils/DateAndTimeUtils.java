@@ -26,7 +26,8 @@ public class DateAndTimeUtils {
      * @return Instant object for the date in given timezone
      */
     public static Instant getDateInstant(String date, String time, String timezone) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+        DateTimeFormatter formatter = time.length() == 5 ? DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm") :
+                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(String.format("%s %s", date, time), formatter);
         return dateTime.atZone(ZoneId.of(timezone)).toInstant();
     }
@@ -82,6 +83,35 @@ public class DateAndTimeUtils {
                 .withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
         Instant end = date.atZone(ZoneOffset.UTC)
                 .withHour(23).withMinute(59).withSecond(59).withNano(0).toInstant();
+        return new Instant[]{start, end};
+    }
+
+    /**
+     * @param date     date in string format(yyyy/MM/dd)
+     * @param timezone timezone required
+     * @return start and end time
+     */
+    public static Instant[] getStartAndEndTimeForInstant(String date, String timezone) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        Instant start = LocalDateTime.parse(String.format("%s %s", date, "00:00:00"), formatter)
+                .atZone(ZoneId.of(timezone)).toInstant();
+        Instant end = LocalDateTime.parse(String.format("%s %s", date, "23:59:59"), formatter)
+                .atZone(ZoneId.of(timezone)).toInstant();
+        return new Instant[]{start, end};
+    }
+
+    /**
+     * @param startDate start date in string format(yyyy/MM/dd)
+     * @param endDate   end date in string format(yyyy/MM/dd)
+     * @param timezone  timezone required
+     * @return start and end time
+     */
+    public static Instant[] getStartAndEndTimeForInstant(String startDate, String endDate, String timezone) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        Instant start = LocalDateTime.parse(String.format("%s %s", startDate, "00:00:00"), formatter)
+                .atZone(ZoneId.of(timezone)).toInstant();
+        Instant end = LocalDateTime.parse(String.format("%s %s", endDate, "23:59:59"), formatter)
+                .atZone(ZoneId.of(timezone)).toInstant();
         return new Instant[]{start, end};
     }
 

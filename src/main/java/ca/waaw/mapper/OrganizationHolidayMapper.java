@@ -7,8 +7,6 @@ import ca.waaw.enumration.HolidayType;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
-import java.util.UUID;
-
 public class OrganizationHolidayMapper {
 
     /**
@@ -19,7 +17,6 @@ public class OrganizationHolidayMapper {
         OrganizationHolidays target = new OrganizationHolidays();
         BeanUtils.copyProperties(source, target);
         if (StringUtils.isEmpty(target.getLocationId())) target.setLocationId(null);
-        target.setId(UUID.randomUUID().toString());
         target.setType(HolidayType.valueOf(source.getType()));
         target.setStatus(EntityStatus.ACTIVE);
         return target;
