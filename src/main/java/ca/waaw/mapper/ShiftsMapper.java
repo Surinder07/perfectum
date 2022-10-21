@@ -6,12 +6,14 @@ import ca.waaw.domain.ShiftsBatch;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.DetailedShift;
 import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.OvertimeDto;
 import ca.waaw.dto.locationandroledtos.LocationAndRoleDto;
 import ca.waaw.dto.shifts.BatchDetailsDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.shifts.ShiftDetailsDto;
 import ca.waaw.dto.userdtos.UserInfoForDropDown;
+import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.ShiftStatus;
 import ca.waaw.enumration.ShiftType;
@@ -156,6 +158,38 @@ public class ShiftsMapper {
         targetCreatedBy.setFullName(CommonUtils.combineFirstAndLastName(admin.getFirstName(), admin.getLastName()));
         targetCreatedBy.setAuthority(admin.getAuthority());
         target.setBatchCreatedBy(targetCreatedBy);
+        return target;
+    }
+
+    /**
+     * @param source     overtime info
+     * @param userSource logged-in user info
+     * @return Entity to be saved in database
+     */
+    public static Shifts overtimeDtoTOEntity(OvertimeDto source, UserOrganization userSource) {
+        Authority userRole = userSource.getAuthority();
+        Shifts target = new Shifts();
+        String timezone;
+        if (userRole.equals(Authority.ADMIN)) {
+            target.setUserId(source.getUserId());
+            timezone = userSource.getOrganization().getTimezone();
+        } else if (userRole.equals(Authority.MANAGER)) {
+            target.setUserId(source.getUserId());
+            timezone = userSource.getLocation().getTimezone();
+            target.setLocationId(userSource.getLocationId());
+        } else {
+            target.setUserId(userSource.getId());
+            timezone = userSource.getLocation().getTimezone();
+            target.setLocationId(userSource.getLocationId());
+            target.setLocationRoleId(userSource.getLocationRoleId());
+        }
+        target.setStart(DateAndTimeUtils.getDateInstant(source.getStart().getDate(), source.getStart().getTime(), timezone));
+        target.setEnd(DateAndTimeUtils.getDateInstant(source.getEnd().getDate(), source.getEnd().getTime(), timezone));
+        target.setNotes(source.getNote());
+        target.setShiftType(ShiftType.OVERTIME);
+        target.setOrganizationId(userSource.getOrganizationId());
+        target.setShiftStatus(userRole.equals(Authority.ADMIN) || userRole.equals(Authority.MANAGER) ?
+                ShiftStatus.SCHEDULED : ShiftStatus.OVERTIME_REQUESTED);
         return target;
     }
 
