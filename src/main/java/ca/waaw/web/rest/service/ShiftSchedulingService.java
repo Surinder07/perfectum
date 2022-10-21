@@ -6,6 +6,7 @@ import ca.waaw.domain.joined.DetailedShift;
 import ca.waaw.domain.joined.EmployeePreferencesWithUser;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.ApiResponseMessageDto;
+import ca.waaw.dto.OvertimeDto;
 import ca.waaw.dto.ShiftSchedulingPreferences;
 import ca.waaw.dto.shifts.BatchDetailsDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
@@ -224,10 +225,10 @@ public class ShiftSchedulingService {
                     .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                     .map(UserOrganization::getId)
                     .map(id -> shiftsRepository.findAllByUserIdAndDeleteFlagAndStartBetween(id, false, startEnd[0], startEnd[1]))
-                    .map(shifts -> shifts.stream().map(shift -> ShiftsMapper.entityToDetailedDto(shift, timezone))
+                    .map(shifts -> shifts.stream().filter(shift -> !shift.isConflict())
+                            .map(shift -> ShiftsMapper.entityToDetailedDto(shift, timezone))
                             .collect(Collectors.toList()))
                     .orElseThrow(UnauthorizedException::new);
-            // TODO for employee filter shifts with conflicts
         } else {
             return SecurityUtils.getCurrentUserLogin()
                     .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
@@ -370,6 +371,79 @@ public class ShiftSchedulingService {
                     return ShiftsMapper.batchEntityToDto(batch, admin, users);
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Request an overtime for an employee or add a new overtime by an admin
+     *
+     * @param overtimeDto all overtime details
+     */
+    public void requestOvertime(OvertimeDto overtimeDto) {
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(loggedUser -> ShiftsMapper.overtimeDtoTOEntity(overtimeDto, loggedUser))
+                .map(overtime -> {
+                    if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN, Authority.MANAGER)) {
+                        userOrganizationRepository.findOneByIdAndDeleteFlag(overtime.getUserId(), false)
+                                .ifPresent(user -> {
+                                    overtime.setLocationId(user.getLocationId());
+                                    overtime.setLocationRoleId(user.getLocationRoleId());
+                                });
+                    }
+                    return overtime;
+                })
+                .map(shiftsRepository::save)
+                .map(overtime -> CommonUtils.logMessageAndReturnObject(overtime, "info", ShiftSchedulingService.class,
+                        "New overtime added: {}", overtime));
+    }
+
+    /**
+     * @param id     id to update status of
+     * @param accept true to accept and false for reject
+     */
+    public void respondToOvertime(String id, boolean accept) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(loggedUser -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
+                        .filter(shift -> shift.getShiftType().equals(ShiftType.OVERTIME))
+                        .map(overtime -> {
+                            if (!overtime.getOrganizationId().equals(loggedUser.getOrganizationId())
+                                    && (loggedUser.getAuthority().equals(Authority.MANAGER) &&
+                                    !overtime.getLocationId().equals(loggedUser.getLocationId()))) {
+                                throw new UnauthorizedException();
+                            }
+                            overtime.setShiftStatus(accept ? ShiftStatus.SCHEDULED : ShiftStatus.OVERTIME_REJECTED);
+                            overtime.setLastModifiedBy(loggedUser.getId());
+                            return overtime;
+                        })
+                        .map(shiftsRepository::save)
+                        .map(overtime -> CommonUtils.logMessageAndReturnObject(overtime, "info", ShiftSchedulingService.class,
+                                "Overtime status updated: {}", overtime))
+                        .orElseThrow(() -> new EntityNotFoundException("overtime request"))
+                );
+    }
+
+    /**
+     * @param id id for the request to be deleted
+     */
+    public void deleteOvertimeRequest(String id) {
+        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(loggedUser -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
+                        .filter(shift -> shift.getShiftType().equals(ShiftType.OVERTIME))
+                        .map(overtime -> {
+                            if (!overtime.getUserId().equals(loggedUser.getId())) return null;
+                            overtime.setDeleteFlag(true);
+                            overtime.setLastModifiedBy(loggedUser.getId());
+                            return overtime;
+                        })
+                        .map(shiftsRepository::save)
+                        .map(overtime -> CommonUtils.logMessageAndReturnObject(overtime, "info", ShiftSchedulingService.class,
+                                "Overtime request deleted: {}", overtime))
+                        .orElseThrow(() -> new EntityNotFoundException("overtime request"))
+                );
     }
 
     /**

@@ -2,6 +2,7 @@ package ca.waaw.web.rest;
 
 import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.dto.ApiResponseMessageDto;
+import ca.waaw.dto.OvertimeDto;
 import ca.waaw.dto.shifts.BatchDetailsDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
@@ -58,6 +59,7 @@ public class ShiftSchedulingController {
     @Operation(description = "${api.description.shift-management.updateShift}")
     @PutMapping("${api.endpoints.shift-management.updateShift}")
     public void updateShift() {
+        // TODO
     }
 
     @SwaggerOk
@@ -145,6 +147,39 @@ public class ShiftSchedulingController {
             schema = @Schema(implementation = BatchDetailsDto.class)))})
     public ResponseEntity<List<BatchDetailsDto>> getAllShiftsBatch() {
         return ResponseEntity.ok(shiftSchedulingService.getAllBatchDetails());
+    }
+
+    @SwaggerCreated
+    @SwaggerBadRequest
+    @SwaggerAlreadyExist
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(description = "${api.description.shift-management.requestOvertime}")
+    @PostMapping("${api.endpoints.shift-management.requestOvertime}")
+    public void addNewOvertime(@Valid @RequestBody OvertimeDto overtimeDto) {
+        shiftSchedulingService.requestOvertime(overtimeDto);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.shift-management.respondToOvertime}")
+    @PutMapping("${api.endpoints.shift-management.respondToOvertime}")
+    public void respondToOvertime(@RequestParam String requestId, @RequestParam boolean accept) {
+        shiftSchedulingService.respondToOvertime(requestId, accept);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.shift-management.deleteOvertime}")
+    @PutMapping("${api.endpoints.shift-management.deleteOvertime}")
+    public void deleteOvertime(@RequestParam String requestId) {
+        shiftSchedulingService.deleteOvertimeRequest(requestId);
     }
 
 }

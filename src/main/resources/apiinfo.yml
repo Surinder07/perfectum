@@ -63,6 +63,9 @@ api:
       createShiftsBatch: /v1/shifts/batch/create
       releaseShiftsBatch: /v1/shifts/batch/approve
       getAllShiftsBatch: /v1/shifts/batch/getAll/{pageNo}/{pageSize}
+      requestOvertime: /v1/shifts/overtime/request
+      respondToOvertime: /v1/shifts/overtime/respond
+      deleteOvertime: /v1/shifts/overtime/delete
     timeoff:
       get: /v1/timeoff/get/{pageNo}/{pageSize}
       add: /v1/timeoff/add
@@ -152,6 +155,9 @@ api:
       createShiftsBatch: Create a new Shift batch between two dates.
       releaseShiftsBatch: Admin can release a batch to employees.
       getAllShiftsBatch: Get all recurring shifts under your authorization.
+      requestOvertime: Add new overtime request by employee or add new overtime directly by admins
+      respondToOvertime: Respond to an overtime request (ADMINS and MANAGERS only)
+      deleteOvertime: Delete an overtime request (For employees only)
     timeoff:
       get: Pagination api to get all timeoffs and requests
       add: Add a new timeoff request, admin can diectly add timeoff for any employee, time will be taken for employee's location timezone.
