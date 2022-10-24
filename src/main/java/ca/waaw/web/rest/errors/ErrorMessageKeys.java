@@ -19,11 +19,13 @@ public final class ErrorMessageKeys {
     public static final String trialExpiredEmployeeMessage = "error.trialExpiredEmployeeMessage";
     public static final String pastValueNotDeletableMessage = "error.pastValueNotDeletableMessage";
     public static final String shiftOverlappingMessage = "error.shiftOverlappingMessage";
+    public static final String timesheetOverlappingMessage = "error.timesheetOverlappingMessage";
     public static final String missingHeadersMessage = "error.missingHeadersMessage";
     public static final String missingRequiredFieldsMessage = "error.missingRequiredFieldsMessage";
     public static final String unsupportedFileFormatMessage = "error.unsupportedFileFormatMessage";
     public static final String futureCalenderNotAccessibleMessage = "error.futureCalenderNotAccessibleMessage";
     public static final String fileNotReadableMessage = "error.fileNotReadableMessage";
     public static final String forDevelopmentOnlyMessage = "error.forDevelopmentOnlyMessage";
+    public static final String activeTimesheetPresentMessage = "error.activeTimesheetPresentMessage";
 
 }
