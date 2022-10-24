@@ -30,3 +30,5 @@ databaseChangeLog:
       file: db/changelog/changelog-user_tokens.yml
   - include:
       file: db/changelog/changelog-time_offs.yml
+  - include:
+      file: db/changelog/changelog-time_sheets.yml
