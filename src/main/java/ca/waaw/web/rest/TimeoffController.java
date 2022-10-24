@@ -42,12 +42,7 @@ public class TimeoffController {
                                                        @Parameter(description = "${api.swagger.param-description.timeoff-date}")
                                                        @RequestParam(required = false) String startDate,
                                                        @RequestParam(required = false) String endDate) {
-        try {
-            return ResponseEntity.ok(timeOffsService.getAllTimeOff(pageNo, pageSize, showAll, startDate, endDate));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        return ResponseEntity.ok(timeOffsService.getAllTimeOff(pageNo, pageSize, showAll, startDate, endDate));
     }
 
     @SwaggerCreated

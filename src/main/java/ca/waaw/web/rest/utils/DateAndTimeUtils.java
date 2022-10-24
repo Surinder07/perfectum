@@ -33,6 +33,14 @@ public class DateAndTimeUtils {
     }
 
     /**
+     * @param timezone timezone, current date required in
+     * @return Instant object for current date and time
+     */
+    public static Instant getCurrentDateTime(String timezone) {
+        return ZonedDateTime.now(ZoneId.of(timezone)).toInstant();
+    }
+
+    /**
      * This method is used to check if user is attempting to update holiday in the past, so we are adding 12
      * hours (negative) to have flexibility for all timezones if timezone is not passed in method.
      *
