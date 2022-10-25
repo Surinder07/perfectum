@@ -23,6 +23,10 @@ public class AppUrlConfig {
 
     private String login;
 
+    public String getHostedUi() {
+        return hostedUi;
+    }
+
     public String getActivateAccountUrl(String key) {
         return String.format("%s%s%s", hostedServer, activateAccount, key);
     }
