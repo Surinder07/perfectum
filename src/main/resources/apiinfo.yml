@@ -60,10 +60,10 @@ api:
       deleteShift: /v1/shifts/delete
       assignShift: /v1/shifts/assign
       releaseShift: /v1/shifts/release
-      getAllShifts: /v1/shifts/getAll/{pageNo}/{pageSize}
+      getAllShifts: /v1/shifts/getAll
       createShiftsBatch: /v1/shifts/batch/create
       releaseShiftsBatch: /v1/shifts/batch/approve
-      getAllShiftsBatch: /v1/shifts/batch/getAll/{pageNo}/{pageSize}
+      getAllShiftsBatch: /v1/shifts/batch/getAll
       requestOvertime: /v1/shifts/overtime/request
       respondToOvertime: /v1/shifts/overtime/respond
       deleteOvertime: /v1/shifts/overtime/delete

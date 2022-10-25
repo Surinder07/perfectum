@@ -43,7 +43,7 @@ public class SuperUserController {
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.super-user.deleteCode}")
-    @PutMapping("${api.endpoints.super-user.deleteCode}")
+    @DeleteMapping("${api.endpoints.super-user.deleteCode}")
     public void deleteCode(@RequestParam String id) {
         superUserService.deleteCode(id);
     }

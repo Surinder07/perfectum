@@ -54,7 +54,7 @@ public class TimesheetController {
     @Operation(description = "${api.description.timesheet.getTimer}")
     @GetMapping("${api.endpoints.timesheet.getTimer}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(implementation = DateTimeDto.class))})
-    public ResponseEntity<DateTimeDto> getAllTimeOff() {
+    public ResponseEntity<DateTimeDto> getActiveTimesheet() {
         return ResponseEntity.ok(timesheetService.getActiveTimesheet());
     }
 
@@ -64,7 +64,7 @@ public class TimesheetController {
     @GetMapping("${api.endpoints.timesheet.getAll}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = TimeOffInfoDto.class)))})
-    public ResponseEntity<List<TimesheetDetailDto>> getAllTimeOff(@RequestParam String startDate, @RequestParam String endDate) {
+    public ResponseEntity<List<TimesheetDetailDto>> getAllTimeSheets(@RequestParam String startDate, @RequestParam String endDate) {
         return ResponseEntity.ok(timesheetService.getAllTimeSheet(startDate, endDate));
     }
 
@@ -96,7 +96,7 @@ public class TimesheetController {
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.timesheet.delete}")
-    @PostMapping("${api.endpoints.timesheet.delete}")
+    @DeleteMapping("${api.endpoints.timesheet.delete}")
     public void deleteTimesheet(@RequestParam String id) {
         timesheetService.deleteTimesheet(id);
     }

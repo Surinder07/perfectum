@@ -64,7 +64,7 @@ public class TimeoffController {
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.timeoff.respond}")
-    @PostMapping("${api.endpoints.timeoff.respond}")
+    @PutMapping("${api.endpoints.timeoff.respond}")
     public void respondToTimeoff(@RequestParam String requestId, @RequestParam boolean accept) {
         timeOffsService.respondToRequest(requestId, accept);
     }
@@ -75,7 +75,7 @@ public class TimeoffController {
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.timeoff.delete}")
-    @PutMapping("${api.endpoints.timeoff.delete}")
+    @DeleteMapping("${api.endpoints.timeoff.delete}")
     public void deleteTimeoff(@RequestParam String requestId) {
         timeOffsService.deleteTimeoff(requestId);
     }

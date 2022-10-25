@@ -177,7 +177,7 @@ public class ShiftSchedulingController {
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.shift-management.deleteOvertime}")
-    @PutMapping("${api.endpoints.shift-management.deleteOvertime}")
+    @DeleteMapping("${api.endpoints.shift-management.deleteOvertime}")
     public void deleteOvertime(@RequestParam String requestId) {
         shiftSchedulingService.deleteOvertimeRequest(requestId);
     }
