@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-time_sheets
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: time_sheets
+      changes:
+        - createTable:
+            tableName: time_sheets
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: VARCHAR(100)
+              - column:
+                  name: start
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end
+                  type: TIMESTAMP
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  defaultValue: ACTIVE
+              - column:
+                  name: created_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: last_modified_by
+                  type: VARCHAR(100)
+              - column:
+                  name: last_modified_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+        - addForeignKeyConstraint:
+            baseTableName: time_sheets
+            baseColumnNames: user_id
+            constraintName: fk_timesheet_user_id
+            referencedColumnNames: uuid
+            referencedTableName: user

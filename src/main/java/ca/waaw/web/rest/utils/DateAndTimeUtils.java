@@ -26,9 +26,18 @@ public class DateAndTimeUtils {
      * @return Instant object for the date in given timezone
      */
     public static Instant getDateInstant(String date, String time, String timezone) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+        DateTimeFormatter formatter = time.length() == 5 ? DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm") :
+                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(String.format("%s %s", date, time), formatter);
         return dateTime.atZone(ZoneId.of(timezone)).toInstant();
+    }
+
+    /**
+     * @param timezone timezone, current date required in
+     * @return Instant object for current date and time
+     */
+    public static Instant getCurrentDateTime(String timezone) {
+        return ZonedDateTime.now(ZoneId.of(timezone)).toInstant();
     }
 
     /**

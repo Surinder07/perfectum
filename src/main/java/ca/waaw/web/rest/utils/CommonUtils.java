@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -122,6 +123,26 @@ public class CommonUtils {
      */
     public static <M, S> PaginationDto getPaginationResponse(Page<M> page, Function<M, S> mapper) {
         List<S> data = page.getContent().stream().map(mapper).collect(Collectors.toList());
+        return PaginationDto.builder()
+                .totalEntries((int) page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .data(data)
+                .build();
+    }
+
+    /**
+     * @param page   Page object containing all data
+     * @param mapper mapper function to convert to dto list
+     * @param timezone timezone to convert the dates to
+     * @param <M>    Class type for Page entity
+     * @param <S>    Class type for DTO response
+     * @return PaginationDto containing list of dto and page info
+     */
+    public static <M, S> PaginationDto getPaginationResponse(Page<M> page, BiFunction<M, String, S> mapper,
+                                                             String timezone) {
+        List<S> data = page.getContent().stream()
+                .map(obj -> mapper.apply(obj, timezone))
+                .collect(Collectors.toList());
         return PaginationDto.builder()
                 .totalEntries((int) page.getTotalElements())
                 .totalPages(page.getTotalPages())

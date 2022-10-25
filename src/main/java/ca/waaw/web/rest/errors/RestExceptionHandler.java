@@ -145,6 +145,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(TimesheetOverlappingException.class)
+    protected ResponseEntity<ErrorVM> handleTimesheetOverlappingException(TimesheetOverlappingException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.timesheetOverlappingMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(MissingHeadersException.class)
     protected ResponseEntity<ErrorVM> handleMissingHeadersException(MissingHeadersException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.missingHeadersMessage,
@@ -185,6 +192,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.forDevelopmentOnlyMessage,
                 null);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ActiveTimesheetPresentException.class)
+    protected ResponseEntity<ErrorVM> handleActiveTimesheetPresentException(ActiveTimesheetPresentException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.activeTimesheetPresentMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
     }
 
 }
