@@ -203,7 +203,7 @@ public class UserService {
      */
     public ResponseEntity<String> activateUser(String key) {
         log.info("Activating user for activation key {}", key);
-        String errorMessage = "Your activation url has been expired.";
+        String errorMessage = "Your activation link has been expired.";
         HttpHeaders httpHeaders = new HttpHeaders();
         String responseTemplate = userTokenRepository
                 .findOneByTokenAndTokenTypeAndIsExpired(key, UserToken.ACTIVATION, false)
@@ -214,10 +214,11 @@ public class UserService {
                         userTokens.setExpired(true);
                         userTokenRepository.save(userTokens);
                         try {
-                            // TODO create error HTML page and add path here.
                             stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
                                     this.getClass().getClassLoader()).getInputStream());
-                            return IOUtils.toString(stream).replace("message", errorMessage);
+                            return IOUtils.toString(stream).replace("messageBody", errorMessage)
+                                    .replace("titleMessage", "Link Expired")
+                                    .replace("homepageUrl", appUrlConfig.getRegisterUrl());
                         } catch (Exception e) {
                             return "<h1>Activation key is expired</h1>";
                         }
@@ -233,7 +234,9 @@ public class UserService {
                         try {
                             stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.successPage,
                                     this.getClass().getClassLoader()).getInputStream());
-                            return IOUtils.toString(stream);
+                            return IOUtils.toString(stream).replace("messageBody", "Your account was successfully activated")
+                                    .replace("titleMessage", "Account activated")
+                                    .replace("homepageUrl", appUrlConfig.getLoginUrl());
                         } catch (Exception e) {
                             return "<h1>Success</h1><p>Redirecting you to the login page...</p>";
                         }
@@ -241,10 +244,11 @@ public class UserService {
                 })
                 .orElseGet(() -> {
                     try {
-                        // TODO create error HTML page and add path here.
                         InputStreamReader stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
                                 this.getClass().getClassLoader()).getInputStream());
-                        return IOUtils.toString(stream).replace("message", errorMessage);
+                        return IOUtils.toString(stream).replace("messageBody", errorMessage)
+                                .replace("titleMessage", "Link Expired")
+                                .replace("homepageUrl", appUrlConfig.getRegisterUrl());
                     } catch (Exception e) {
                         return "<h1>Activation key is expired</h1>";
                     }
@@ -275,12 +279,13 @@ public class UserService {
         String body = null;
         HttpHeaders httpHeaders = new HttpHeaders();
         if (registerUrl == null) {
-            // TODO get failed html body without redirect
             try {
                 String message = "Your invitation url seems to be expired, Please contact admin.";
                 InputStreamReader stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
                         this.getClass().getClassLoader()).getInputStream());
-                body = IOUtils.toString(stream).replace("message", message);
+                body = IOUtils.toString(stream).replace("messageBody", message)
+                        .replace("titleMessage", "Link Expired")
+                        .replace("homepageUrl", appUrlConfig.getHostedUi());
             } catch (Exception e) {
                 body = "<h1>Invitation key is expired</h1>";
             }

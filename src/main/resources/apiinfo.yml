@@ -26,8 +26,9 @@ api:
       editHoliday: /v1/organization/holiday/edit
       deleteHoliday: /v1/organization/holiday/delete
     member:
-      sendInvite: /v1/member/sendInvite
-      sendInviteByUpload: /v1/member/sendInvite/upload
+      sendInvite: /v1/member/invite/send
+      resendInvite: /v1/member/invite/resend
+      sendInviteByUpload: /v1/member/invite/upload
       getAllMembers: /v1/member/getAll
       listAllMembers: /v1/member/listAll
       getMemberById: /v1/member/getById
@@ -115,6 +116,7 @@ api:
       deleteHoliday: Delete a holiday.
     member:
       sendInvite: Invite new users to join logged in admins organization.
+      resendInvite: Resend invites to exisitng users.
       sendInviteByUpload: |
         Upload excel or csv to add new members and send invite.
         * Include location name and location role if you are global admin, include only location role if you are location admin.

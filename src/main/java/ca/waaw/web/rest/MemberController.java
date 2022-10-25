@@ -7,10 +7,7 @@ import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
 import ca.waaw.dto.userdtos.UserInfoForDropDown;
 import ca.waaw.web.rest.service.MemberService;
-import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerAuthenticated;
-import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
-import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerCreated;
-import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerUnauthorized;
+import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -76,6 +73,18 @@ public class MemberController {
         role = StringUtils.isNotEmpty(role) ? role.toUpperCase(Locale.ROOT) : null;
         locationId = StringUtils.isNotEmpty(locationId) ? locationId : null;
         return ResponseEntity.ok(memberService.getAllUsers(pageNo, pageSize, searchKey, locationId, role));
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.member.resendInvite}")
+    @GetMapping("${api.endpoints.member.resendInvite}")
+    public void resendInvite(@RequestParam String userId) {
+        memberService.resendInvite(userId);
     }
 
     @SwaggerBadRequest

@@ -11,6 +11,7 @@ import ca.waaw.dto.emailmessagedtos.InviteUserMailDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.UserToken;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
@@ -78,6 +79,47 @@ public class MemberService {
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .orElseThrow(UnauthorizedException::new);
         inviteNewUsers(Collections.singletonList(inviteUserDto), true, admin);
+    }
+
+    /**
+     * @param userId User to which invitation is to be resent
+     */
+    public void resendInvite(String userId) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(loggedUser -> userRepository.findOneByIdAndDeleteFlag(userId, false)
+                        .map(user -> {
+                            if (!user.getId().equals(loggedUser.getId()) ||
+                                    (loggedUser.getAuthority().equals(Authority.MANAGER) &&
+                                            !user.getLocationId().equals(loggedUser.getLocationId()))) {
+                                return null;
+                            }
+                            if (user.getStatus().equals(EntityStatus.ACTIVE)) return null; // TODO throw error
+                            userTokenRepository.findOneByUserIdAndTokenType(userId, UserToken.INVITE)
+                                    .map(token -> {
+                                        token.setExpired(true);
+                                        return userTokenRepository.save(token);
+                                    })
+                                    .map(token -> {
+                                        UserTokens newToken = new UserTokens(UserToken.INVITE);
+                                        newToken.setUserId(token.getUserId());
+                                        newToken.setCreatedBy(loggedUser.getId());
+                                        return newToken;
+                                    })
+                                    .map(userTokenRepository::save)
+                                    .map(newToken -> {
+                                        InviteUserMailDto mailDto = new InviteUserMailDto();
+                                        mailDto.setUser(user);
+                                        mailDto.setInviteUrl(appUrlConfig.getInviteUserUrl(newToken.getToken()));
+                                        userMailService.sendInvitationEmail(Collections.singletonList(mailDto),
+                                                loggedUser.getOrganization().getName());
+                                        return newToken;
+                                    });
+                            return user;
+                        })
+                        .orElseThrow(() -> new EntityNotFoundException("user"))
+                );
     }
 
     /**
