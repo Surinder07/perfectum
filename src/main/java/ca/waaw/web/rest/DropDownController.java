@@ -50,6 +50,7 @@ public class DropDownController {
         populateListToEnumMap(enumMap, PromoCodeType.class);
         populateListToEnumMap(enumMap, ShiftStatus.class);
         populateListToEnumMap(enumMap, ShiftType.class);
+        populateListToEnumMap(enumMap, PayrollGenerationType.class);
         return ResponseEntity.ok(enumMap);
     }
 

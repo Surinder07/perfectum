@@ -8,6 +8,7 @@ import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.PayrollGenerationType;
 import ca.waaw.web.rest.utils.CommonUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -161,6 +162,10 @@ public class UserMapper {
             target.setTimeoffEnabledDefault(source.getIsTimeoffEnabledDefault());
         if (source.getDaysBeforeShiftsAssigned() != null)
             target.setDaysBeforeShiftsAssigned(source.getDaysBeforeShiftsAssigned());
+        if (source.getPayrollGenerationFrequency() != null){
+            target.setPayrollGenerationFrequency(PayrollGenerationType.valueOf(source.getPayrollGenerationFrequency().toUpperCase()));
+            target.setDayDateForPayroll(source.getDayDateForPayroll());
+        }
         return target;
     }
 

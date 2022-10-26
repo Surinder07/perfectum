@@ -1,7 +1,7 @@
 package ca.waaw.domain;
 
 import ca.waaw.enumration.DaysOfWeek;
-import ca.waaw.enumration.SubscriptionPlans;
+import ca.waaw.enumration.PayrollGenerationType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -24,8 +24,11 @@ public class Organization extends AbstractEntity {
     private DaysOfWeek firstDayOfWeek = DaysOfWeek.MONDAY;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "subscription_plan")
-    private SubscriptionPlans subscriptionPlan;
+    @Column(name = "payroll_generation_frequency")
+    private PayrollGenerationType payrollGenerationFrequency;
+
+    @Column(name = "day_date_for_payroll")
+    private String dayDateForPayroll;
 
     @Column(name = "trial_days")
     private int trialDays;

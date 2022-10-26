@@ -27,7 +27,10 @@ databaseChangeLog:
                   type: VARCHAR(20)
                   defaultValue: 'MONDAY'
               - column:
-                  name: subscription_plan
+                  name: payroll_generation_frequency
+                  type: VARCHAR(50)
+              - column:
+                  name: day_date_for_payroll
                   type: VARCHAR(50)
               - column:
                   name: trial_days
