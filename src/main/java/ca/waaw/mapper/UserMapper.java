@@ -85,6 +85,7 @@ public class UserMapper {
         if (StringUtils.isNotEmpty(source.getLangKey())) target.setLangKey(source.getLangKey());
         if (source.getIsEmailNotifications() != null) target.setEmailNotifications(source.getIsEmailNotifications());
         if (source.getIsSmsNotifications() != null) target.setSmsNotifications(source.getIsSmsNotifications());
+        if (source.getIsFullTime() != null) target.setFullTime(source.getIsFullTime());
     }
 
     /**
@@ -99,6 +100,8 @@ public class UserMapper {
         target.setEmployeeId(source.getEmployeeId());
         target.setLocationId(source.getLocationId());
         target.setLocationRoleId(source.getLocationRoleId());
+        if (source.getIsFullTime() != null) target.setFullTime(source.getIsFullTime());
+        else target.setFullTime(!source.getRole().equals(Authority.CONTRACTOR.toString()));
         target.setAuthority(Authority.valueOf(source.getRole()));
         target.setStatus(EntityStatus.PENDING);
         return target;

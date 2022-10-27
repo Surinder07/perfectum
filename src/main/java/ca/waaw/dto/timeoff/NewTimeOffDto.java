@@ -1,7 +1,10 @@
 package ca.waaw.dto.timeoff;
 
 import ca.waaw.dto.DateTimeDto;
+import ca.waaw.enumration.TimeOffType;
+import ca.waaw.web.rest.utils.customannotations.ToUppercase;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
+import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -30,5 +33,9 @@ public class NewTimeOffDto {
 
     @Schema(description = "Send in case of admin trying to add manually")
     private String userId;
+
+    @ToUppercase
+    @ValueOfEnum(enumClass = TimeOffType.class, message = "Pass a valid timeoff type")
+    private String type;
 
 }

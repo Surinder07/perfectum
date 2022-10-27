@@ -142,7 +142,7 @@ files:
     csv: csv
   required-fields:
     holidays: name, year, month, date
-    invite-users: email, location_role, first_name
+    invite-users: email, location_role, first_name, is_full_time
   pojo-templates:
     holidays:
       name: name
@@ -158,3 +158,4 @@ files:
       first_name: firstName
       last_name: lastName
       employee_id: employeeId
+      is_full_time: isFullTime
