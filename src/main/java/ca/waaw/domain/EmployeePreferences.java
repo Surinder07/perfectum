@@ -1,13 +1,11 @@
 package ca.waaw.domain;
 
+import ca.waaw.enumration.Currency;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
@@ -69,6 +67,13 @@ public class EmployeePreferences implements Serializable {
 
     @Column(name = "sunday_working_hours")
     private float sundayWorkingHours;
+
+    @Column(name = "wages_per_hour")
+    private float wagesPerHour;
+
+    @Column(name = "wages_currency")
+    @Enumerated(EnumType.STRING)
+    private Currency wagesCurrency;
 
     @Column(name = "is_expired")
     private boolean isExpired;

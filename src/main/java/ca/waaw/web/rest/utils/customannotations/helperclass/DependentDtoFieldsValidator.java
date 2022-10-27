@@ -6,6 +6,7 @@ import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.OrganizationPreferences;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.Currency;
 import ca.waaw.enumration.DaysOfWeek;
 import ca.waaw.enumration.PayrollGenerationType;
 import ca.waaw.security.SecurityUtils;
@@ -125,6 +126,18 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
                         Integer.parseInt(dayDateForPayroll) > 31)) || !EnumUtils.isValidEnum(DaysOfWeek.class, dayDateForPayroll);
                 if (!EnumUtils.isValidEnum(PayrollGenerationType.class, payrollGenerationFrequency)) error = true;
                 return !error;
+            case EMPLOYEE_PREFERENCES_WAGES:
+                float wagesPerHour = 0;
+                String wagesCurrency = null;
+                if (PARSER.parseExpression("wagesPerHour").getValue(value) != null &&
+                        !String.valueOf(PARSER.parseExpression("wagesPerHour").getValue(value)).equals("")) {
+                    wagesPerHour = Float.parseFloat(String.valueOf(PARSER.parseExpression("wagesPerHour").getValue(value)));
+                }
+                if (PARSER.parseExpression("wagesCurrency").getValue(value) != null &&
+                        !String.valueOf(PARSER.parseExpression("wagesCurrency").getValue(value)).equals("")) {
+                    wagesCurrency = String.valueOf(PARSER.parseExpression("wagesCurrency").getValue(value));
+                }
+                return !(wagesPerHour > 0 && StringUtils.isEmpty(wagesCurrency) && EnumUtils.isValidEnum(Currency.class, wagesCurrency));
         }
         return true;
     }

@@ -7,6 +7,7 @@ import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.Currency;
 import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.PayrollGenerationType;
 import ca.waaw.web.rest.utils.CommonUtils;
@@ -162,7 +163,7 @@ public class UserMapper {
             target.setTimeoffEnabledDefault(source.getIsTimeoffEnabledDefault());
         if (source.getDaysBeforeShiftsAssigned() != null)
             target.setDaysBeforeShiftsAssigned(source.getDaysBeforeShiftsAssigned());
-        if (source.getPayrollGenerationFrequency() != null){
+        if (source.getPayrollGenerationFrequency() != null) {
             target.setPayrollGenerationFrequency(PayrollGenerationType.valueOf(source.getPayrollGenerationFrequency().toUpperCase()));
             target.setDayDateForPayroll(source.getDayDateForPayroll());
         }
@@ -189,6 +190,8 @@ public class UserMapper {
     public static EmployeePreferences employeePreferencesToEntity(EmployeePreferencesDto source) {
         EmployeePreferences target = new EmployeePreferences();
         BeanUtils.copyProperties(source, target);
+        if (StringUtils.isNotEmpty(source.getWagesCurrency()))
+            target.setWagesCurrency(Currency.valueOf(source.getWagesCurrency()));
         target.setExpired(false);
         return target;
     }

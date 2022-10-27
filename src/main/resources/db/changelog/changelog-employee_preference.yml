@@ -63,6 +63,12 @@ databaseChangeLog:
                   name: sunday_working_hours
                   type: DECIMAL
               - column:
+                  name: wages_per_hour
+                  type: DECIMAL
+              - column:
+                  name: wages_currency
+                  type: VARCHAR(5)
+              - column:
                   name: is_expired
                   type: BOOLEAN
                   defaultValue: false

@@ -6,7 +6,6 @@ import ca.waaw.config.applicationconfig.AppSuperUserConfig;
 import ca.waaw.domain.*;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.EntityStatus;
-import ca.waaw.enumration.SubscriptionPlans;
 import ca.waaw.repository.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
@@ -71,7 +70,6 @@ public class ApplicationStartupSqlService {
                             Organization organization = new Organization();
                             organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
                             organization.setName(appSuperUserConfig.getOrganization());
-                            organization.setSubscriptionPlan(SubscriptionPlans.UNLIMITED);
                             organization.setStatus(EntityStatus.ACTIVE);
                             organization.setTimezone(appSuperUserConfig.getTimezone());
                             organization.setCreatedBy("SYSTEM");
