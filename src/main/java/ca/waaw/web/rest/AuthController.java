@@ -79,7 +79,7 @@ public class AuthController {
         Optional<User> userEntity = userRepository.findOneByUsernameOrEmail(loginDto.getLogin(), loginDto.getLogin());
 
         boolean isTrialOver = userEntity
-                .flatMap(user -> organizationRepository.findOneByIdAndDeleteFlagAndSubscriptionPlanIsNull(user.getOrganizationId(), false)
+                .flatMap(user -> organizationRepository.findOneByIdAndDeleteFlagAndTrialDaysNot(user.getOrganizationId(), false, 0)
                         .map(organization -> {
                             if (!user.getAuthority().equals(Authority.SUPER_USER) &&
                                     organization.getCreatedDate().isBefore(Instant.now().minus(organization.getTrialDays(), ChronoUnit.DAYS))) {

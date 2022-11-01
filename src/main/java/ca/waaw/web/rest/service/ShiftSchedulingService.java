@@ -408,9 +408,9 @@ public class ShiftSchedulingService {
                 .map(loggedUser -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
                         .filter(shift -> shift.getShiftType().equals(ShiftType.OVERTIME))
                         .map(overtime -> {
-                            if (!overtime.getOrganizationId().equals(loggedUser.getOrganizationId())
-                                    && (loggedUser.getAuthority().equals(Authority.MANAGER) &&
-                                    !overtime.getLocationId().equals(loggedUser.getLocationId()))) {
+                            if (!overtime.getOrganizationId().equals(loggedUser.getOrganizationId()) ||
+                                    (loggedUser.getAuthority().equals(Authority.MANAGER) &&
+                                            !overtime.getLocationId().equals(loggedUser.getLocationId()))) {
                                 throw new UnauthorizedException();
                             }
                             overtime.setShiftStatus(accept ? ShiftStatus.SCHEDULED : ShiftStatus.OVERTIME_REJECTED);

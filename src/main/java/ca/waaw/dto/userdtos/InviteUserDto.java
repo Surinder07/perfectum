@@ -35,6 +35,8 @@ public class InviteUserDto {
 
     private String employeeId;
 
+    private Boolean isFullTime;
+
     @Schema(description = "Required if role is <b>EMPLOYEE</b> or <b>MANAGER</b>")
     private String locationId;
 

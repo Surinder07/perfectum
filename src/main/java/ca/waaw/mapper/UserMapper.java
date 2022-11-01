@@ -7,7 +7,9 @@ import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.Currency;
 import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.PayrollGenerationType;
 import ca.waaw.web.rest.utils.CommonUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -83,6 +85,7 @@ public class UserMapper {
         if (StringUtils.isNotEmpty(source.getLangKey())) target.setLangKey(source.getLangKey());
         if (source.getIsEmailNotifications() != null) target.setEmailNotifications(source.getIsEmailNotifications());
         if (source.getIsSmsNotifications() != null) target.setSmsNotifications(source.getIsSmsNotifications());
+        if (source.getIsFullTime() != null) target.setFullTime(source.getIsFullTime());
     }
 
     /**
@@ -97,6 +100,8 @@ public class UserMapper {
         target.setEmployeeId(source.getEmployeeId());
         target.setLocationId(source.getLocationId());
         target.setLocationRoleId(source.getLocationRoleId());
+        if (source.getIsFullTime() != null) target.setFullTime(source.getIsFullTime());
+        else target.setFullTime(!source.getRole().equals(Authority.CONTRACTOR.toString()));
         target.setAuthority(Authority.valueOf(source.getRole()));
         target.setStatus(EntityStatus.PENDING);
         return target;
@@ -161,6 +166,10 @@ public class UserMapper {
             target.setTimeoffEnabledDefault(source.getIsTimeoffEnabledDefault());
         if (source.getDaysBeforeShiftsAssigned() != null)
             target.setDaysBeforeShiftsAssigned(source.getDaysBeforeShiftsAssigned());
+        if (source.getPayrollGenerationFrequency() != null) {
+            target.setPayrollGenerationFrequency(PayrollGenerationType.valueOf(source.getPayrollGenerationFrequency().toUpperCase()));
+            target.setDayDateForPayroll(source.getDayDateForPayroll());
+        }
         return target;
     }
 
@@ -184,6 +193,8 @@ public class UserMapper {
     public static EmployeePreferences employeePreferencesToEntity(EmployeePreferencesDto source) {
         EmployeePreferences target = new EmployeePreferences();
         BeanUtils.copyProperties(source, target);
+        if (StringUtils.isNotEmpty(source.getWagesCurrency()))
+            target.setWagesCurrency(Currency.valueOf(source.getWagesCurrency()));
         target.setExpired(false);
         return target;
     }

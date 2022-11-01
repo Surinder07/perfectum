@@ -122,12 +122,12 @@ api:
         * Include location name and location role if you are global admin, include only location role if you are location admin.
         * If no role is mentioned, user will be added as an employee; if no language is mentioned, default will be 'en'.
         * Use Form Data.
-        * Allowed file formats: ${files.formats-allowed.excel},${files.formats-allowed.csv}
+        * Allowed file formats: ${files.formats-allowed.excel}, ${files.formats-allowed.csv}
       getAllMembers: Get all Employees and Admins under logged-in user.
       listAllMembers: |
         Get all members under one locationId with search. *Limited info will be returned.*
         > This API can be used for populating a drop-down while **scheduling shifts**
-      getMemberById: Get details of a meber by id
+      getMemberById: Get details of a member by id
       addEmployeePreferences: Update employee preferences
       getEmployeePreferences: Get an employee's preferences
     dropdown:

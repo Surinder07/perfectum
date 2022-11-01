@@ -7,6 +7,7 @@ import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.timeoff.TimeOffInfoDto;
 import ca.waaw.dto.userdtos.UserInfoForDropDown;
 import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.TimeOffType;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 
@@ -25,6 +26,7 @@ public class TimeoffMapper {
                 source.getEndDate().getTime(), timezone));
         target.setNotes(source.getNote());
         target.setUserId(source.getUserId());
+        target.setType(TimeOffType.valueOf(source.getType()));
         return target;
     }
 

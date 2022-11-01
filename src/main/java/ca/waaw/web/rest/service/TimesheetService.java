@@ -197,7 +197,7 @@ public class TimesheetService {
                         .map(timesheet -> {
                             userRepository.findOneByIdAndDeleteFlag(timesheet.getUserId(), false)
                                     .map(user -> {
-                                        if (!user.getOrganizationId().equals(loggedUser.getOrganizationId()) &&
+                                        if (!user.getOrganizationId().equals(loggedUser.getOrganizationId()) ||
                                                 (loggedUser.getAuthority().equals(Authority.MANAGER) &&
                                                         !loggedUser.getLocationId().equals(user.getLocationId()))) {
                                             return null;

@@ -1,6 +1,8 @@
 package ca.waaw.dto;
 
+import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
+import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.RegexValidatorType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -13,6 +15,8 @@ import java.time.Instant;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.EMPLOYEE_PREFERENCES_WAGES, message =
+        "Pass both Wages per hour with a valid currency or neither")
 public class EmployeePreferencesDto {
 
     private String id;
@@ -61,6 +65,11 @@ public class EmployeePreferencesDto {
     private String sundayStartTime;
 
     private float sundayWorkingHours;
+
+    @Schema(description = "wages per hour for payroll purposes")
+    private float wagesPerHour;
+
+    private String wagesCurrency;
 
     @Schema(hidden = true)
     private String createdBy;
