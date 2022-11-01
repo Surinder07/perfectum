@@ -78,6 +78,7 @@ public class UserService {
      *
      * @param userDTO all user related details with invite key
      */
+    // TODO Change to accept invite
     @Transactional(rollbackFor = Exception.class)
     public void registerUser(RegisterUserDto userDTO) {
         userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(userDTO.getInviteKey(),
@@ -112,6 +113,7 @@ public class UserService {
                 .orElseThrow(() -> new ExpiredKeyException("invite"));
     }
 
+    // TODO Split into two APIs for simple registration and complete registration
     /**
      * Main User registration method for organizations, admin user account will be created with an organization
      *
@@ -201,6 +203,7 @@ public class UserService {
      *
      * @param key activation key received in mail
      */
+    // TODO Change to complete profile with another api to check activation key
     public ResponseEntity<String> activateUser(String key) {
         log.info("Activating user for activation key {}", key);
         String errorMessage = "Your activation link has been expired.";
@@ -261,6 +264,7 @@ public class UserService {
      *
      * @param key invite key received in mail
      */
+    // TODO merge accept invite with register and create separate api for checking invite key
     public ResponseEntity<String> acceptInvite(String key) {
         log.info("Getting details for user with invitation key: {}", key);
         String registerUrl = userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(key, UserToken.INVITE, false)

@@ -49,9 +49,14 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(description = "${api.description.user.registerUser}")
     @PostMapping("${api.endpoints.user.registerUser}")
+    // TODO
     public void registerNewUser(@Valid @RequestBody RegisterUserDto registerUserDto) {
         userService.registerUser(registerUserDto);
     }
+
+    // TODO add complete registration
+
+    // TODO add accept invite
 
     @SwaggerCreated
     @SwaggerBadRequest
@@ -59,6 +64,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(description = "${api.description.user.registerOrganization}")
     @PostMapping("${api.endpoints.user.registerOrganization}")
+    // TODO Remove this api
     public void registerNewAdminAndOrganization(@Valid @RequestBody RegisterOrganizationDto registerOrganizationDto) {
         userService.registerAdminAndOrganization(registerOrganizationDto);
     }
@@ -122,21 +128,19 @@ public class UserController {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
     }
 
-    /*
-     Below are APIs for links sent to email for various purpose. These are not exposed on swagger
-     */
-
+    // TODO Add Swagger
     @Operation(hidden = true)
     @ResponseStatus(HttpStatus.OK)
     @GetMapping(value = "${api.endpoints.user.activateAccount}", produces = "text/html;charset=UTF-8")
-    public ResponseEntity<String> activateAccount(@RequestParam String key) {
+    public ResponseEntity<String> checkActivationLink(@RequestParam String key) {
         return userService.activateUser(key);
     }
 
+    // TODO Add Swagger
     @Operation(hidden = true)
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("${api.endpoints.user.acceptInvitation}")
-    public ResponseEntity<String> acceptInvitation(@RequestParam String key) {
+    public ResponseEntity<String> checkInviteLink(@RequestParam String key) {
         return userService.acceptInvite(key);
     }
 
