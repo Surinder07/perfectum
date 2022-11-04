@@ -25,10 +25,7 @@ public class Organization extends AbstractEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payroll_generation_frequency")
-    private PayrollGenerationType payrollGenerationFrequency;
-
-    @Column(name = "day_date_for_payroll")
-    private String dayDateForPayroll;
+    private PayrollGenerationType payrollGenerationFrequency = PayrollGenerationType.MONTHLY;
 
     @Column(name = "trial_days")
     private int trialDays;

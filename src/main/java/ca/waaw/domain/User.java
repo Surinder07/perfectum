@@ -1,5 +1,6 @@
 package ca.waaw.domain;
 
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -64,6 +65,10 @@ public class User extends AbstractEntity {
     @Column
     @Enumerated(EnumType.STRING)
     private Authority authority;
+
+    @Column(name = "account_status")
+    @Enumerated(EnumType.STRING)
+    private AccountStatus accountStatus;
 
     @Column(name = "email_notification_on")
     private boolean isEmailNotifications;

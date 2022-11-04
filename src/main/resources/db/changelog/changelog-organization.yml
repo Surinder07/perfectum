@@ -30,9 +30,6 @@ databaseChangeLog:
                   name: payroll_generation_frequency
                   type: VARCHAR(50)
               - column:
-                  name: day_date_for_payroll
-                  type: VARCHAR(50)
-              - column:
                   name: trial_days
                   type: SMALLINT
                   defaultValue: 14

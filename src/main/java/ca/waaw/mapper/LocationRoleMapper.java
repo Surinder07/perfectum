@@ -10,7 +10,6 @@ import ca.waaw.dto.locationandroledtos.LocationRoleDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleWithUsersDto;
 import ca.waaw.dto.userdtos.BaseUserDetails;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.EntityStatus;
 import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
@@ -41,7 +40,6 @@ public class LocationRoleMapper {
         target.setLocationId(source2.getAuthority().equals(Authority.ADMIN) ? source1.getLocationId() : null);
         target.setOrganizationId(source2.getOrganizationId());
         target.setCreatedBy(source2.getId());
-        target.setStatus(EntityStatus.ACTIVE);
         target.setTimeclockEnabled(source1.getIsTimeclockEnabled());
         target.setTimeoffEnabled(source1.getIsTimeoffEnabled());
         return target;

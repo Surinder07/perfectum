@@ -29,4 +29,5 @@ public class BaseUserDetails {
     private Instant lastLogin;
 
     private Authority role;
+
 }

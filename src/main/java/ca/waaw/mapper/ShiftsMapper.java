@@ -14,7 +14,6 @@ import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.shifts.ShiftDetailsDto;
 import ca.waaw.dto.userdtos.UserInfoForDropDown;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.ShiftStatus;
 import ca.waaw.enumration.ShiftType;
 import ca.waaw.web.rest.utils.CommonUtils;
@@ -38,7 +37,6 @@ public class ShiftsMapper {
                                           String organizationId) {
         Shifts target = new Shifts();
         if (StringUtils.isNotEmpty(source.getUserId())) target.setUserId(source.getUserId());
-        target.setStatus(EntityStatus.ACTIVE);
         target.setLocationId(locationAndRoleIdsAndTimeZone[0]);
         target.setLocationRoleId(locationAndRoleIdsAndTimeZone[1]);
         target.setAssignToFirstClaim(source.isAssignToFirstClaim());

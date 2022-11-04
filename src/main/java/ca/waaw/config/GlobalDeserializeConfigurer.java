@@ -16,4 +16,5 @@ public class GlobalDeserializeConfigurer {
         module.addDeserializer(String.class, new WhiteSpaceToNullDeserializer());
         return module;
     }
+
 }

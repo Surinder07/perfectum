@@ -8,7 +8,6 @@ import ca.waaw.dto.locationandroledtos.AdminLocationDto;
 import ca.waaw.dto.locationandroledtos.EmployeeLocationDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleDto;
 import ca.waaw.dto.locationandroledtos.NewLocationDto;
-import ca.waaw.enumration.EntityStatus;
 import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
@@ -27,7 +26,6 @@ public class LocationMapper {
         target.setTimezone(source.getTimezone());
         target.setOrganizationId(userSource.getOrganizationId());
         target.setCreatedBy(userSource.getId());
-        target.setStatus(EntityStatus.ACTIVE);
         return target;
     }
 

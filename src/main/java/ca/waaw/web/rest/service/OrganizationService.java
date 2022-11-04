@@ -8,7 +8,6 @@ import ca.waaw.dto.holiday.HolidayAdminDto;
 import ca.waaw.dto.holiday.HolidayDto;
 import ca.waaw.dto.userdtos.OrganizationPreferences;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.EntityStatus;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
 import ca.waaw.mapper.OrganizationHolidayMapper;
@@ -118,7 +117,6 @@ public class OrganizationService {
                 .parallelStream().peek(holiday -> {
                     holiday.setOrganizationId(admin.getOrganizationId());
                     holiday.setCreatedBy(admin.getId());
-                    holiday.setStatus(EntityStatus.ACTIVE);
                     if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) || StringUtils.isNotEmpty(locationId)) {
                         holiday.setLocationId(SecurityUtils.isCurrentUserInRole(Authority.MANAGER) ?
                                 admin.getLocationId() : locationId);

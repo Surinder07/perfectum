@@ -82,9 +82,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: status
-                  type: VARCHAR(50)
-                  defaultValue: PENDING
+                  name: account_status
+                  type: VARCHAR(100)
               - column:
                   name: last_login
                   type: TIMESTAMP
