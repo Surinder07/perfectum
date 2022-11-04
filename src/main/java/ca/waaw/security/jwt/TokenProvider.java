@@ -1,6 +1,7 @@
 package ca.waaw.security.jwt;
 
 import ca.waaw.config.applicationconfig.AppSecurityConfig;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.security.SecurityUtils;
 import io.jsonwebtoken.*;
 import lombok.AllArgsConstructor;
@@ -31,11 +32,11 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
 
-    private static final String IS_TRIAL_EXPIRED_KEY = "is_trial_expired";
+    private static final String ACCOUNT_STATUS_KEY = "account_status";
 
     private final AppSecurityConfig appSecurityConfig;
 
-    public String createToken(Authentication authentication, Boolean rememberMe, Boolean isTrialExpired) {
+    public String createToken(Authentication authentication, Boolean rememberMe, AccountStatus accountStatus) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
@@ -51,7 +52,7 @@ public class TokenProvider {
         return Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
-                .claim(IS_TRIAL_EXPIRED_KEY, isTrialExpired)
+                .claim(ACCOUNT_STATUS_KEY, accountStatus.name())
                 .signWith(SignatureAlgorithm.HS512, appSecurityConfig.getJwtSecret())
                 .setExpiration(validity)
                 .compact();
@@ -107,11 +108,11 @@ public class TokenProvider {
         return getClaimFromToken(token, Claims::getExpiration);
     }
 
-    //Check if associated account trial is expired
-    public Boolean checkTrialExpiry() {
+    //Check if associated account status
+    public AccountStatus checkAccountStatus() {
         return SecurityUtils.getCurrentUserJWT()
-                .map(token -> getClaimFromToken(token, (claims) -> claims.get(IS_TRIAL_EXPIRED_KEY, Boolean.class)))
-                .orElse(false);
+                .map(token -> getClaimFromToken(token, (claims) -> claims.get(ACCOUNT_STATUS_KEY, AccountStatus.class)))
+                .orElse(null);
     }
 
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {

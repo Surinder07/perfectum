@@ -52,10 +52,7 @@ public class JWTFilter extends OncePerRequestFilter {
             // JWT Token is in the form "Bearer token". Remove Bearer word and get only the Token
             if (!isUnAuthUrl(request.getRequestURI()) && requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
                 String jwtToken = requestTokenHeader.substring(7);
-                if (tokenProvider.checkTrialExpiry() && !request.getRequestURI().equals(String
-                        .format("/api%s", env.getProperty("api.endpoints.user-organization.getUserDetails")))) {
-                    throw new TrialExpiredException(Authority.ADMIN);
-                }
+                checkLoginPermission(request);
                 Authentication authentication = tokenProvider.getAuthentication(jwtToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -66,6 +63,21 @@ public class JWTFilter extends OncePerRequestFilter {
         }
         chain.doFilter(request, response);
         SecurityContextHolder.getContext().setAuthentication(null);
+    }
+
+    private void checkLoginPermission(HttpServletRequest request) {
+        switch (tokenProvider.checkAccountStatus()) {
+            case PAYMENT_PENDING:
+                // TODO throw error
+            case PAYMENT_INFO_PENDING:
+                // TODO throw error
+            case PROFILE_PENDING:
+                // TODO throw error
+            case TRIAL_EXPIRED:
+                if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.getUserDetails")))) {
+                    throw new TrialExpiredException(Authority.ADMIN);
+                }
+        }
     }
 
     private boolean isUnAuthUrl(String requestedUri) {
