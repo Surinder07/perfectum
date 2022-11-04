@@ -75,7 +75,7 @@ public class AuthController {
             log.error("Exception while logging in", e);
             throw e;
         }
-
+// TODO Only check for username/email and password here and move account status info to jwt filter by adding some parameter in jwt token
         Optional<User> userEntity = userRepository.findOneByUsernameOrEmail(loginDto.getLogin(), loginDto.getLogin());
 
         boolean isTrialOver = userEntity

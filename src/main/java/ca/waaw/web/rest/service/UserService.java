@@ -8,8 +8,7 @@ import ca.waaw.domain.PromotionCode;
 import ca.waaw.domain.User;
 import ca.waaw.domain.UserTokens;
 import ca.waaw.dto.userdtos.*;
-import ca.waaw.enumration.DaysOfWeek;
-import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.PromoCodeType;
 import ca.waaw.enumration.UserToken;
 import ca.waaw.mapper.UserMapper;
@@ -19,21 +18,14 @@ import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.utils.CommonUtils;
-import ca.waaw.web.rest.utils.HtmlTemplatesPath;
 import lombok.AllArgsConstructor;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.InputStreamReader;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -73,91 +65,136 @@ public class UserService {
         return userRepository.findOneByUsernameAndDeleteFlag(username, false).isPresent();
     }
 
-    /**
-     * Main User registration method, registration is done through email invite
-     *
-     * @param userDTO all user related details with invite key
-     */
-    // TODO Change to accept invite
     @Transactional(rollbackFor = Exception.class)
-    public void registerUser(RegisterUserDto userDTO) {
-        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(userDTO.getInviteKey(),
-                        UserToken.INVITE, false)
-                .map(token -> {
-                    if (token.getCreatedDate().isAfter(Instant.now()
-                            .minus(appValidityTimeConfig.getUserInvite(), ChronoUnit.DAYS))) {
-                        token.setExpired(true);
-                        userTokenRepository.save(token);
-                        return null;
-                    }
-                    return token;
-                })
-                .flatMap(token -> userOrganizationRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
-                        .map(user -> {
-                            String currentCustomId = userRepository.getLastUsedCustomId()
-                                    .orElse(appCustomIdConfig.getUserPrefix() + "0000000000");
-                            UserMapper.updateInvitedUser(userDTO, user);
-                            user.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
-                            user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
-                            return user;
-                        })
-                        .map(userOrganizationRepository::save)
-                        .flatMap(user -> userRepository.findOneByIdAndDeleteFlag(token.getCreatedBy(), false)
-                                .map(admin -> {
-                                    // Sending notification to admin
-                                    notificationInternalService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl());
-                                    return user;
-                                })
-                        )
-                )
-                .orElseThrow(() -> new ExpiredKeyException("invite"));
-    }
-
-    // TODO Split into two APIs for simple registration and complete registration
-    /**
-     * Main User registration method for organizations, admin user account will be created with an organization
-     *
-     * @param userDTO all user related details with invite key
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public void registerAdminAndOrganization(RegisterOrganizationDto userDTO) {
-        checkUserExistence(userDTO);
-        int trialDays = 0;
-        if (StringUtils.isNotEmpty(userDTO.getPromoCode())) {
-            trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(userDTO.getPromoCode(), PromoCodeType.TRIAL, false)
-                    .map(PromotionCode::getPromotionValue)
-                    .orElseThrow(() -> new EntityNotFoundException("promo code"));
-        }
-
+    public void registerNewUser(NewRegistrationDto registrationDto) {
+        userRepository.findOneByEmailAndDeleteFlag(registrationDto.getEmail(), false)
+                .ifPresent(user -> {
+                    if (user.getAccountStatus().equals(AccountStatus.EMAIL_PENDING))
+                        userRepository.delete(user);
+                    else
+                        throw new EntityAlreadyExistsException("email", registrationDto.getEmail());
+                });
         String currentCustomId = userRepository.getLastUsedCustomId()
                 .orElse(appCustomIdConfig.getUserPrefix() + "0000000000");
-        String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
-                .orElse(appCustomIdConfig.getOrganizationPrefix() + "0000000000");
-
-        User user = UserMapper.registerDtoToUserEntity(userDTO);
-        Organization organization = new Organization();
-        organization.setCreatedBy(user.getId());
-        organization.setLastModifiedBy(user.getId());
-        organization.setFirstDayOfWeek(DaysOfWeek.valueOf(userDTO.getFirstDayOfWeek()));
-        organization.setName(userDTO.getOrganizationName());
-        organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
-        organization.setTimezone(userDTO.getTimezone());
-        organization.setTrialDays(trialDays);
-        user.setOrganizationId(organization.getId());
+        User user = UserMapper.registerDtoToUserEntity(registrationDto);
         user.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
-        user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
+        user.setPasswordHash(passwordEncoder.encode(registrationDto.getPassword()));
         UserTokens token = new UserTokens(UserToken.ACTIVATION);
         token.setUserId(user.getId());
         token.setCreatedBy("SYSTEM");
-
-        organizationRepository.save(organization);
         userRepository.save(user);
         userTokenRepository.save(token);
-        log.info("New Organization created: {}", organization);
         log.info("New User registered: {}", user);
         log.info("New activation token generated: {}", token);
         String activationUrl = appUrlConfig.getActivateAccountUrl(token.getToken());
         userMailService.sendActivationEmail(user, activationUrl);
+    }
+
+    /**
+     * Used to activate a user by verifying email when they click link in their mails.
+     *
+     * @param verificationKey activation verificationKey received in mail
+     */
+    public UserDetailsNewDto verifyEmail(String verificationKey) {
+        log.info("Activating user for verificationKey {}", verificationKey);
+        return userTokenRepository
+                .findOneByTokenAndTokenTypeAndIsExpired(verificationKey, UserToken.ACTIVATION, false)
+                .flatMap(userTokens -> {
+                    if (userTokens.getCreatedDate().isAfter(Instant.now()
+                            .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
+                        userTokens.setExpired(true);
+                        userTokenRepository.save(userTokens);
+                        throw new ExpiredKeyException("verification");
+                    } else {
+                        return userRepository.findOneByIdAndDeleteFlag(userTokens.getUserId(), false)
+                                .map(user -> {
+                                    user.setAccountStatus(AccountStatus.PROFILE_PENDING);
+                                    user.setLastModifiedDate(Instant.now());
+                                    return user;
+                                })
+                                .map(userRepository::save)
+                                .map(UserMapper::entityToDetailsDto);
+                    }
+                })
+                .orElseThrow(() -> new ExpiredKeyException("verification"));
+    }
+
+    /**
+     * Complete registration after email verification
+     *
+     * @param completeRegistrationDto Complete registration details
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void completeRegistration(CompleteRegistrationDto completeRegistrationDto) {
+        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(completeRegistrationDto.getVerificationKey(),
+                        UserToken.ACTIVATION, true)
+                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
+                        .map(user -> {
+                            Organization organization = UserMapper.completeRegistrationToEntity(completeRegistrationDto, user);
+                            String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
+                                    .orElse(appCustomIdConfig.getOrganizationPrefix() + "0000000000");
+                            int trialDays = 0;
+                            if (StringUtils.isNotEmpty(completeRegistrationDto.getPromoCode())) {
+                                trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(completeRegistrationDto.getPromoCode(),
+                                                PromoCodeType.TRIAL, false)
+                                        .map(PromotionCode::getPromotionValue)
+                                        .orElseThrow(() -> new EntityNotFoundException("promo code"));
+                            }
+                            organization.setTrialDays(trialDays);
+                            organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
+                            organizationRepository.save(organization);
+                            return user;
+                        })
+                        .map(userRepository::save)
+                )
+                .orElseThrow(() -> new EntityNotFoundException("verification key"));
+    }
+
+    /**
+     * If a user accepts invite, this method will fetch their details
+     *
+     * @param invitationKey invite key received in mail
+     */
+    public UserDetailsNewDto checkInviteLink(String invitationKey) {
+        log.info("Getting details for user with invitation key: {}", invitationKey);
+        return userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(invitationKey, UserToken.INVITE, false)
+                .map(token -> {
+                    if (token.getCreatedDate().isAfter(Instant.now()
+                            .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
+                        token.setExpired(true);
+                        userTokenRepository.save(token);
+                        log.info("Invitation key expired: {}", invitationKey);
+                        throw new ExpiredKeyException("invitation");
+                    }
+                    return token;
+                })
+                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
+                        .map(UserMapper::entityToDetailsDto)
+                ).orElseThrow(() -> new ExpiredKeyException("invitation"));
+    }
+
+    /**
+     * Complete registration for invited users
+     *
+     * @param acceptInviteDto invite key and newPassword info
+     */
+    public void acceptInvite(AcceptInviteDto acceptInviteDto) {
+        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(acceptInviteDto.getInviteKey(), UserToken.INVITE, false)
+                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
+                        .map(user -> {
+                            user.setPasswordHash(passwordEncoder.encode(acceptInviteDto.getPassword()));
+                            return user;
+                        })
+                        .map(userRepository::save)
+                        .flatMap(user -> userOrganizationRepository.findOneByIdAndDeleteFlag(user.getId(), false))
+                        .map(user -> userRepository.findOneByIdAndDeleteFlag(token.getCreatedBy(), false)
+                                .map(admin -> {
+                                    notificationInternalService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl());
+                                    return admin;
+                                })
+                        )
+                )
+                .orElseThrow(() -> new EntityNotFoundException("invite key"));
     }
 
     /**
@@ -197,108 +234,6 @@ public class UserService {
                 .ifPresent(user -> log.info("Changed password for User: {}", user));
     }
 
-
-    /**
-     * Used to activate a user when they click link in their mails.
-     *
-     * @param key activation key received in mail
-     */
-    // TODO Change to complete profile with another api to check activation key
-    public ResponseEntity<String> activateUser(String key) {
-        log.info("Activating user for activation key {}", key);
-        String errorMessage = "Your activation link has been expired.";
-        HttpHeaders httpHeaders = new HttpHeaders();
-        String responseTemplate = userTokenRepository
-                .findOneByTokenAndTokenTypeAndIsExpired(key, UserToken.ACTIVATION, false)
-                .map(userTokens -> {
-                    InputStreamReader stream;
-                    if (userTokens.getCreatedDate().isAfter(Instant.now()
-                            .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
-                        userTokens.setExpired(true);
-                        userTokenRepository.save(userTokens);
-                        try {
-                            stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
-                                    this.getClass().getClassLoader()).getInputStream());
-                            return IOUtils.toString(stream).replace("messageBody", errorMessage)
-                                    .replace("titleMessage", "Link Expired")
-                                    .replace("homepageUrl", appUrlConfig.getRegisterUrl());
-                        } catch (Exception e) {
-                            return "<h1>Activation key is expired</h1>";
-                        }
-                    } else {
-                        httpHeaders.add("Refresh", String.format("2;url=%s", appUrlConfig.getLoginUrl()));
-                        userRepository.findOneByIdAndDeleteFlag(userTokens.getUserId(), false)
-                                .map(user -> {
-                                    user.setStatus(EntityStatus.ACTIVE);
-                                    user.setLastModifiedDate(Instant.now());
-                                    return user;
-                                })
-                                .map(userRepository::save);
-                        try {
-                            stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.successPage,
-                                    this.getClass().getClassLoader()).getInputStream());
-                            return IOUtils.toString(stream).replace("messageBody", "Your account was successfully activated")
-                                    .replace("titleMessage", "Account activated")
-                                    .replace("homepageUrl", appUrlConfig.getLoginUrl());
-                        } catch (Exception e) {
-                            return "<h1>Success</h1><p>Redirecting you to the login page...</p>";
-                        }
-                    }
-                })
-                .orElseGet(() -> {
-                    try {
-                        InputStreamReader stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
-                                this.getClass().getClassLoader()).getInputStream());
-                        return IOUtils.toString(stream).replace("messageBody", errorMessage)
-                                .replace("titleMessage", "Link Expired")
-                                .replace("homepageUrl", appUrlConfig.getRegisterUrl());
-                    } catch (Exception e) {
-                        return "<h1>Activation key is expired</h1>";
-                    }
-                });
-        return new ResponseEntity<>(responseTemplate, httpHeaders, HttpStatus.OK);
-    }
-
-    /**
-     * If a user accepts invite, this method will fetch their details and redirect to registration page
-     *
-     * @param key invite key received in mail
-     */
-    // TODO merge accept invite with register and create separate api for checking invite key
-    public ResponseEntity<String> acceptInvite(String key) {
-        log.info("Getting details for user with invitation key: {}", key);
-        String registerUrl = userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(key, UserToken.INVITE, false)
-                .map(token -> {
-                    if (token.getCreatedDate().isAfter(Instant.now()
-                            .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
-                        token.setExpired(true);
-                        userTokenRepository.save(token);
-                        return null;
-                    }
-                    return token;
-                })
-                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
-                        .map(user -> UserMapper.buildRegisterThroughInviteUrl(user, appUrlConfig.getRegisterUrl(), token.getToken()))
-                ).orElse(null);
-        String body = null;
-        HttpHeaders httpHeaders = new HttpHeaders();
-        if (registerUrl == null) {
-            try {
-                String message = "Your invitation url seems to be expired, Please contact admin.";
-                InputStreamReader stream = new InputStreamReader(new ClassPathResource(HtmlTemplatesPath.errorPage,
-                        this.getClass().getClassLoader()).getInputStream());
-                body = IOUtils.toString(stream).replace("messageBody", message)
-                        .replace("titleMessage", "Link Expired")
-                        .replace("homepageUrl", appUrlConfig.getHostedUi());
-            } catch (Exception e) {
-                body = "<h1>Invitation key is expired</h1>";
-            }
-        } else {
-            httpHeaders.add("Refresh", String.format("1;url=%s", registerUrl));
-        }
-        return new ResponseEntity<>(body, httpHeaders, HttpStatus.OK);
-    }
-
     /**
      * First part of password reset request
      *
@@ -307,7 +242,6 @@ public class UserService {
     public void requestPasswordReset(String email) {
         userRepository
                 .findOneByEmailAndDeleteFlag(email, false)
-                .filter(localUser -> localUser.getStatus().equals(EntityStatus.ACTIVE))
                 .map(user -> {
                     UserTokens token = new UserTokens(UserToken.RESET);
                     token.setUserId(user.getId());
@@ -347,7 +281,7 @@ public class UserService {
                 })
                 .map(userRepository::save)
                 .map(user -> CommonUtils.logMessageAndReturnObject(user, "info", UserService.class,
-                            "Finished reset password request for user : {}", user))
+                        "Finished reset password request for user : {}", user))
                 .orElseThrow(() -> new ExpiredKeyException("password reset"));
     }
 
@@ -360,31 +294,6 @@ public class UserService {
                         .map(UserMapper::entityToDto)
                 )
                 .orElseThrow(UnauthorizedException::new);
-    }
-
-    /**
-     * Check if user trying to register already exists (if an unactivated user exists with same details, it is deleted)
-     *
-     * @param userDTO all user related details
-     */
-    private void checkUserExistence(RegisterOrganizationDto userDTO) {
-        userRepository
-                .findOneByUsernameAndDeleteFlag(userDTO.getUsername(), false)
-                .ifPresent(existingUser -> {
-                    if (existingUser.getStatus().equals(EntityStatus.PENDING)) {
-                        userRepository.delete(existingUser);
-                    } else {
-                        throw new EntityAlreadyExistsException("username", userDTO.getUsername());
-                    }
-                });
-        userRepository.findOneByEmailAndDeleteFlag(userDTO.getEmail(), false)
-                .ifPresent(existingUser -> {
-                    if (existingUser.getStatus().equals(EntityStatus.PENDING)) {
-                        userRepository.delete(existingUser);
-                    } else {
-                        throw new EntityAlreadyExistsException("email", userDTO.getEmail());
-                    }
-                });
     }
 
 }

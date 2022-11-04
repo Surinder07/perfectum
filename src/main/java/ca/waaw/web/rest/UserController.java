@@ -49,24 +49,52 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(description = "${api.description.user.registerUser}")
     @PostMapping("${api.endpoints.user.registerUser}")
-    // TODO
-    public void registerNewUser(@Valid @RequestBody RegisterUserDto registerUserDto) {
-        userService.registerUser(registerUserDto);
+    public void registerNewUser(@Valid @RequestBody NewRegistrationDto registrationDto) {
+        userService.registerNewUser(registrationDto);
     }
 
-    // TODO add complete registration
-
-    // TODO add accept invite
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.user.verifyEmail}")
+    @GetMapping(value = "${api.endpoints.user.verifyEmail}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = UserDetailsNewDto.class))})
+    public ResponseEntity<UserDetailsNewDto> verifyEmail(@RequestParam String key) {
+        return ResponseEntity.ok(userService.verifyEmail(key));
+    }
 
     @SwaggerCreated
     @SwaggerBadRequest
     @SwaggerAlreadyExist
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "${api.description.user.registerOrganization}")
-    @PostMapping("${api.endpoints.user.registerOrganization}")
-    // TODO Remove this api
-    public void registerNewAdminAndOrganization(@Valid @RequestBody RegisterOrganizationDto registerOrganizationDto) {
-        userService.registerAdminAndOrganization(registerOrganizationDto);
+    @Operation(description = "${api.description.user.completeRegistration}")
+    @PutMapping("${api.endpoints.user.completeRegistration}")
+    public void completeRegistration(@Valid @RequestBody CompleteRegistrationDto registrationDto) {
+        userService.completeRegistration(registrationDto);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.user.checkInviteKey}")
+    @GetMapping("${api.endpoints.user.checkInviteKey}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = UserDetailsNewDto.class))})
+    public ResponseEntity<UserDetailsNewDto> checkInviteLink(@RequestParam String key) {
+        return ResponseEntity.ok(userService.checkInviteLink(key));
+    }
+
+    @SwaggerOk
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.user.acceptInvite}")
+    @PutMapping("${api.endpoints.user.acceptInvite}")
+    public void acceptInvite(@Valid @RequestBody AcceptInviteDto acceptInviteDto) {
+        userService.acceptInvite(acceptInviteDto);
     }
 
     @SwaggerOk
@@ -126,22 +154,6 @@ public class UserController {
             schema = @Schema(implementation = UserDetailsDto.class))})
     public ResponseEntity<UserDetailsDto> getLoggedInUser() {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
-    }
-
-    // TODO Add Swagger
-    @Operation(hidden = true)
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping(value = "${api.endpoints.user.activateAccount}", produces = "text/html;charset=UTF-8")
-    public ResponseEntity<String> checkActivationLink(@RequestParam String key) {
-        return userService.activateUser(key);
-    }
-
-    // TODO Add Swagger
-    @Operation(hidden = true)
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping("${api.endpoints.user.acceptInvitation}")
-    public ResponseEntity<String> checkInviteLink(@RequestParam String key) {
-        return userService.acceptInvite(key);
     }
 
 }
