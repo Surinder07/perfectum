@@ -34,5 +34,6 @@ application:
   create-dummy-data-on-startup: true
   urls:
     hosted-ui: http://localhost:3000
+    hosted-server: http://localhost:8080
   mail:
     ui-url: ${application.urls.hosted-ui}

@@ -142,7 +142,7 @@ public class ApplicationStartupSqlService {
         user.setUsername(username);
         user.setWaawId(customId);
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setAccountStatus(AccountStatus.COMPLETE);
+        user.setAccountStatus(AccountStatus.PAID_AND_ACTIVE);
         user.setCreatedBy("SYSTEM");
         user.setAuthority(role);
         user.setOrganizationId(organizationId);

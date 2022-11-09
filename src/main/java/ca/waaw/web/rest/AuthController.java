@@ -87,6 +87,10 @@ public class AuthController {
                 .map(User::getAccountStatus).orElse(null);
 
         final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe(), accountStatus);
+        assert accountStatus != null;
+        if(accountStatus.equals(AccountStatus.TRIAL_PERIOD)) {
+            // TODO send user notification for the number of days remaining.
+        }
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
 

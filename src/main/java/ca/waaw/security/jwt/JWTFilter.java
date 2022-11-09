@@ -1,8 +1,8 @@
 package ca.waaw.security.jwt;
 
 import ca.waaw.config.applicationconfig.AppSecurityConfig;
-import ca.waaw.enumration.Authority;
-import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
+import ca.waaw.enumration.ErrorCodes;
+import ca.waaw.web.rest.errors.exceptions.application.AccessDeniedException;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -68,14 +68,14 @@ public class JWTFilter extends OncePerRequestFilter {
     private void checkLoginPermission(HttpServletRequest request) {
         switch (tokenProvider.checkAccountStatus()) {
             case PAYMENT_PENDING:
-                // TODO throw error
+                throw new AccessDeniedException(ErrorCodes.WE_004);
             case PAYMENT_INFO_PENDING:
-                // TODO throw error
+                throw new AccessDeniedException(ErrorCodes.WE_002);
             case PROFILE_PENDING:
-                // TODO throw error
+                throw new AccessDeniedException(ErrorCodes.WE_001);
             case TRIAL_EXPIRED:
                 if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.getUserDetails")))) {
-                    throw new TrialExpiredException(Authority.ADMIN);
+                    throw new AccessDeniedException(ErrorCodes.WE_003);
                 }
         }
     }

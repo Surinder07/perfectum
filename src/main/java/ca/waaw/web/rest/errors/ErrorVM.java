@@ -1,5 +1,6 @@
 package ca.waaw.web.rest.errors;
 
+import ca.waaw.enumration.ErrorCodes;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -12,6 +13,8 @@ public class ErrorVM implements Serializable {
 
     private final String[] fields;
 
+    private ErrorCodes waawErrorCode = null;
+
     private final String message;
 
     private final Instant timestamp = Instant.now();
@@ -19,6 +22,12 @@ public class ErrorVM implements Serializable {
     public ErrorVM(String message, String... fields) {
         this.fields = fields;
         this.message = message;
+    }
+
+    public ErrorVM(ErrorCodes errorCode, String... fields) {
+        this.fields = fields;
+        this.waawErrorCode = errorCode;
+        this.message = errorCode.value;
     }
 
 }
