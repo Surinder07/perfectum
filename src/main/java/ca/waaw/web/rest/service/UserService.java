@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -148,6 +150,20 @@ public class UserService {
                         .map(userRepository::save)
                 )
                 .orElseThrow(() -> new EntityNotFoundException("verification key"));
+    }
+
+    public Map<String, Object> validatePromoCode(String promoCode) {
+        return promotionCodeRepository.findOneByCodeAndDeleteFlag(promoCode, false)
+                .map(code -> {
+                    if (code.getExpiryDate().isBefore(Instant.now())) {
+                        return null;
+                    }
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("codeType", code.getType().name());
+                    response.put("codeValue", code.getPromotionValue());
+                    return response;
+                })
+                .orElseThrow(() -> new EntityNotFoundException("promotion code"));
     }
 
     /**

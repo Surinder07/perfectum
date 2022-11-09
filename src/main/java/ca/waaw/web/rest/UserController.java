@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
@@ -73,6 +74,19 @@ public class UserController {
     @PutMapping("${api.endpoints.user.completeRegistration}")
     public void completeRegistration(@Valid @RequestBody CompleteRegistrationDto registrationDto) {
         userService.completeRegistration(registrationDto);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.user.validatePromoCode}")
+    @GetMapping("${api.endpoints.user.validatePromoCode}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(example = "{codeType: STRING, codeValue: INTEGER}"))})
+    public ResponseEntity<Map<String, Object>> validatePromoCode(@RequestParam String promoCode) {
+        return ResponseEntity.ok(userService.validatePromoCode(promoCode));
     }
 
     @SwaggerOk
