@@ -5,7 +5,7 @@ package ca.waaw.web.rest.errors;
  */
 public final class ErrorMessageKeys {
 
-    public static final String userNotActivatedMessage = "error.userNotActivatedMessage";
+    public static final String emailNotVerifiedMessage = "error.emailNotVerifiedMessage";
     public static final String usernameNotFoundMessage = "error.usernameNotFoundMessage";
     public static final String entityNotFoundMessage = "error.entityNotFoundMessage";
     public static final String entityNotFoundWithValueMessage = "error.entityNotFoundWithValueMessage";
@@ -15,7 +15,6 @@ public final class ErrorMessageKeys {
     public static final String authenticationFailedMessage = "error.authenticationFailedMessage";
     public static final String internalServerMessage = "error.internalServerMessage";
     public static final String entityAlreadyExistsMessage = "error.entityAlreadyExistsMessage";
-    public static final String trialExpiredAdminMessage = "error.trialExpiredAdminMessage";
     public static final String trialExpiredEmployeeMessage = "error.trialExpiredEmployeeMessage";
     public static final String pastValueNotDeletableMessage = "error.pastValueNotDeletableMessage";
     public static final String shiftOverlappingMessage = "error.shiftOverlappingMessage";

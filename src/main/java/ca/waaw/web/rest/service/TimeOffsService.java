@@ -7,7 +7,7 @@ import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.timeoff.TimeOffInfoDto;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.TimeOffStatus;
 import ca.waaw.mapper.TimeoffMapper;
 import ca.waaw.repository.DetailedTimeOffRepository;
 import ca.waaw.repository.ShiftsRepository;
@@ -79,19 +79,19 @@ public class TimeOffsService {
                     }
                     if (loggedInUser.getAuthority().equals(Authority.ADMIN)) {
                         return returnRange ? detailedTimeOffRepository.getByOrganizationIdBetweenDates(loggedInUser.getOrganizationId(),
-                                start, end, showAll ? null : EntityStatus.PENDING, getSortedByCreatedDate) :
+                                start, end, showAll ? null : TimeOffStatus.REQUESTED, getSortedByCreatedDate) :
                                 detailedTimeOffRepository.getByOrganizationIdAfterDate(loggedInUser.getOrganizationId(),
-                                        start, showAll ? null : EntityStatus.PENDING, getSortedByCreatedDate);
+                                        start, showAll ? null : TimeOffStatus.REQUESTED, getSortedByCreatedDate);
                     } else if (loggedInUser.getAuthority().equals(Authority.MANAGER)) {
                         return returnRange ? detailedTimeOffRepository.getByLocationIdBetweenDates(loggedInUser.getLocationId(),
-                                start, end, showAll ? null : EntityStatus.PENDING, getSortedByCreatedDate) :
+                                start, end, showAll ? null : TimeOffStatus.REQUESTED, getSortedByCreatedDate) :
                                 detailedTimeOffRepository.getByLocationIdAfterDate(loggedInUser.getLocationId(),
-                                        start, showAll ? null : EntityStatus.PENDING, getSortedByCreatedDate);
+                                        start, showAll ? null : TimeOffStatus.REQUESTED, getSortedByCreatedDate);
                     } else {
                         return returnRange ? detailedTimeOffRepository.getByUserIdBetweenDates(loggedInUser.getId(),
-                                start, end, showAll ? null : EntityStatus.PENDING, getSortedByCreatedDate) :
+                                start, end, showAll ? null : TimeOffStatus.REQUESTED, getSortedByCreatedDate) :
                                 detailedTimeOffRepository.getByUserIdAfterDate(loggedInUser.getId(),
-                                        start, showAll ? null : EntityStatus.PENDING, getSortedByCreatedDate);
+                                        start, showAll ? null : TimeOffStatus.REQUESTED, getSortedByCreatedDate);
                     }
                 })
                 .orElseThrow(UnauthorizedException::new);
@@ -126,12 +126,12 @@ public class TimeOffsService {
                                             return TimeoffMapper.dtoToEntity(newTimeOffDto, user.getLocation().getTimezone());
                                         })
                                         .orElseThrow(() -> new EntityNotFoundException("user"));
-                                timeOff.setStatus(EntityStatus.ACTIVE);
+                                timeOff.setStatus(TimeOffStatus.ACCEPTED);
                             } else {
                                 newTimeOffDto.setUserId(loggedInUser.getId());
                                 checkOverlappingAndPastTimeoff(newTimeOffDto, loggedInUser.getLocation().getTimezone(), true);
                                 timeOff = TimeoffMapper.dtoToEntity(newTimeOffDto, loggedInUser.getLocation().getTimezone());
-                                timeOff.setStatus(EntityStatus.PENDING);
+                                timeOff.setStatus(TimeOffStatus.REQUESTED);
                             }
                             timeOff.setCreatedBy(loggedInUser.getId());
                             return timeOff;
@@ -159,7 +159,7 @@ public class TimeOffsService {
                                                     !user.getLocationId().equals(admin.getLocationId()))) {
                                         return null;
                                     }
-                                    timeOff.setStatus(accept ? EntityStatus.ACTIVE : EntityStatus.REJECTED);
+                                    timeOff.setStatus(accept ? TimeOffStatus.ACCEPTED : TimeOffStatus.REJECTED);
                                     timeOff.setLastModifiedBy(admin.getId());
                                     return timeOff;
                                 })
@@ -168,7 +168,7 @@ public class TimeOffsService {
                         .orElseThrow(() -> new EntityNotFoundException("timeoff request"))
                 )
                 .map(timeoff -> CommonUtils.logMessageAndReturnObject(timeoff, "info", TimeOffsService.class,
-                        "Timeoff status updated to {} for id {}", accept ? EntityStatus.ACTIVE : EntityStatus.REJECTED, id))
+                        "Timeoff status updated to {} for id {}", accept ? TimeOffStatus.ACCEPTED : TimeOffStatus.REJECTED, id))
                 .orElseThrow(UnauthorizedException::new);
         // TODO notify to employee
     }
@@ -181,7 +181,7 @@ public class TimeOffsService {
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> timeOffsRepository.findOneByIdAndDeleteFlag(id, false)
-                        .filter(timeOff -> timeOff.getStatus().equals(EntityStatus.PENDING))
+                        .filter(timeOff -> timeOff.getStatus().equals(TimeOffStatus.REQUESTED))
                         .map(timeoff -> {
                             if (!timeoff.getUserId().equals(user.getId())) return null;
                             timeoff.setDeleteFlag(true);

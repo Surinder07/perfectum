@@ -1,10 +1,10 @@
 package ca.waaw.security;
 
 import ca.waaw.domain.User;
-import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.repository.UserRepository;
+import ca.waaw.web.rest.errors.exceptions.EmailNotVerifiedException;
 import ca.waaw.web.rest.errors.exceptions.UserAccountDisabledException;
-import ca.waaw.web.rest.errors.exceptions.UserNotActivatedException;
 import ca.waaw.web.rest.errors.exceptions.UsernameNotFoundException;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -47,9 +47,9 @@ public class DomainUserDetailsService implements UserDetailsService {
     }
 
     private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {
-        if (user.getStatus().equals(EntityStatus.PENDING)) {
-            throw new UserNotActivatedException(lowercaseLogin);
-        } else if (user.getStatus().equals(EntityStatus.SUSPENDED)) {
+        if (user.getAccountStatus().equals(AccountStatus.EMAIL_PENDING)) {
+            throw new EmailNotVerifiedException(lowercaseLogin);
+        } else if (user.getAccountStatus().equals(AccountStatus.SUSPENDED)) {
             throw new UserAccountDisabledException();
         }
         List<GrantedAuthority> grantedAuthorities = Collections.singletonList(new SimpleGrantedAuthority(user.getAuthority().name()));
@@ -57,4 +57,5 @@ public class DomainUserDetailsService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(user.getUsername(),
                 user.getPasswordHash(), grantedAuthorities);
     }
+
 }

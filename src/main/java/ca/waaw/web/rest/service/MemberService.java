@@ -10,8 +10,8 @@ import ca.waaw.dto.ShiftSchedulingPreferences;
 import ca.waaw.dto.emailmessagedtos.InviteUserMailDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.UserToken;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
@@ -95,28 +95,30 @@ public class MemberService {
                                             !user.getLocationId().equals(loggedUser.getLocationId()))) {
                                 return null;
                             }
-                            if (user.getStatus().equals(EntityStatus.ACTIVE)) return null; // TODO throw error
-                            userTokenRepository.findOneByUserIdAndTokenType(userId, UserToken.INVITE)
-                                    .map(token -> {
-                                        token.setExpired(true);
-                                        return userTokenRepository.save(token);
-                                    })
-                                    .map(token -> {
-                                        UserTokens newToken = new UserTokens(UserToken.INVITE);
-                                        newToken.setUserId(token.getUserId());
-                                        newToken.setCreatedBy(loggedUser.getId());
-                                        return newToken;
-                                    })
-                                    .map(userTokenRepository::save)
-                                    .map(newToken -> {
-                                        InviteUserMailDto mailDto = new InviteUserMailDto();
-                                        mailDto.setUser(user);
-                                        mailDto.setInviteUrl(appUrlConfig.getInviteUserUrl(newToken.getToken()));
-                                        userMailService.sendInvitationEmail(Collections.singletonList(mailDto),
-                                                loggedUser.getOrganization().getName());
-                                        return newToken;
-                                    });
-                            return user;
+                            if (user.getAccountStatus().equals(AccountStatus.INVITED)) {
+                                userTokenRepository.findOneByUserIdAndTokenType(userId, UserToken.INVITE)
+                                        .map(token -> {
+                                            token.setExpired(true);
+                                            return userTokenRepository.save(token);
+                                        })
+                                        .map(token -> {
+                                            UserTokens newToken = new UserTokens(UserToken.INVITE);
+                                            newToken.setUserId(token.getUserId());
+                                            newToken.setCreatedBy(loggedUser.getId());
+                                            return newToken;
+                                        })
+                                        .map(userTokenRepository::save)
+                                        .map(newToken -> {
+                                            InviteUserMailDto mailDto = new InviteUserMailDto();
+                                            mailDto.setUser(user);
+                                            mailDto.setInviteUrl(appUrlConfig.getInviteUserUrl(newToken.getToken()));
+                                            userMailService.sendInvitationEmail(Collections.singletonList(mailDto),
+                                                    loggedUser.getOrganization().getName());
+                                            return newToken;
+                                        });
+                                return user;
+                            }
+                            return null; // TODO throw user already active error
                         })
                         .orElseThrow(() -> new EntityNotFoundException("user"))
                 );

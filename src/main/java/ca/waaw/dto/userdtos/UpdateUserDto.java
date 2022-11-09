@@ -26,4 +26,6 @@ public class UpdateUserDto {
 
     private Boolean isSmsNotifications;
 
+    private Boolean isFullTime;
+
 }

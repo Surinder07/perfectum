@@ -1,13 +1,18 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass;
 
-import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
+import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
+import ca.waaw.dto.userdtos.OrganizationPreferences;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.Currency;
+import ca.waaw.enumration.DaysOfWeek;
+import ca.waaw.enumration.PayrollGenerationType;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
@@ -47,6 +52,10 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
      * 4. {@link DependentDtoFieldsValidatorType#TIME_OFF_USER_ID_TO_USER_ROLE}
      * Used in {@link NewTimeOffDto}
      * If logged-in user is admin or manager, userId cannot be null
+     * <p>
+     * 5. {@link DependentDtoFieldsValidatorType#ORGANIZATION_PREFERENCES_PAYROLL}
+     * Used in {@link OrganizationPreferences}
+     * If frequency is set to weekly, day should be passed in dayDate, or else a date (1-31) should be passed.
      */
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
@@ -102,6 +111,33 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
                     return PARSER.parseExpression("userId").getValue(value) != null &&
                             !String.valueOf(PARSER.parseExpression("userId").getValue(value)).equals("");
                 }
+            case ORGANIZATION_PREFERENCES_PAYROLL:
+                String payrollGenerationFrequency = null;
+                String dayDateForPayroll = null;
+                if (PARSER.parseExpression("payrollGenerationFrequency").getValue(value) != null &&
+                        !String.valueOf(PARSER.parseExpression("payrollGenerationFrequency").getValue(value)).equals("")) {
+                    payrollGenerationFrequency = String.valueOf(PARSER.parseExpression("payrollGenerationFrequency").getValue(value));
+                }
+                if (PARSER.parseExpression("dayDateForPayroll").getValue(value) != null &&
+                        !String.valueOf(PARSER.parseExpression("dayDateForPayroll").getValue(value)).equals("")) {
+                    dayDateForPayroll = String.valueOf(PARSER.parseExpression("dayDateForPayroll").getValue(value));
+                }
+                boolean error = (StringUtils.isNumeric(dayDateForPayroll) && (Integer.parseInt(dayDateForPayroll) < 0 &&
+                        Integer.parseInt(dayDateForPayroll) > 31)) || !EnumUtils.isValidEnum(DaysOfWeek.class, dayDateForPayroll);
+                if (!EnumUtils.isValidEnum(PayrollGenerationType.class, payrollGenerationFrequency)) error = true;
+                return !error;
+            case EMPLOYEE_PREFERENCES_WAGES:
+                float wagesPerHour = 0;
+                String wagesCurrency = null;
+                if (PARSER.parseExpression("wagesPerHour").getValue(value) != null &&
+                        !String.valueOf(PARSER.parseExpression("wagesPerHour").getValue(value)).equals("")) {
+                    wagesPerHour = Float.parseFloat(String.valueOf(PARSER.parseExpression("wagesPerHour").getValue(value)));
+                }
+                if (PARSER.parseExpression("wagesCurrency").getValue(value) != null &&
+                        !String.valueOf(PARSER.parseExpression("wagesCurrency").getValue(value)).equals("")) {
+                    wagesCurrency = String.valueOf(PARSER.parseExpression("wagesCurrency").getValue(value));
+                }
+                return !(wagesPerHour > 0 && StringUtils.isEmpty(wagesCurrency) && EnumUtils.isValidEnum(Currency.class, wagesCurrency));
         }
         return true;
     }

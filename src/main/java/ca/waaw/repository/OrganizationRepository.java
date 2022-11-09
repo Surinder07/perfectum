@@ -12,7 +12,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
 
     Optional<Organization> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
 
-    Optional<Organization> findOneByIdAndDeleteFlagAndSubscriptionPlanIsNull(String id, boolean deleteFlag);
+    Optional<Organization> findOneByIdAndDeleteFlagAndTrialDaysNot(String id, boolean deleteFlag, int trialDaysNot);
 
     @Query(value = "SELECT num FROM (SELECT ROW_NUMBER() OVER (ORDER BY created_date ASC) AS num, uuid " +
             "AS id FROM organization WHERE SUBSTRING(name, 1, 3) = SUBSTRING(?1, 1, 3) ) AS TEMP " +

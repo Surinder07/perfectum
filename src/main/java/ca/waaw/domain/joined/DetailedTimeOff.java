@@ -1,6 +1,8 @@
 package ca.waaw.domain.joined;
 
 import ca.waaw.domain.AbstractEntity;
+import ca.waaw.enumration.TimeOffStatus;
+import ca.waaw.enumration.TimeOffType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -49,5 +51,13 @@ public class DetailedTimeOff extends AbstractEntity {
     @NotFound(action = NotFoundAction.IGNORE)
     @JoinColumn(name = "user_id", referencedColumnName = "uuid", updatable = false, insertable = false)
     private UserOrganization userDetails;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private TimeOffType type;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private TimeOffStatus status;
 
 }

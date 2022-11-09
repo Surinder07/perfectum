@@ -1,5 +1,7 @@
 package ca.waaw.domain;
 
+import ca.waaw.enumration.TimeOffStatus;
+import ca.waaw.enumration.TimeOffType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,5 +28,13 @@ public class TimeOffs extends AbstractEntity {
 
     @Column(name = "user_id")
     private String userId;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private TimeOffType type;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private TimeOffStatus status;
 
 }

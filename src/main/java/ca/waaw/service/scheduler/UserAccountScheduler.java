@@ -3,7 +3,7 @@ package ca.waaw.service.scheduler;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.User;
 import ca.waaw.domain.UserTokens;
-import ca.waaw.enumration.EntityStatus;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.UserToken;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.repository.UserTokenRepository;
@@ -39,7 +39,7 @@ public class UserAccountScheduler {
     @Scheduled(cron = "0 0 1 * * ?")
     public void removeNotActivatedUsers() {
         userRepository
-                .findAllByStatusAndCreatedDateBefore(EntityStatus.PENDING, Instant.now()
+                .findAllByAccountStatusAndCreatedDateBefore(AccountStatus.EMAIL_PENDING, Instant.now()
                         .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))
                 .ifPresent(users -> {
                     userTokenRepository.findAllByUserIdInAndTokenType(users.stream().map(User::getId)

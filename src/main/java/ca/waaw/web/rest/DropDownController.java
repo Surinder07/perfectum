@@ -1,6 +1,7 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.enumration.*;
+import ca.waaw.enumration.Currency;
 import ca.waaw.web.rest.errors.exceptions.ForDevelopmentOnlyException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -50,6 +51,11 @@ public class DropDownController {
         populateListToEnumMap(enumMap, PromoCodeType.class);
         populateListToEnumMap(enumMap, ShiftStatus.class);
         populateListToEnumMap(enumMap, ShiftType.class);
+        populateListToEnumMap(enumMap, PayrollGenerationType.class);
+        populateListToEnumMap(enumMap, Currency.class);
+        populateListToEnumMap(enumMap, DaysOfWeek.class);
+        populateListToEnumMap(enumMap, TimeOffType.class);
+        populateListToEnumMap(enumMap, TimeSheetType.class);
         return ResponseEntity.ok(enumMap);
     }
 

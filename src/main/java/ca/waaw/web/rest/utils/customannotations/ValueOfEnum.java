@@ -1,9 +1,7 @@
 package ca.waaw.web.rest.utils.customannotations;
 
-import ca.waaw.web.rest.utils.customannotations.helperclass.ToUpperCaseDeserializer;
 import ca.waaw.web.rest.utils.customannotations.helperclass.ValueOfEnumValidator;
 import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
@@ -26,7 +24,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @JacksonAnnotationsInside
 public @interface ValueOfEnum {
     Class<? extends Enum<?>> enumClass();
+
     String message() default "invalid value; must be any of enum {enumClass}";
+
     Class<?>[] groups() default {};
+
     Class<? extends Payload>[] payload() default {};
 }

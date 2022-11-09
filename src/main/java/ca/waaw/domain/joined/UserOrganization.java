@@ -92,6 +92,9 @@ public class UserOrganization extends AbstractEntity {
     @Column(name = "location_role_id")
     private String locationRoleId;
 
+    @Column(name = "is_full_time")
+    private boolean isFullTime;
+
     @Column
     @Enumerated(EnumType.STRING)
     private Authority authority;

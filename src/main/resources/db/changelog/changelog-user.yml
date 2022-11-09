@@ -71,14 +71,19 @@ databaseChangeLog:
                   name: location_role_id
                   type: VARCHAR(100)
               - column:
+                  name: is_full_time
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
                   name: authority
                   type: VARCHAR(50)
                   constraints:
                     nullable: false
               - column:
-                  name: status
-                  type: VARCHAR(50)
-                  defaultValue: PENDING
+                  name: account_status
+                  type: VARCHAR(100)
               - column:
                   name: last_login
                   type: TIMESTAMP
