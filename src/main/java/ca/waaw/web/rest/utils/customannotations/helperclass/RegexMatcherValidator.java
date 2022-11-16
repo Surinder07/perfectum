@@ -60,6 +60,9 @@ public class RegexMatcherValidator implements ConstraintValidator<ValidateRegex,
                 } catch (Exception e) {
                     return false;
                 }
+            case REPORT_FORMAT:
+                return String.valueOf(value).equalsIgnoreCase("csv") ||
+                        String.valueOf(value).equalsIgnoreCase("xls");
             default:
                 return true;
         }
