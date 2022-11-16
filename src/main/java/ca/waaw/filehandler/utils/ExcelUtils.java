@@ -114,7 +114,7 @@ public class ExcelUtils {
      * @param filename     file name for worksheet
      * @return Workbook object containing Excel sheet
      */
-    public static XSSFWorkbook pojoToWorkbook(List<Object[]> writableList, String filename) {
+    public static XSSFWorkbook objectListToWorkbook(List<Object[]> writableList, String filename) {
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet(filename);
         IntStream.range(0, writableList.size()).forEach(rowIndex -> {

@@ -3,13 +3,17 @@ package ca.waaw.filehandler.utils;
 import ca.waaw.web.rest.errors.exceptions.application.MissingHeadersException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
 
 public class CsvUtils {
 
@@ -99,6 +103,26 @@ public class CsvUtils {
             }
         }
         return null;
+    }
+
+    public static void objectListToWorkbook(List<Object[]> writableList, OutputStreamWriter writer) throws IOException {
+        try {
+            CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.builder()
+                    .setHeader(Arrays.stream(writableList.get(0)).map(Object::toString).toArray(String[]::new))
+                    .build());
+            writableList.remove(0);
+            IntStream.range(0, writableList.size()).forEach(rowIndex -> {
+                try {
+                    csvPrinter.printRecord(writableList.get(rowIndex));
+                } catch (IOException e) {
+                    log.error("Writing row to csv failed: {}", writableList.get(rowIndex));
+                }
+            });
+            csvPrinter.flush();
+        } catch (Exception e) {
+            log.error("Exception while creating csv file", e);
+            throw e;
+        }
     }
 
 }
