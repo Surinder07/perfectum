@@ -1,8 +1,8 @@
 package ca.waaw.repository;
 
 import ca.waaw.domain.User;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.EntityStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,7 +30,7 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findOneByAuthority(Authority authority);
 
-    Optional<List<User>> findAllByStatusAndCreatedDateBefore(EntityStatus status, Instant date);
+    Optional<List<User>> findAllByAccountStatusAndCreatedDateBefore(AccountStatus status, Instant date);
 
     List<User> findAllByLocationIdAndDeleteFlag(String locationId, boolean deleteFlag);
 

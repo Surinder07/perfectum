@@ -10,7 +10,7 @@ import java.time.Instant;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BaseUserDetails {
+public class UserDetailsNewDto {
 
     private String employeeId;
 

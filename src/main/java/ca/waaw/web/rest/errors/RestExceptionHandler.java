@@ -1,6 +1,5 @@
 package ca.waaw.web.rest.errors;
 
-import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.errors.exceptions.application.*;
 import ca.waaw.web.rest.utils.CommonUtils;
@@ -68,9 +67,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorVM(ex.getMessage(), ex.getFields()), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(UserNotActivatedException.class)
-    protected ResponseEntity<ErrorVM> handleUserNotActivatedException(UserNotActivatedException ex) {
-        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.userNotActivatedMessage,
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    protected ResponseEntity<ErrorVM> handleEmailNotVerifiedException(EmailNotVerifiedException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.emailNotVerifiedMessage,
                 null), ex.getLoginName());
         return new ResponseEntity<>(new ErrorVM(message, "username/email"), HttpStatus.UNAUTHORIZED);
     }
@@ -126,8 +125,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(TrialExpiredException.class)
     protected ResponseEntity<ErrorVM> handleTrialExpiredException(TrialExpiredException ex) {
-        String message = CommonUtils.getPropertyFromMessagesResourceBundle((ex.getRole().equals(Authority.ADMIN) ?
-                ErrorMessageKeys.trialExpiredAdminMessage : ErrorMessageKeys.trialExpiredEmployeeMessage), null);
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.trialExpiredEmployeeMessage, null);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.PAYMENT_REQUIRED);
     }
 
@@ -199,6 +197,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.activeTimesheetPresentMessage,
                 null);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    protected ResponseEntity<ErrorVM> handleAccessDeniedException(AccessDeniedException ex) {
+        return new ResponseEntity<>(new ErrorVM(ex.getErrorCode()), HttpStatus.FORBIDDEN);
     }
 
 }

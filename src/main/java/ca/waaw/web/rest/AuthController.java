@@ -3,6 +3,7 @@ package ca.waaw.web.rest;
 import ca.waaw.domain.User;
 import ca.waaw.dto.userdtos.LoginDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
 import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.UserRepository;
@@ -35,7 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @SuppressWarnings("unused")
@@ -75,26 +75,22 @@ public class AuthController {
             log.error("Exception while logging in", e);
             throw e;
         }
-
         Optional<User> userEntity = userRepository.findOneByUsernameOrEmail(loginDto.getLogin(), loginDto.getLogin());
+        AccountStatus accountStatus = userEntity
+                .map(user -> {
+                    if (user.getAccountStatus().equals(AccountStatus.TRIAL_EXPIRED) &&
+                            !user.getAuthority().equals(Authority.ADMIN)) {
+                        throw new TrialExpiredException(user.getAuthority());
+                    }
+                    return user;
+                })
+                .map(User::getAccountStatus).orElse(null);
 
-        boolean isTrialOver = userEntity
-                .flatMap(user -> organizationRepository.findOneByIdAndDeleteFlagAndTrialDaysNot(user.getOrganizationId(), false, 0)
-                        .map(organization -> {
-                            if (!user.getAuthority().equals(Authority.SUPER_USER) &&
-                                    organization.getCreatedDate().isBefore(Instant.now().minus(organization.getTrialDays(), ChronoUnit.DAYS))) {
-                                return true;
-                            }
-                            return null;
-                        })
-                ).orElse(false);
-        userEntity.ifPresent(user -> {
-            if (isTrialOver && !user.getAuthority().equals(Authority.ADMIN)) {
-                throw new TrialExpiredException(user.getAuthority());
-            }
-        });
-
-        final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe(), isTrialOver);
+        final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe(), accountStatus);
+        assert accountStatus != null;
+        if(accountStatus.equals(AccountStatus.TRIAL_PERIOD)) {
+            // TODO send user notification for the number of days remaining.
+        }
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
 

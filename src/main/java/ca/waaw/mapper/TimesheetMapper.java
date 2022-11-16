@@ -5,7 +5,6 @@ import ca.waaw.domain.joined.DetailedTimesheet;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.TimesheetDetailDto;
 import ca.waaw.dto.userdtos.UserInfoForDropDown;
-import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.TimeSheetType;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
@@ -24,7 +23,6 @@ public class TimesheetMapper {
         target.setType(TimeSheetType.CLOCKED);
         target.setCreatedBy(loggedInUser.getId());
         target.setUserId(loggedInUser.getId());
-        target.setStatus(EntityStatus.ACTIVE);
         return target;
     }
 
@@ -39,7 +37,6 @@ public class TimesheetMapper {
         target.setStart(start);
         target.setEnd(end);
         target.setType(TimeSheetType.ADDED_BY_ADMIN);
-        target.setStatus(EntityStatus.ACTIVE);
         target.setCreatedBy(loggedUserId);
         return target;
     }

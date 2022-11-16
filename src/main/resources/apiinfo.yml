@@ -4,20 +4,23 @@
 api:
   date-format: yyyy/MM/dd
   time-format: 24 hours (HH:MM)
+  profile-status-message: Profile Status can be {INVITED, REGISTERED, PROFILE_PENDING, PAYMENT_INFO_PENDING, COMPLETE, PAYMENT_PENDING or TRIAL_EXPIRED}. Redirect accordingly
   endpoints:
     authentication: /v1/unAuth/authenticate
     user:
-      checkUsername: /v1/unAuth/checkUserNameExistence
-      registerOrganization: /v1/unAuth/registerAdmin
-      registerUser: /v1/unAuth/registerUser
-      resetPasswordInit: /v1/unAuth/resetPassword/init
-      resetPasswordFinish: /v1/unAuth/resetPassword/finish
-      activateAccount: /v1/unAuth/activateAccount
-      acceptInvitation: /v1/unAuth/acceptInvitation
-      updateUser: /v1/updateUser
-      updatePassword: v1/updatePassword
-      updateProfileImage: /v1/updateProfileImage
-      getUserDetails: /v1/getAccount
+      checkUsername: /v1/unAuth/user/checkUserNameExistence
+      registerUser: /v1/unAuth/user/registration/new
+      verifyEmail: /v1/unAuth/user/registration/verifyEmail
+      completeRegistration: /v1/registration/user/completeProfile
+      validatePromoCode: /v1/registration/user/validatePromoCode
+      checkInviteKey: /v1/unAuth/user/invitation/validateKey
+      acceptInvite: /v1/unAuth/user/invitation/register
+      resetPasswordInit: /v1/unAuth/user/resetPassword/init
+      resetPasswordFinish: /v1/unAuth/user/resetPassword/finish
+      updateUser: /v1/user/update
+      updatePassword: v1/user/updatePassword
+      updateProfileImage: /v1/user/updateProfileImage
+      getUserDetails: /v1/user/getAccount
     organization:
       updateOrganizationPreferences: /v1/organization/update
       getHolidays: /v1/organization/holiday/getAll
@@ -92,18 +95,27 @@ api:
     user:
       checkUsername: Will Return Success only if given username is available.
       registerUser: |
-        Register a new user **(by email invite only)**.
+        Register a new user
         ${regex.table}
-      registerOrganization: |
-        Register a new user **(admin)** with an organization.
-        ${regex.table}
+      verifyEmail: |
+        - Will activate account and return user details, if verification key is active.
+        - Take to complete profile page if response is success.
+        - ${api.profile-status-message}
+      completeRegistration: |
+        Complete the registration process by giving all profile info (For organization or contractor)
+      validatePromoCode: Validate if a promocode is valid and check the benifits of that promocode
+      checkInviteKey: |
+        Will return user details, if invite key is active.
+        Take to registration page to choose a password if response is success.
+      acceptInvite: Choose a password and complete profile registration through invite
       updateUser: Update logged in user details.
       updatePassword: Update current password using the old password.
       resetPasswordInit: Initialize a password reset request and get email to reset password.
       resetPasswordFinish: Finish password reset request with key received on email.
       updateProfileImage: Update profile image for logged in user ***(Not operational right now)***.
-      getUserDetails: Get Logged in user's account details.
-      updateOrganizationPreferences: Update organization preferences under logged-in admin
+      getUserDetails: |
+        Get Logged in user's account details.
+        ${profile-status-message}
     organization:
       updateOrganizationPreferences: Update organization preferences under logged-in admin
       getHolidays: |
@@ -126,7 +138,9 @@ api:
         * If no role is mentioned, user will be added as an employee; if no language is mentioned, default will be 'en'.
         * Use Form Data.
         * Allowed file formats: ${files.formats-allowed.excel}, ${files.formats-allowed.csv}
-      getAllMembers: Get all Employees and Admins under logged-in user.
+      getAllMembers: |
+        Get all Employees and Admins under logged-in user.
+        ${profile-status-message}
       listAllMembers: |
         Get all members under one locationId with search. *Limited info will be returned.*
         > This API can be used for populating a drop-down while **scheduling shifts**

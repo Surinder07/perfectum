@@ -4,8 +4,8 @@ import ca.waaw.domain.Location;
 import ca.waaw.domain.LocationRole;
 import ca.waaw.domain.User;
 import ca.waaw.dto.locationandroledtos.*;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.EntityStatus;
 import ca.waaw.mapper.LocationMapper;
 import ca.waaw.mapper.LocationRoleMapper;
 import ca.waaw.repository.*;
@@ -102,7 +102,7 @@ public class LocationAndRoleService {
                 .map(locationRepository::save)
                 .map(Location::getId)
                 .map(locationId -> userRepository.findAllByLocationIdAndDeleteFlag(locationId, false)
-                        .stream().peek(user -> user.setStatus(EntityStatus.SUSPENDED)).collect(Collectors.toList())
+                        .stream().peek(user -> user.setAccountStatus(AccountStatus.SUSPENDED)).collect(Collectors.toList())
                 ).map(userRepository::saveAll)
                 .orElseThrow(() -> new EntityNotFoundException("location"));
         log.info("Successfully deleted the location and suspended all users for the location: {}", id);
@@ -148,7 +148,7 @@ public class LocationAndRoleService {
                 .map(locationRoleRepository::save)
                 .map(LocationRole::getId)
                 .map(locationRoleId -> userRepository.findAllByLocationRoleIdAndDeleteFlag(locationRoleId, false)
-                        .stream().peek(user -> user.setStatus(EntityStatus.SUSPENDED)).collect(Collectors.toList())
+                        .stream().peek(user -> user.setAccountStatus(AccountStatus.SUSPENDED)).collect(Collectors.toList())
                 ).map(userRepository::saveAll);
         log.info("Successfully deleted the location role and suspended all users for the location: {}", id);
     }

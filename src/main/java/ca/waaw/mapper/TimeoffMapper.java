@@ -6,7 +6,6 @@ import ca.waaw.dto.locationandroledtos.LocationAndRoleDto;
 import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.timeoff.TimeOffInfoDto;
 import ca.waaw.dto.userdtos.UserInfoForDropDown;
-import ca.waaw.enumration.EntityStatus;
 import ca.waaw.enumration.TimeOffType;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
@@ -41,9 +40,7 @@ public class TimeoffMapper {
         target.setStartDate(DateAndTimeUtils.getDateTimeObject(source.getStartDate(), timezone));
         target.setEndDate(DateAndTimeUtils.getDateTimeObject(source.getEndDate(), timezone));
         target.setNote(source.getNotes());
-        String status = source.getStatus().equals(EntityStatus.ACTIVE) ? "APPROVED" : (source.getStatus().equals(EntityStatus.PENDING) ?
-                "REQUESTED" : "DECLINED");
-        target.setStatus(status);
+        target.setStatus(source.getStatus().toString());
         UserInfoForDropDown user = new UserInfoForDropDown();
         user.setId(source.getUserDetails().getId());
         user.setEmail(source.getUserDetails().getEmail());

@@ -4,8 +4,8 @@ import ca.waaw.WaawApplication;
 import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.config.applicationconfig.AppSuperUserConfig;
 import ca.waaw.domain.*;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.EntityStatus;
 import ca.waaw.repository.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
@@ -70,7 +70,6 @@ public class ApplicationStartupSqlService {
                             Organization organization = new Organization();
                             organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
                             organization.setName(appSuperUserConfig.getOrganization());
-                            organization.setStatus(EntityStatus.ACTIVE);
                             organization.setTimezone(appSuperUserConfig.getTimezone());
                             organization.setCreatedBy("SYSTEM");
                             organizationRepository.save(organization);
@@ -143,7 +142,7 @@ public class ApplicationStartupSqlService {
         user.setUsername(username);
         user.setWaawId(customId);
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setStatus(EntityStatus.ACTIVE);
+        user.setAccountStatus(AccountStatus.PAID_AND_ACTIVE);
         user.setCreatedBy("SYSTEM");
         user.setAuthority(role);
         user.setOrganizationId(organizationId);
@@ -160,7 +159,6 @@ public class ApplicationStartupSqlService {
         location.setOrganizationId(organizationId);
         location.setTimezone(appSuperUserConfig.getTimezone());
         location.setCreatedBy("SYSTEM");
-        location.setStatus(EntityStatus.ACTIVE);
         locationRepository.save(location);
         log.info("New Location created: {}", location);
         return location.getId();
@@ -172,7 +170,6 @@ public class ApplicationStartupSqlService {
         role.setOrganizationId(organizationId);
         role.setLocationId(locationId);
         role.setCreatedBy("SYSTEM");
-        role.setStatus(EntityStatus.ACTIVE);
         locationRoleRepository.save(role);
         log.info("New location role saved: {}", role);
         return role.getId();
