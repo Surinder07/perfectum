@@ -80,6 +80,9 @@ api:
       add: /v1/timesheet/add
       edit: /v1/timesheet/edit
       delete: /v1/timesheet/delete
+    reports:
+      download: /v1/reports/download
+      email: /v1/reports/email
   description:
     authentication: |
       Authenticate login and password to get a jwt token.
@@ -181,6 +184,9 @@ api:
       add: Add new timesheet manually (For admins).
       edit: Edit timesheet manually (For admins).
       delete: Delete timesheet manually (For admins).
+    reports:
+      download: Download a report for specific dates
+      email: Generate a report for specific dates and email it to required email id
   swagger:
     groups:
       auth: 01. Auth
@@ -194,6 +200,7 @@ api:
       shift-management: 09. Shift Management
       timeoff: 10. Timeoff Management
       timesheet: 11. Timesheet Management
+      reports: 12. Reports
     error-description:
       trial-over: Payment Required. If role is ADMIN redirect to payment page with error message or else just show the error.
       authentication: Authentication Failed.

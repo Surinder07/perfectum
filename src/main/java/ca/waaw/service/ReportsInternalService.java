@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class ReportsService {
+public class ReportsInternalService {
 
-    private final Logger log = LogManager.getLogger(ReportsService.class);
+    private final Logger log = LogManager.getLogger(ReportsInternalService.class);
 
     // Generate payroll report
 
