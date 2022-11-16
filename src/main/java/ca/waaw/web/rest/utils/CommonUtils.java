@@ -9,7 +9,13 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -131,11 +137,11 @@ public class CommonUtils {
     }
 
     /**
-     * @param page   Page object containing all data
-     * @param mapper mapper function to convert to dto list
+     * @param page     Page object containing all data
+     * @param mapper   mapper function to convert to dto list
      * @param timezone timezone to convert the dates to
-     * @param <M>    Class type for Page entity
-     * @param <S>    Class type for DTO response
+     * @param <M>      Class type for Page entity
+     * @param <S>      Class type for DTO response
      * @return PaginationDto containing list of dto and page info
      */
     public static <M, S> PaginationDto getPaginationResponse(Page<M> page, BiFunction<M, String, S> mapper,
@@ -160,6 +166,19 @@ public class CommonUtils {
         String nameSuffix = StringUtils.leftPad(newNumber, numericLength
                 - newNumber.length(), '0');
         return currentCustomId.substring(0, 3) + nameSuffix;
+    }
+
+    /**
+     * @param resource resource to be sent through api
+     * @param filename filename to be included in the headers
+     * @return Response Entity with the file
+     */
+    public static ResponseEntity<Resource> byteArrayResourceToResponse(ByteArrayResource resource, String filename) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(resource.contentLength())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(filename).build().toString())
+                .body(resource);
     }
 
     /**
