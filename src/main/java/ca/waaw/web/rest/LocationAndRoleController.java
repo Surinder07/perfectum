@@ -1,13 +1,12 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.dto.locationandroledtos.AdminLocationDto;
+import ca.waaw.dto.PaginationDto;
+import ca.waaw.dto.locationandroledtos.LocationDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleDto;
-import ca.waaw.dto.locationandroledtos.LocationRoleWithUsersDto;
-import ca.waaw.dto.locationandroledtos.NewLocationDto;
+import ca.waaw.dto.locationandroledtos.UpdateLocationRoleDto;
 import ca.waaw.web.rest.service.LocationAndRoleService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,9 +31,9 @@ public class LocationAndRoleController {
     @Operation(description = "${api.description.location-and-role.getLocation}")
     @GetMapping("${api.endpoints.location-and-role.getLocation}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
-            implementation = AdminLocationDto.class))}, description = "${api.swagger.schema-description.getLocation}")
-    public ResponseEntity<Object> getLocation() {
-        return ResponseEntity.ok(locationAndRoleService.getLocation());
+            implementation = LocationDto.class))}, description = "${api.swagger.schema-description.pagination}")
+    public ResponseEntity<PaginationDto> getLocation(@PathVariable int pageNo, @PathVariable int pageSize) {
+        return ResponseEntity.ok(locationAndRoleService.getLocation(pageNo, pageSize));
     }
 
     @SwaggerCreated
@@ -44,8 +43,8 @@ public class LocationAndRoleController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(description = "${api.description.location-and-role.addLocation}")
     @PostMapping("${api.endpoints.location-and-role.addLocation}")
-    public void addNewLocation(@Valid @RequestBody NewLocationDto newLocationDto) {
-        locationAndRoleService.addNewLocation(newLocationDto);
+    public void addNewLocation(@Valid @RequestBody LocationDto locationDto) {
+        locationAndRoleService.addNewLocation(locationDto);
     }
 
     @SwaggerOk
@@ -58,6 +57,18 @@ public class LocationAndRoleController {
     @DeleteMapping("${api.endpoints.location-and-role.deleteLocation}")
     public void deleteLocation(@Valid @RequestParam String id) {
         locationAndRoleService.deleteLocation(id);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.location-and-role.toggleActiveLocation}")
+    @PutMapping("${api.endpoints.location-and-role.toggleActiveLocation}")
+    public void toggleActiveLocation(@Valid @RequestParam String id) {
+        locationAndRoleService.toggleActiveLocation(id);
     }
 
     @SwaggerCreated
@@ -83,16 +94,13 @@ public class LocationAndRoleController {
         locationAndRoleService.deleteLocationRole(id);
     }
 
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
     @SwaggerAuthenticated
     @Operation(description = "${api.description.location-and-role.getLocationRole}")
     @GetMapping("${api.endpoints.location-and-role.getLocationRole}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema =
-    @Schema(implementation = LocationRoleWithUsersDto.class))}, description = "${api.swagger.schema-description.getLocationRole}")
-    public ResponseEntity<Object> getLocationRole(@RequestParam(required = false) @Parameter(
-            description = "${api.swagger.param-description.getLocationRole}") String locationRoleId) {
-        return ResponseEntity.ok(locationAndRoleService.getLocationRoleInfo(locationRoleId));
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
+            implementation = PaginationDto.class))}, description = "${api.swagger.schema-description.pagination}")
+    public ResponseEntity<PaginationDto> getLocationRole(@PathVariable int pageNo, @PathVariable int pageSize) {
+        return ResponseEntity.ok(locationAndRoleService.getLocationRoles(pageNo, pageSize));
     }
 
     @SwaggerOk
@@ -103,8 +111,20 @@ public class LocationAndRoleController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.location-and-role.updateLocationRole}")
     @PutMapping("${api.endpoints.location-and-role.updateLocationRole}")
-    public void updateLocationRole(@Valid @RequestBody LocationRoleDto locationRoleDto) {
+    public void updateLocationRole(@Valid @RequestBody UpdateLocationRoleDto locationRoleDto) {
         locationAndRoleService.updateLocationRolePreferences(locationRoleDto);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.location-and-role.toggleActiveLocationRole}")
+    @PutMapping("${api.endpoints.location-and-role.toggleActiveLocationRole}")
+    public void toggleActiveLocationRole(@Valid @RequestParam String id) {
+        locationAndRoleService.toggleActiveLocationRole(id);
     }
 
 }

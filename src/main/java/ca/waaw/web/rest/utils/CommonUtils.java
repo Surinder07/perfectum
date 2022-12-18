@@ -1,6 +1,8 @@
 package ca.waaw.web.rest.utils;
 
+import ca.waaw.domain.User;
 import ca.waaw.dto.PaginationDto;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
@@ -179,6 +181,16 @@ public class CommonUtils {
                 .contentLength(resource.contentLength())
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(filename).build().toString())
                 .body(resource);
+    }
+
+    /**
+     * @param users a list of users
+     * @return count of employees who logged-in during last 48 hours
+     */
+    public static int getActiveEmployeesFromList(List<User> users) {
+        return (int) users.stream()
+                .filter(user -> !user.getAuthority().equals(Authority.ADMIN))
+                .filter(user -> user.getAccountStatus().equals(AccountStatus.PAID_AND_ACTIVE)).count();
     }
 
     /**

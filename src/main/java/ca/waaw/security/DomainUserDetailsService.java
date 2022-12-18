@@ -49,7 +49,7 @@ public class DomainUserDetailsService implements UserDetailsService {
     private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {
         if (user.getAccountStatus().equals(AccountStatus.EMAIL_PENDING)) {
             throw new EmailNotVerifiedException(lowercaseLogin);
-        } else if (user.getAccountStatus().equals(AccountStatus.SUSPENDED)) {
+        } else if (user.getAccountStatus().equals(AccountStatus.DISABLED)) {
             throw new UserAccountDisabledException();
         }
         List<GrantedAuthority> grantedAuthorities = Collections.singletonList(new SimpleGrantedAuthority(user.getAuthority().name()));

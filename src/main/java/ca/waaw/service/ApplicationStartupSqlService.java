@@ -113,13 +113,13 @@ public class ApplicationStartupSqlService {
                     CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()),
                     Authority.ADMIN, organizationId, null, null);
             // Create a new location
-            String locationId = createNewLocation(organizationId);
+            String locationId = createNewLocation(organizationId, admin.getId());
             // Create a location admin
             User manager = saveNewUser("Location", "Admin", "lAdmin", "ladmin@waaw.ca", "Admin123$",
                     CommonUtils.getNextCustomId(admin.getWaawId(), appCustomIdConfig.getLength()),
                     Authority.MANAGER, organizationId, locationId, null);
             // Create a new location role
-            String locationRoleId = createNewLocationRole(organizationId, locationId);
+            String locationRoleId = createNewLocationRole(organizationId, locationId, manager.getId());
             // Create new Employees
             User employee1 = saveNewUser("First", "Employee", "employee1", "employee1@waaw.ca",
                     "EMPL123$", CommonUtils.getNextCustomId(manager.getWaawId(), appCustomIdConfig.getLength()),
@@ -153,23 +153,26 @@ public class ApplicationStartupSqlService {
         return user;
     }
 
-    private String createNewLocation(String organizationId) {
+    private String createNewLocation(String organizationId, String admin) {
         Location location = new Location();
         location.setName("Test location");
         location.setOrganizationId(organizationId);
         location.setTimezone(appSuperUserConfig.getTimezone());
-        location.setCreatedBy("SYSTEM");
+        location.setCreatedBy(admin);
+        location.setWaawId("L0000000001");
         locationRepository.save(location);
         log.info("New Location created: {}", location);
         return location.getId();
     }
 
-    private String createNewLocationRole(String organizationId, String locationId) {
+    private String createNewLocationRole(String organizationId, String locationId, String admin) {
         LocationRole role = new LocationRole();
         role.setName("Test Role");
         role.setOrganizationId(organizationId);
         role.setLocationId(locationId);
-        role.setCreatedBy("SYSTEM");
+        role.setWaawId("R0000000001");
+        role.setCreatedBy(admin);
+        role.setAdminRights(true);
         locationRoleRepository.save(role);
         log.info("New location role saved: {}", role);
         return role.getId();

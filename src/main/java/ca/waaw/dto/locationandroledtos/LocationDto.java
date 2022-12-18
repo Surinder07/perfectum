@@ -13,7 +13,7 @@ import javax.validation.constraints.NotEmpty;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class NewLocationDto {
+public class LocationDto {
 
     @NotEmpty
     @CapitalizeFirstLetter

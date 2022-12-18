@@ -22,10 +22,16 @@ public class Location extends AbstractEntity {
     @Column
     private String name;
 
+    @Column(name = "waaw_id")
+    private String waawId;
+
     @Column(name = "organization_id")
     private String organizationId;
 
     @Column
     private String timezone;
+
+    @Column(name = "is_active")
+    private boolean isActive = true;
 
 }

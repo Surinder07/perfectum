@@ -1,7 +1,7 @@
 package ca.waaw.domain.joined;
 
 import ca.waaw.domain.AbstractEntity;
-import ca.waaw.domain.LocationRole;
+import ca.waaw.domain.User;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -14,10 +14,13 @@ import java.util.List;
 @Table(name = "location")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class LocationAndRoles extends AbstractEntity {
+public class LocationUsers extends AbstractEntity {
 
     @Column
     private String name;
+
+    @Column(name = "waaw_id")
+    private String waawId;
 
     @Column(name = "organization_id")
     private String organizationId;
@@ -25,8 +28,11 @@ public class LocationAndRoles extends AbstractEntity {
     @Column
     private String timezone;
 
+    @Column(name = "is_active")
+    private boolean isActive = true;
+
     @OneToMany
     @JoinColumn(name = "location_id", referencedColumnName = "uuid")
-    private List<LocationRole> locationRoles;
+    private List<User> users;
 
 }

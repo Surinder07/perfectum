@@ -15,4 +15,8 @@ public class AppCustomIdConfig {
 
     private String organizationPrefix;
 
+    private String locationPrefix;
+
+    private String rolePrefix;
+
 }

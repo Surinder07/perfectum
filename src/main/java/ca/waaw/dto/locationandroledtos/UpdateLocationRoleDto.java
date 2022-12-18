@@ -1,6 +1,5 @@
 package ca.waaw.dto.locationandroledtos;
 
-import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,16 +10,10 @@ import javax.validation.constraints.NotEmpty;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BaseLocationRole {
+public class UpdateLocationRoleDto {
 
     @NotEmpty
-    @CapitalizeFirstLetter
-    @Schema(description = "non updatable")
-    private String name;
-
-    private Boolean isTimeclockEnabled;
-
-    private Boolean isTimeoffEnabled;
+    private String id;
 
     @Schema(description = "minimum total hours an employee can work per day")
     private int totalHoursPerDayMin;

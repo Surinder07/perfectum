@@ -1,1 +1,42 @@
+spring:
+  datasource:
+    url: jdbc:mysql://waaw-stage-db.mysql.database.azure.com:3306/waaw_stage?createDatabaseIfNotExist=true&useSSl=true
+    username: waaw
+    password: W@@WGl0b@l
+  mail:
+    userName: pragrashipcarte@gmail.com
+    password: Pragra123
 
+logging:
+  config: classpath:log4j2.yml
+
+#########################################
+#####    Security Configurations    #####
+#########################################
+security:
+  un-auth-url-patterns: /api/*/unAuth/**, /api/unAuth/**, /test/**, /swagger-ui.html, /swagger-ui/**, /v3/api-docs/**, ${application.websocket.connection-endpoint}/**
+  cors-allowed-origins: http://localhost:3000, https://agreeable-mud-0a6835c10.2.azurestaticapps.net, https://stage.waaw.ca, https://azurestaticapps.net
+  # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
+  jwt-secret: YjE0OTg3YTEyM2YwY2YyNGJjYmZlYTUwNjJkZDQ0YzYxNmUwNjIyMGVkOTIxNTEyODA1M2I3Yjk0NTU5NmIyNjMwZTJiZTlmNjA0YTAyNGY3MzdjOGNlNzQ4OTQzNTAxYmJiM2VlYmRiZGE1YTM5NjhiNGEyNWE1YzA0YTY1MTI=
+  jwt-default-token-validity-in-seconds: 1800
+  jwt-remember-me-token-validity-in-seconds: 2592000
+
+########################################
+#####    Swagger Configurations    #####
+########################################
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+
+#################################################
+#####    Application specific properties    #####
+#################################################
+application:
+  create-dummy-data-on-startup: true
+  urls:
+    hosted-ui: https://agreeable-mud-0a6835c10.2.azurestaticapps.net
+    hosted-server: https://waaw-server-stage.azurewebsites.net
+  mail:
+    ui-url: ${application.urls.hosted-ui}

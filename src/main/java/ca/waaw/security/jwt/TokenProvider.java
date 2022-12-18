@@ -2,7 +2,6 @@ package ca.waaw.security.jwt;
 
 import ca.waaw.config.applicationconfig.AppSecurityConfig;
 import ca.waaw.enumration.AccountStatus;
-import ca.waaw.security.SecurityUtils;
 import io.jsonwebtoken.*;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -52,7 +51,7 @@ public class TokenProvider {
         return Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
-                .claim(ACCOUNT_STATUS_KEY, accountStatus.name())
+                .claim(ACCOUNT_STATUS_KEY, accountStatus.toString())
                 .signWith(SignatureAlgorithm.HS512, appSecurityConfig.getJwtSecret())
                 .setExpiration(validity)
                 .compact();
@@ -108,11 +107,13 @@ public class TokenProvider {
         return getClaimFromToken(token, Claims::getExpiration);
     }
 
-    //Check if associated account status
-    public AccountStatus checkAccountStatus() {
-        return SecurityUtils.getCurrentUserJWT()
-                .map(token -> getClaimFromToken(token, (claims) -> claims.get(ACCOUNT_STATUS_KEY, AccountStatus.class)))
-                .orElse(null);
+    //Check the associated account status
+    public AccountStatus checkAccountStatus(String token) {
+        Object status = getClaimFromToken(token, (claims) -> claims.get(ACCOUNT_STATUS_KEY)).toString();
+        if (status != null) {
+            return AccountStatus.valueOf(status.toString());
+        }
+        return null;
     }
 
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {

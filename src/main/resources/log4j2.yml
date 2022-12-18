@@ -1,0 +1,131 @@
+Configuration:
+  status: warn
+  monitorInterval: 30
+
+  Properties:
+    Property:
+
+      - name: LOG_PATTERN
+        value: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %p %m%n"
+
+      - name: APP_LOG_ROOT
+        value: /home/site/wwwroot/springLogs
+
+  appenders:
+
+    Console:
+
+      - name: LogToConsole
+        target: SYSTEM_OUT
+        PatternLayout:
+          pattern: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
+
+    File:
+
+      - name: LogToFile
+        fileName: ${APP_LOG_ROOT}/app.log
+        PatternLayout:
+          pattern: "%d %p %c{1.} [%t] %m%n"
+
+      - name: LogToDEBUGFile
+        fileName: ${APP_LOG_ROOT}/debug-app.log
+        PatternLayout:
+          pattern: "%d %p %c{1.} [%t] %m%n"
+
+    RollingFile:
+
+      - name: debugLog
+        fileName: ${APP_LOG_ROOT}/application-debug.log
+        filePattern: ${APP_LOG_ROOT}/application-debug-%d{yyyy-MM-dd}-%i.log
+        LevelRangeFilter:
+          minLevel: DEBUG
+          maxLevel: DEBUG
+          onMatch: ACCEPT
+          onMismatch: DENY
+        PatternLayout:
+          pattern: ${LOG_PATTERN}
+        Policies:
+          SizeBasedTriggeringPolicy:
+            size: 19500KB
+        DefaultRolloverStrategy:
+          max: 1
+
+      - name: infoLog
+        fileName: ${APP_LOG_ROOT}/application-info.log
+        filePattern: ${APP_LOG_ROOT}/application-info-%d{yyyy-MM-dd}-%i.log
+        LevelRangeFilter:
+          minLevel: INFO
+          maxLevel: INFO
+          onMatch: ACCEPT
+          onMismatch: DENY
+        PatternLayout:
+          pattern: ${LOG_PATTERN}
+        Policies:
+          SizeBasedTriggeringPolicy:
+            size: 19500KB
+        DefaultRolloverStrategy:
+          max: 1
+
+      - name: errorLog
+        fileName: ${APP_LOG_ROOT}/application-error.log
+        filePattern: ${APP_LOG_ROOT}/application-error-%d{yyyy-MM-dd}-%i.log
+        LevelRangeFilter:
+          minLevel: ERROR
+          maxLevel: ERROR
+          onMatch: ACCEPT
+          onMismatch: DENY
+        PatternLayout:
+          pattern: ${LOG_PATTERN}
+        Policies:
+          SizeBasedTriggeringPolicy:
+            size: 19500KB
+        DefaultRolloverStrategy:
+          max: 1
+
+      - name: springLog
+        fileName: ${APP_LOG_ROOT}/spring.log
+        filePattern: ${APP_LOG_ROOT}/spring-%d{yyyy-MM-dd}-%i.log
+        PatternLayout:
+          pattern: ${LOG_PATTERN}
+        Policies:
+          SizeBasedTriggeringPolicy:
+            size: 19500KB
+        DefaultRolloverStrategy:
+          max: 1
+
+      - name: aopLog
+        fileName: ${APP_LOG_ROOT}/application-aop.log
+        filePattern: ${APP_LOG_ROOT}/application-aop-%d{yyyy-MM-dd}-%i.log
+        PatternLayout:
+          pattern: ${LOG_PATTERN}
+        Policies:
+          SizeBasedTriggeringPolicy:
+            size: 19500KB
+        DefaultRolloverStrategy:
+          max: 1
+
+  loggers:
+    logger:
+
+      - name: ca.waaw
+        additivity: false
+        appender-ref:
+          - ref: aopLog
+
+      - name: ca.waaw
+        additivity: false
+        appender-ref:
+          - ref: debugLog
+          - ref: infoLog
+          - ref: errorLog
+          - ref: LogToConsole
+
+      - name: org.springframework
+        additivity: false
+        appender-ref:
+          - ref: springLog
+
+    root:
+      level: all
+      appender-ref:
+        ref: LogToFile

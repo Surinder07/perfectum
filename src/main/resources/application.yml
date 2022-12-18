@@ -139,8 +139,10 @@ application:
     queue-capacity: 200
   custom-id:
     length: 10
-    user-prefix: USR
-    organization-prefix: ORG
+    user-prefix: U
+    organization-prefix: O
+    location-prefix: L
+    role-prefix: R
 
 ######################################
 ###### Files related properties ######

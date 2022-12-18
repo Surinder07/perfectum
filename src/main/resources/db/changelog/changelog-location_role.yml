@@ -21,23 +21,14 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(100)
               - column:
+                  name: waaw_id
+                  type: VARCHAR(25)
+              - column:
                   name: organization_id
                   type: VARCHAR(100)
               - column:
                   name: location_id
                   type: VARCHAR(100)
-              - column:
-                  name: is_timeclock_enabled
-                  type: BOOLEAN
-                  defaultValue: false
-                  constraints:
-                    nullable: false
-              - column:
-                  name: is_timeoff_enabled
-                  type: BOOLEAN
-                  defaultValue: false
-                  constraints:
-                    nullable: false
               - column:
                   name: total_hours_per_day_min
                   type: SMALLINT
@@ -51,9 +42,17 @@ databaseChangeLog:
                   name: max_consecutive_work_days
                   type: SMALLINT
               - column:
-                  name: status
-                  type: VARCHAR(50)
-                  defaultValue: PENDING
+                  name: admin_rights
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValue: true
+                  constraints:
+                    nullable: false
               - column:
                   name: del_flg
                   type: BOOLEAN
@@ -88,3 +87,10 @@ databaseChangeLog:
             constraintName: fk_location_role_organization_id
             referencedColumnNames: uuid
             referencedTableName: organization
+        - createIndex:
+            indexName: idx_waaw_location_role_id
+            tableName: location_role
+            unique: true
+            column:
+              name: waaw_id
+              type: VARCHAR(25)

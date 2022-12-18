@@ -3,6 +3,7 @@ package ca.waaw.web.rest.errors;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.errors.exceptions.application.*;
 import ca.waaw.web.rest.utils.CommonUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -39,7 +40,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
             if (errors.containsKey(fieldName)) {
                 errors.put(fieldName, errors.get(fieldName) + "; " + message);
             } else {
-                errors.put(fieldName, message);
+                errors.put(StringUtils.isNotEmpty(fieldName) ? fieldName : "Error", message);
             }
         });
         String[] fields = null;
@@ -112,8 +113,8 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(EntityAlreadyExistsException.class)
     protected ResponseEntity<ErrorVM> handleEntityAlreadyExistsException(EntityAlreadyExistsException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityAlreadyExistsMessage,
-                null), ex.getEntityName(), ex.getValue());
-        return new ResponseEntity<>(new ErrorVM(message, ex.getEntityName()), HttpStatus.UNAUTHORIZED);
+                null), ex.getEntityName(), ex.getEntityType(), ex.getValue());
+        return new ResponseEntity<>(new ErrorVM(message, ex.getEntityName()), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(ExpiredKeyException.class)

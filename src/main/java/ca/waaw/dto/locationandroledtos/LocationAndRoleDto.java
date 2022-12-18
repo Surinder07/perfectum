@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * @todo delete if not needed
+ */
 public class LocationAndRoleDto {
 
     private String locationId;

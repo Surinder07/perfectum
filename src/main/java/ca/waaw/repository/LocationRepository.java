@@ -2,6 +2,7 @@ package ca.waaw.repository;
 
 import ca.waaw.domain.Location;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,6 +14,9 @@ public interface LocationRepository extends JpaRepository<Location, String> {
     Optional<Location> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
 
     Optional<Location> getByNameAndOrganizationId(String name, String organizationId);
+
+    @Query(value = "SELECT waaw_id from location WHERE waaw_id IS NOT NULL ORDER BY created_date DESC LIMIT 1", nativeQuery = true)
+    Optional<String>getLastUsedWaawId();
 
     List<Location> getListByNameAndOrganization(List<String> name, String organizationId);
 

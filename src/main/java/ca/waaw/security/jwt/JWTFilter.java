@@ -2,7 +2,6 @@ package ca.waaw.security.jwt;
 
 import ca.waaw.config.applicationconfig.AppSecurityConfig;
 import ca.waaw.enumration.ErrorCodes;
-import ca.waaw.web.rest.errors.exceptions.application.AccessDeniedException;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -52,7 +51,11 @@ public class JWTFilter extends OncePerRequestFilter {
             // JWT Token is in the form "Bearer token". Remove Bearer word and get only the Token
             if (!isUnAuthUrl(request.getRequestURI()) && requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
                 String jwtToken = requestTokenHeader.substring(7);
-                checkLoginPermission(request);
+                ErrorCodes error = checkLoginPermission(request, jwtToken);
+                if (error != null) {
+                    respondToErrorIfAny(error, response);
+                    return;
+                }
                 Authentication authentication = tokenProvider.getAuthentication(jwtToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -65,19 +68,32 @@ public class JWTFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
-    private void checkLoginPermission(HttpServletRequest request) {
-        switch (tokenProvider.checkAccountStatus()) {
+    private ErrorCodes checkLoginPermission(HttpServletRequest request, String jwtToken) {
+        switch (tokenProvider.checkAccountStatus(jwtToken)) {
             case PAYMENT_PENDING:
-                throw new AccessDeniedException(ErrorCodes.WE_004);
+                return ErrorCodes.WE_004;
             case PAYMENT_INFO_PENDING:
-                throw new AccessDeniedException(ErrorCodes.WE_002);
+                if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.completeRegistration"))))
+                return ErrorCodes.WE_002;
             case PROFILE_PENDING:
-                throw new AccessDeniedException(ErrorCodes.WE_001);
+                if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.completeRegistration"))))
+                    return ErrorCodes.WE_001;
             case TRIAL_EXPIRED:
                 if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.getUserDetails")))) {
-                    throw new AccessDeniedException(ErrorCodes.WE_003);
+                    return ErrorCodes.WE_003;
                 }
         }
+        return null;
+    }
+
+    private void respondToErrorIfAny(ErrorCodes errorCode, HttpServletResponse response) throws IOException {
+        String sb = "{ " +
+                "\"waawErrorCode\": \"" + errorCode.name() + "\"," +
+                "\"message\": \"" + errorCode.value + "\"" +
+                "}";
+        response.setContentType("application/json");
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.getWriter().write(sb);
     }
 
     private boolean isUnAuthUrl(String requestedUri) {

@@ -21,15 +21,20 @@ databaseChangeLog:
                   name: name
                   type: VARCHAR(100)
               - column:
+                  name: waaw_id
+                  type: VARCHAR(25)
+              - column:
                   name: organization_id
                   type: VARCHAR(100)
               - column:
                   name: timezone
                   type: VARCHAR(100)
               - column:
-                  name: status
-                  type: VARCHAR(50)
-                  defaultValue: PENDING
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValue: true
+                  constraints:
+                    nullable: false
               - column:
                   name: del_flg
                   type: BOOLEAN
@@ -58,3 +63,10 @@ databaseChangeLog:
             constraintName: fk_location_organization_id
             referencedColumnNames: uuid
             referencedTableName: organization
+        - createIndex:
+            indexName: idx_waaw_location_id
+            tableName: location
+            unique: true
+            column:
+              name: waaw_id
+              type: VARCHAR(25)

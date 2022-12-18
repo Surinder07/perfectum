@@ -4,8 +4,11 @@ spring:
     username: root
     password: Pragra2020
   mail:
-    userName: pragrashipcarte@gmail.com
-    password: Pragra123
+    userName: customer.service@waaw.ca
+    password: WaaW2022@CS
+
+logging:
+  config: classpath:log4j2-dev.yml
 
 #########################################
 #####    Security Configurations    #####
