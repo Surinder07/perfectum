@@ -9,6 +9,7 @@ import ca.waaw.domain.User;
 import ca.waaw.domain.UserTokens;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.AccountStatus;
+import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.PromoCodeType;
 import ca.waaw.enumration.UserToken;
 import ca.waaw.mapper.UserMapper;
@@ -59,22 +60,15 @@ public class UserService {
 
     private final AppCustomIdConfig appCustomIdConfig;
 
-    /**
-     * @param username username to check in database
-     * @return true if username is present in database
-     */
-    public boolean checkIfUsernameExists(String username) {
-        return userRepository.findOneByUsernameAndDeleteFlag(username, false).isPresent();
-    }
-
     @Transactional(rollbackFor = Exception.class)
     public void registerNewUser(NewRegistrationDto registrationDto) {
         userRepository.findOneByEmailAndDeleteFlag(registrationDto.getEmail(), false)
                 .ifPresent(user -> {
-                    if (user.getAccountStatus().equals(AccountStatus.EMAIL_PENDING))
-                        userRepository.delete(user);
-                    else
-                        throw new EntityAlreadyExistsException("email", registrationDto.getEmail());
+                    if (user.getAccountStatus().equals(AccountStatus.EMAIL_PENDING)) {
+                        user.setDeleteFlag(true);
+                        userRepository.save(user);
+                    } else
+                        throw new EntityAlreadyExistsException("email", "address", registrationDto.getEmail());
                 });
         String currentCustomId = userRepository.getLastUsedCustomId()
                 .orElse(appCustomIdConfig.getUserPrefix() + "0000000000");
@@ -89,6 +83,7 @@ public class UserService {
         log.info("New User registered: {}", user);
         log.info("New activation token generated: {}", token);
         String activationUrl = appUrlConfig.getActivateAccountUrl(token.getToken());
+        // @todo email and change activation url
         userMailService.sendActivationEmail(user, activationUrl);
     }
 
@@ -97,9 +92,9 @@ public class UserService {
      *
      * @param verificationKey activation verificationKey received in mail
      */
-    public UserDetailsNewDto verifyEmail(String verificationKey) {
+    public void verifyEmail(String verificationKey) {
         log.info("Activating user for verificationKey {}", verificationKey);
-        return userTokenRepository
+        userTokenRepository
                 .findOneByTokenAndTokenTypeAndIsExpired(verificationKey, UserToken.ACTIVATION, false)
                 .flatMap(userTokens -> {
                     if (userTokens.getCreatedDate().isAfter(Instant.now()
@@ -112,10 +107,12 @@ public class UserService {
                                 .map(user -> {
                                     user.setAccountStatus(AccountStatus.PROFILE_PENDING);
                                     user.setLastModifiedDate(Instant.now());
+                                    log.info("Saving new User: {}", user);
                                     return user;
                                 })
                                 .map(userRepository::save)
-                                .map(UserMapper::entityToDetailsDto);
+                                .map(user -> CommonUtils.logMessageAndReturnObject(user, "info", UserService.class,
+                                        "New User registered: {}", user));
                     }
                 })
                 .orElseThrow(() -> new ExpiredKeyException("verification"));
@@ -128,39 +125,51 @@ public class UserService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void completeRegistration(CompleteRegistrationDto completeRegistrationDto) {
-        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(completeRegistrationDto.getVerificationKey(),
-                        UserToken.ACTIVATION, true)
-                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .map(user -> {
-                            Organization organization = UserMapper.completeRegistrationToEntity(completeRegistrationDto, user);
-                            String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
-                                    .orElse(appCustomIdConfig.getOrganizationPrefix() + "0000000000");
-                            int trialDays = 0;
-                            if (StringUtils.isNotEmpty(completeRegistrationDto.getPromoCode())) {
-                                trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(completeRegistrationDto.getPromoCode(),
-                                                PromoCodeType.TRIAL, false)
-                                        .map(PromotionCode::getPromotionValue)
-                                        .orElseThrow(() -> new EntityNotFoundException("promo code"));
+                            if (user.getAuthority().equals(Authority.ADMIN)) {
+                                if (StringUtils.isEmpty(completeRegistrationDto.getOrganizationName())) {
+                                    throw new BadRequestException("Organization Name is required.", "Organization.name");
+                                }
+                                Organization organization = new Organization();
+                                UserMapper.completeRegistrationToEntity(completeRegistrationDto, organization, user);
+                                String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
+                                        .orElse(appCustomIdConfig.getOrganizationPrefix() + "0000000000");
+                                int trialDays = 0;
+                                if (StringUtils.isNotEmpty(completeRegistrationDto.getPromoCode())) {
+                                    trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(completeRegistrationDto.getPromoCode(),
+                                                    PromoCodeType.TRIAL, false)
+                                            .map(PromotionCode::getPromotionValue)
+                                            .orElseThrow(() -> new EntityNotFoundException("promo code", completeRegistrationDto.getPromoCode()));
+                                }
+                                organization.setTrialDays(trialDays);
+                                organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
+                                organizationRepository.save(organization);
+                            } else {
+                                UserMapper.completeRegistrationToEntity(completeRegistrationDto, null, user);
                             }
-                            organization.setTrialDays(trialDays);
-                            organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
-                            organizationRepository.save(organization);
                             return user;
                         })
                         .map(userRepository::save)
                 )
-                .orElseThrow(() -> new EntityNotFoundException("verification key"));
+                .orElseThrow(UnauthorizedException::new);
     }
 
-    public Map<String, Object> validatePromoCode(String promoCode) {
+    /**
+     * @param promoCode promo value
+     * @return Message for applied perk or error
+     */
+    public Map<String, String> validatePromoCode(String promoCode) {
         return promotionCodeRepository.findOneByCodeAndDeleteFlag(promoCode, false)
                 .map(code -> {
                     if (code.getExpiryDate().isBefore(Instant.now())) {
                         return null;
                     }
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("codeType", code.getType().name());
-                    response.put("codeValue", code.getPromotionValue());
+                    Map<String, String> response = new HashMap<>();
+                    if (code.getType().equals(PromoCodeType.TRIAL)) {
+                        response.put("message", String.format("Trial Period for %s days added", code.getPromotionValue()));
+                    }
                     return response;
                 })
                 .orElseThrow(() -> new EntityNotFoundException("promotion code"));
@@ -171,7 +180,7 @@ public class UserService {
      *
      * @param invitationKey invite key received in mail
      */
-    public UserDetailsNewDto checkInviteLink(String invitationKey) {
+    public UserListingDto checkInviteLink(String invitationKey) {
         log.info("Getting details for user with invitation key: {}", invitationKey);
         return userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(invitationKey, UserToken.INVITE, false)
                 .map(token -> {
@@ -205,27 +214,13 @@ public class UserService {
                         .flatMap(user -> userOrganizationRepository.findOneByIdAndDeleteFlag(user.getId(), false))
                         .map(user -> userRepository.findOneByIdAndDeleteFlag(token.getCreatedBy(), false)
                                 .map(admin -> {
+                                    // @todo change mail
                                     notificationInternalService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl());
                                     return admin;
                                 })
                         )
                 )
                 .orElseThrow(() -> new EntityNotFoundException("invite key"));
-    }
-
-    /**
-     * Updates the details of current logged-in user
-     *
-     * @param updateUserDto all user details to update
-     */
-    public void updateUserDetails(UpdateUserDto updateUserDto) {
-        SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(user -> {
-                    UserMapper.updateUserDtoToEntity(updateUserDto, user);
-                    return user;
-                }).map(userRepository::save)
-                .ifPresent(user -> log.info("User successfully updated: {}", user));
     }
 
     /**
@@ -264,6 +259,7 @@ public class UserService {
                     token.setCreatedBy("SYSTEM");
                     userTokenRepository.save(token);
                     String resetUrl = appUrlConfig.getResetPasswordUrl(token.getToken());
+                    // @todo change mail update url
                     userMailService.sendPasswordResetMail(user, resetUrl);
                     return user;
                 })
@@ -304,6 +300,7 @@ public class UserService {
     /**
      * @return User details of the logged-in user account
      */
+    //@TODO update details as per updated dto
     public UserDetailsDto getLoggedInUserAccount() {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
@@ -311,5 +308,7 @@ public class UserService {
                 )
                 .orElseThrow(UnauthorizedException::new);
     }
+
+    //@TODO add update user API to update emailPreference and sms preference
 
 }

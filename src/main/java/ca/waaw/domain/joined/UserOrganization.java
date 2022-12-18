@@ -4,6 +4,7 @@ import ca.waaw.domain.AbstractEntity;
 import ca.waaw.domain.Location;
 import ca.waaw.domain.LocationRole;
 import ca.waaw.domain.Organization;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,6 +21,11 @@ import java.time.Instant;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @NamedQueries({
+        @NamedQuery(name = "UserOrganization.searchAndFilterUsers", query = "SELECT u FROM UserOrganization u WHERE (?1 IS NULL OR (u.firstName LIKE " +
+                "CONCAT('%', ?1, '%') OR u.lastName LIKE CONCAT('%', ?1, '%') OR u.waawId LIKE CONCAT('%', ?1, '%') " +
+                "OR u.email LIKE CONCAT('%', ?1, '%'))) AND (?2 IS NULL OR u.organizationId = ?2) AND (?3 IS NULL " +
+                "OR u.locationId = ?3) AND (?4 IS NULL OR u.locationRoleId = ?4) AND (?5 IS NULL OR " +
+                "u.isFullTime = ?5) AND (?6 IS NULL OR u.accountStatus = ?6) AND u.deleteFlag = FALSE"),
         @NamedQuery(name = "UserOrganization.searchUsersWithOrganizationIdAndLocationIdAndDeleteFlagAndAuthority",
                 query = "SELECT u FROM UserOrganization u WHERE (u.firstName LIKE ?1 OR u.lastName LIKE ?1 " +
                         "or u.email LIKE ?1 OR u.employeeId LIKE ?1 OR u.waawId LIKE ?1) " +
@@ -55,6 +61,9 @@ public class UserOrganization extends AbstractEntity {
 
     @Column
     private String mobile;
+
+    @Column
+    private String country;
 
     @Column(name = "password_hash")
     private String passwordHash;
@@ -98,6 +107,10 @@ public class UserOrganization extends AbstractEntity {
     @Column
     @Enumerated(EnumType.STRING)
     private Authority authority;
+
+    @Column(name = "account_status")
+    @Enumerated(EnumType.STRING)
+    private AccountStatus accountStatus;
 
     @Column(name = "email_notification_on")
     private Boolean isEmailNotifications;

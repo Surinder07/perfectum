@@ -20,10 +20,6 @@ import javax.validation.constraints.Size;
 public class CompleteRegistrationDto {
 
     @NotEmpty
-    @Schema(description = "Verification key sent on the mail will be sent here to recognize user.")
-    private String verificationKey;
-
-    @NotEmpty
     @CapitalizeFirstLetter
     private String firstName;
 
@@ -42,9 +38,10 @@ public class CompleteRegistrationDto {
     @Max(value = 9999999999L, message = "Mobile has to be 10 digits")
     private Long mobile;
 
+    private String country;
+
     private String langKey;
 
-    @NotEmpty
     @CapitalizeFirstLetter
     private String organizationName;
 
@@ -53,7 +50,6 @@ public class CompleteRegistrationDto {
     @ValueOfEnum(enumClass = DaysOfWeek.class, message = "Pass correct day of week")
     private String firstDayOfWeek;
 
-    @NotEmpty
     @Schema(description = "Use get Timezones api to get dropdown of possible values, Required for Admin registration")
     @ValueOfEnum(enumClass = Timezones.class, message = "Pass a valid timezone")
     private String timezone;

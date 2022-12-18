@@ -38,19 +38,19 @@ databaseChangeLog:
                   type: SMALLINT
                   defaultValue: 4
               - column:
-                  name: is_timeclock_enabled_default
+                  name: is_timeclock_enabled
                   type: BOOLEAN
                   defaultValue: false
                   constraints:
                     nullable: false
               - column:
-                  name: is_timeoff_enabled_default
+                  name: is_timeoff_enabled
                   type: BOOLEAN
                   defaultValue: false
                   constraints:
                     nullable: false
               - column:
-                  name: is_overtime_request_enabled
+                  name: is_overtime_enabled
                   type: BOOLEAN
                   defaultValue: true
                   constraints:
@@ -67,10 +67,6 @@ databaseChangeLog:
               - column:
                   name: timezone
                   type: VARCHAR(100)
-              - column:
-                  name: status
-                  type: VARCHAR(50)
-                  defaultValue: PENDING
               - column:
                   name: del_flg
                   type: BOOLEAN

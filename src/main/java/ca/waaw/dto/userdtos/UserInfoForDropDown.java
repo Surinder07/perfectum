@@ -1,6 +1,5 @@
 package ca.waaw.dto.userdtos;
 
-import ca.waaw.enumration.Authority;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +14,5 @@ public class UserInfoForDropDown {
     private String fullName;
 
     private String email;
-
-    private Authority authority;
 
 }

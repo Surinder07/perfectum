@@ -2,8 +2,6 @@ package ca.waaw.web.rest;
 
 import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.dto.userdtos.*;
-import ca.waaw.web.rest.errors.exceptions.BadRequestException;
-import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 @RestController
@@ -30,19 +27,6 @@ public class UserController {
     private final UserService userService;
 
     private final AppRegexConfig appRegexConfig;
-
-    @SwaggerOk
-    @SwaggerBadRequest
-    @SwaggerAlreadyExist
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.user.checkUsername}")
-    @GetMapping("${api.endpoints.user.checkUsername}")
-    public void checkUserNameExistence(@RequestParam String username) {
-        if (!Pattern.matches(appRegexConfig.getUsername(), username))
-            throw new BadRequestException("Please enter a valid username", "username");
-        if (userService.checkIfUsernameExists(username))
-            throw new EntityAlreadyExistsException("username", username);
-    }
 
     @SwaggerCreated
     @SwaggerBadRequest
@@ -60,10 +44,9 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.user.verifyEmail}")
     @GetMapping(value = "${api.endpoints.user.verifyEmail}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
-            schema = @Schema(implementation = UserDetailsNewDto.class))})
-    public ResponseEntity<UserDetailsNewDto> verifyEmail(@RequestParam String key) {
-        return ResponseEntity.ok(userService.verifyEmail(key));
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json")})
+    public void verifyEmail(@RequestParam String key) {
+        userService.verifyEmail(key);
     }
 
     @SwaggerCreated
@@ -84,8 +67,8 @@ public class UserController {
     @Operation(description = "${api.description.user.validatePromoCode}")
     @GetMapping("${api.endpoints.user.validatePromoCode}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
-            schema = @Schema(example = "{codeType: STRING, codeValue: INTEGER}"))})
-    public ResponseEntity<Map<String, Object>> validatePromoCode(@RequestParam String promoCode) {
+            schema = @Schema(example = "{message: Trial period for 10 days applied.}"))})
+    public ResponseEntity<Map<String, String>> validatePromoCode(@RequestParam String promoCode) {
         return ResponseEntity.ok(userService.validatePromoCode(promoCode));
     }
 
@@ -96,8 +79,8 @@ public class UserController {
     @Operation(description = "${api.description.user.checkInviteKey}")
     @GetMapping("${api.endpoints.user.checkInviteKey}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
-            schema = @Schema(implementation = UserDetailsNewDto.class))})
-    public ResponseEntity<UserDetailsNewDto> checkInviteLink(@RequestParam String key) {
+            schema = @Schema(implementation = UserListingDto.class))})
+    public ResponseEntity<UserListingDto> checkInviteLink(@RequestParam String key) {
         return ResponseEntity.ok(userService.checkInviteLink(key));
     }
 
@@ -109,16 +92,6 @@ public class UserController {
     @PutMapping("${api.endpoints.user.acceptInvite}")
     public void acceptInvite(@Valid @RequestBody AcceptInviteDto acceptInviteDto) {
         userService.acceptInvite(acceptInviteDto);
-    }
-
-    @SwaggerOk
-    @SwaggerBadRequest
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.user.updateUser}")
-    @PutMapping("${api.endpoints.user.updateUser}")
-    public void updateUser(@Valid @RequestBody UpdateUserDto updateUserDto) {
-        userService.updateUserDetails(updateUserDto);
     }
 
     @SwaggerOk
@@ -169,5 +142,7 @@ public class UserController {
     public ResponseEntity<UserDetailsDto> getLoggedInUser() {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
     }
+
+    // TODO Add API to toggle mobile and email notification preference
 
 }

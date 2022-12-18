@@ -4,12 +4,12 @@ import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
+import ca.waaw.dto.userdtos.UpdateUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
-import ca.waaw.dto.userdtos.UserInfoForDropDown;
+import ca.waaw.dto.userdtos.UserListingDto;
 import ca.waaw.web.rest.service.MemberService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
-import java.util.Locale;
 
 @SuppressWarnings("unused")
 @RestController
@@ -42,7 +41,19 @@ public class MemberController {
     @Operation(description = "${api.description.member.sendInvite}")
     @PostMapping("${api.endpoints.member.sendInvite}")
     public void sendInvite(@Valid @RequestBody InviteUserDto inviteUserDto) {
-        memberService.inviteNewUsers(inviteUserDto);
+            memberService.inviteNewUsers(inviteUserDto);
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.member.resendInvite}")
+    @GetMapping("${api.endpoints.member.resendInvite}")
+    public void resendInvite(@RequestParam String userId) {
+        memberService.resendInvite(userId);
     }
 
     @SwaggerCreated
@@ -61,44 +72,22 @@ public class MemberController {
     @Operation(description = "${api.description.member.getAllMembers}")
     @GetMapping("${api.endpoints.member.getAllMembers}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = UserDetailsForAdminDto.class)))},
+            schema = @Schema(implementation = UserListingDto.class)))},
             description = "${api.swagger.schema-description.pagination}")
     public ResponseEntity<PaginationDto> getAllMembers(@PathVariable int pageNo, @PathVariable int pageSize,
-                                                       @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
                                                        @RequestParam(required = false) String searchKey,
-                                                       @Parameter(description = "${api.swagger.param-description.getUsersLocation}")
                                                        @RequestParam(required = false) String locationId,
-                                                       @Parameter(description = "${api.swagger.param-description.getUsersRole}")
-                                                       @RequestParam(required = false) String role) {
-        role = StringUtils.isNotEmpty(role) ? role.toUpperCase(Locale.ROOT) : null;
-        locationId = StringUtils.isNotEmpty(locationId) ? locationId : null;
-        return ResponseEntity.ok(memberService.getAllUsers(pageNo, pageSize, searchKey, locationId, role));
-    }
-
-    @SwaggerOk
-    @SwaggerNotFound
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.member.resendInvite}")
-    @GetMapping("${api.endpoints.member.resendInvite}")
-    public void resendInvite(@RequestParam String userId) {
-        memberService.resendInvite(userId);
-    }
-
-    @SwaggerBadRequest
-    @SwaggerAuthenticated
-    @Operation(description = "${api.description.member.listAllMembers}")
-    @GetMapping("${api.endpoints.member.listAllMembers}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = UserInfoForDropDown.class)))},
-            description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> listAllMembers(@PathVariable int pageNo, @PathVariable int pageSize,
-                                                        @Parameter(description = "${api.swagger.param-description.getUsersSearchKey}")
-                                                        @RequestParam(required = false) String searchKey,
-                                                        @RequestParam String locationRoleId) {
-        return ResponseEntity.ok(memberService.listAllUsers(pageNo, pageSize, searchKey, locationRoleId));
+                                                       @RequestParam(required = false) String roleId,
+                                                       @RequestParam(required = false) String type,
+                                                       @RequestParam(required = false) String status) {
+        // TODO Add sort
+        if (StringUtils.isEmpty(searchKey)) searchKey = null;
+        if (StringUtils.isEmpty(locationId)) locationId = null;
+        if (StringUtils.isEmpty(roleId)) roleId = null;
+        if (StringUtils.isEmpty(type)) type = null;
+        if (StringUtils.isEmpty(status)) status = null;
+        return ResponseEntity.ok(memberService.getAllUsers(pageNo, pageSize, searchKey, locationId, roleId,
+                type, status));
     }
 
     @SwaggerBadRequest
@@ -122,18 +111,15 @@ public class MemberController {
         memberService.addEmployeePreferences(employeePreferencesDto);
     }
 
+    @SwaggerOk
     @SwaggerBadRequest
+    @SwaggerUnauthorized
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.member.getEmployeePreferences}")
-    @GetMapping("${api.endpoints.member.getEmployeePreferences}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = EmployeePreferencesDto.class)))},
-            description = "${api.swagger.schema-description.getEmployeePreferences}")
-    public ResponseEntity<Object> getEmployeePreferences(@Parameter(description = "${api.swagger.param-description.getEmployeePreferences}")
-                                                         @RequestParam boolean getFullHistory,
-                                                         @Parameter(description = "${api.swagger.param-description.getPreferencesUserId}")
-                                                         @RequestParam(required = false) String userId) {
-        return ResponseEntity.ok(memberService.getEmployeePreferences(userId, getFullHistory));
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.member.updateMember}")
+    @PostMapping("${api.endpoints.member.updateMember}")
+    public void updateMemberDetails(@Valid @RequestBody UpdateUserDto memberDto) {
+        memberService.updateMember(memberDto);
     }
 
 }

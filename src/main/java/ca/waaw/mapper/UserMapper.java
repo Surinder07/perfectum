@@ -7,7 +7,6 @@ import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.*;
-import ca.waaw.web.rest.utils.CommonUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
@@ -20,10 +19,9 @@ public class UserMapper {
     public static UserDetailsDto entityToDto(UserOrganization source) {
         UserDetailsDto target = new UserDetailsDto();
         BeanUtils.copyProperties(source, target);
-        target.setMobile(CommonUtils.combinePhoneNumber(source.getCountryCode(), source.getMobile()));
-        target.setRole(source.getAuthority());
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
+        target.setOrganizationTimezone(source.getOrganization().getTimezone());
         if (source.getAuthority().equals(Authority.ADMIN)) {
             OrganizationPreferences preferences = new OrganizationPreferences();
             preferences.setDaysBeforeShiftsAssigned(source.getOrganization().getDaysBeforeShiftsAssigned());
@@ -37,13 +35,11 @@ public class UserMapper {
 
     /**
      * @param source User and organization details
-     * @return {@link UserDetailsNewDto} to be sent in response for user details
+     * @return {@link UserListingDto} to be sent in response for user details
      */
-    public static UserDetailsNewDto entityToDetailsDto(User source) {
-        UserDetailsNewDto target = new UserDetailsNewDto();
+    public static UserListingDto entityToDetailsDto(User source) {
+        UserListingDto target = new UserListingDto();
         BeanUtils.copyProperties(source, target);
-        target.setMobile(CommonUtils.combinePhoneNumber(source.getCountryCode(), source.getMobile()));
-        target.setRole(source.getAuthority());
         return target;
     }
 
@@ -65,24 +61,24 @@ public class UserMapper {
     }
 
     /**
-     * @param source Complete registration dto
-     * @param target User entity to be updated
-     * @return Updates the {@link User} object with new provided details and returns a {@link Organization} object
+     * @param source     Complete registration dto
+     * @param orgTarget  Organization object to be updated if any
+     * @param userTarget User entity to be updated
      */
-    public static Organization completeRegistrationToEntity(CompleteRegistrationDto source, User target) {
-        Organization organization = new Organization();
-        organization.setTimezone(source.getTimezone());
-        organization.setName(source.getOrganizationName());
-        if (StringUtils.isNotEmpty(source.getFirstDayOfWeek()))
-            organization.setFirstDayOfWeek(DaysOfWeek.valueOf(source.getFirstDayOfWeek()));
-        target.setOrganizationId(organization.getId());
-        target.setFirstName(source.getFirstName());
-        target.setLastName(source.getLastName());
-        target.setUsername(source.getUsername());
-        target.setLangKey(source.getLangKey());
-        target.setCountryCode(source.getCountryCode());
-        target.setMobile(String.valueOf(source.getMobile()));
-        return organization;
+    public static void completeRegistrationToEntity(CompleteRegistrationDto source, Organization orgTarget, User userTarget) {
+        if (orgTarget != null) {
+            orgTarget.setTimezone(source.getTimezone());
+            orgTarget.setName(source.getOrganizationName());
+            if (StringUtils.isNotEmpty(source.getFirstDayOfWeek()))
+                orgTarget.setFirstDayOfWeek(DaysOfWeek.valueOf(source.getFirstDayOfWeek()));
+            userTarget.setOrganizationId(orgTarget.getId());
+        }
+        userTarget.setFirstName(source.getFirstName());
+        userTarget.setLastName(source.getLastName());
+        userTarget.setUsername(source.getUsername());
+        userTarget.setLangKey(source.getLangKey());
+        userTarget.setCountryCode(source.getCountryCode());
+        userTarget.setMobile(String.valueOf(source.getMobile()));
     }
 
     /**
@@ -92,13 +88,13 @@ public class UserMapper {
      * @param target {@link User} entity fetched from database to be updated
      */
     public static void updateUserDtoToEntity(UpdateUserDto source, User target) {
-        if (StringUtils.isNotEmpty(source.getFirstName())) target.setFirstName(source.getFirstName());
-        if (StringUtils.isNotEmpty(source.getLastName())) target.setLastName(source.getLastName());
-        if (StringUtils.isNotEmpty(source.getCountryCode())) target.setCountryCode(source.getCountryCode());
-        if (StringUtils.isNotEmpty(source.getMobile())) target.setMobile(source.getMobile());
-        if (StringUtils.isNotEmpty(source.getLangKey())) target.setLangKey(source.getLangKey());
-        if (source.getIsEmailNotifications() != null) target.setEmailNotifications(source.getIsEmailNotifications());
-        if (source.getIsSmsNotifications() != null) target.setSmsNotifications(source.getIsSmsNotifications());
+        if (source.getMobile() != null) {
+            target.setMobile(String.valueOf(source.getMobile()));
+            target.setCountry(source.getCountry());
+            target.setCountryCode(source.getCountryCode());
+        }
+        if (StringUtils.isNotEmpty(source.getLocationId())) target.setLocationId(source.getLocationId());
+        if (StringUtils.isNotEmpty(source.getRoleId())) target.setLocationRoleId(source.getRoleId());
         if (source.getIsFullTime() != null) target.setFullTime(source.getIsFullTime());
     }
 
@@ -114,9 +110,8 @@ public class UserMapper {
         target.setEmployeeId(source.getEmployeeId());
         target.setLocationId(source.getLocationId());
         target.setLocationRoleId(source.getLocationRoleId());
-        if (source.getIsFullTime() != null) target.setFullTime(source.getIsFullTime());
-        else target.setFullTime(!source.getRole().equals(Authority.CONTRACTOR.toString()));
-        target.setAuthority(Authority.valueOf(source.getRole()));
+        target.setFullTime(source.isFullTime());
+        target.setAuthority(source.getAuthority());
         target.setAccountStatus(AccountStatus.INVITED);
         return target;
     }
@@ -125,28 +120,29 @@ public class UserMapper {
      * @param source details for user to be mapped
      * @return User details for Admin
      */
-    public static UserDetailsForAdminDto entityToUserDetailsForAdmin(UserOrganization source) {
-        UserDetailsForAdminDto target = new UserDetailsForAdminDto();
+    public static UserListingDto entityToUserDetailsForListing(UserOrganization source) {
+        UserListingDto target = new UserListingDto();
         BeanUtils.copyProperties(source, target);
-        target.setRole(source.getAuthority());
-        target.setMobile(CommonUtils.combinePhoneNumber(source.getCountryCode(), source.getMobile()));
-        target.setLocationId(source.getLocation() == null ? null : source.getLocation().getId());
-        target.setLocationName(source.getLocation() == null ? null : source.getLocation().getName());
-        target.setLocationRoleId(source.getLocationRole() == null ? null : source.getLocationRole().getId());
-        target.setLocationRoleName(source.getLocationRole() == null ? null : source.getLocationRole().getName());
+        target.setLocation(source.getLocation() == null ? "-" : source.getLocation().getName());
+        target.setRole(source.getLocationRole() == null ? "-" : source.getLocationRole().getName());
+        target.setLastLogin(source.getLastLogin().toString().split("\\.")[0].replace("T", " "));
+        target.setFullTime(source.isFullTime());
+        target.setStatus(source.getAccountStatus());
         return target;
     }
 
     /**
-     * @param source details for user to be mapped
-     * @return minimal details about user for a drop-down
+     * @param userSource        user entity
+     * @param preferencesSource employee preference
+     * @return data to be shown to admin for an employee
      */
-    public static UserInfoForDropDown entityToUserInfoForDropDown(User source) {
-        UserInfoForDropDown target = new UserInfoForDropDown();
-        target.setId(source.getId());
-        target.setFullName(CommonUtils.combineFirstAndLastName(source.getFirstName(), source.getLastName()));
-        target.setEmail(source.getEmail());
-        target.setAuthority(source.getAuthority());
+    public static UserDetailsForAdminDto entityToUserDetailsForAdmin(UserOrganization userSource, EmployeePreferences preferencesSource) {
+        UserDetailsForAdminDto target = new UserDetailsForAdminDto();
+        BeanUtils.copyProperties(userSource, target);
+        target.setLocationName(userSource.getLocation().getName());
+        target.setLocationRoleName(userSource.getLocationRole().getName());
+        target.setFullTime(userSource.isFullTime());
+        target.setEmployeePreferences(employeePreferenceToDto(preferencesSource));
         return target;
     }
 

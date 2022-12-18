@@ -9,5 +9,5 @@ public enum AccountStatus {
     TRIAL_EXPIRED,
     PAID_AND_ACTIVE,
     PAYMENT_PENDING,
-    SUSPENDED
+    DISABLED
 }

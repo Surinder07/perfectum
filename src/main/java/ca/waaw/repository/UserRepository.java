@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
 
-    @Query(value = "SELECT name from shifts_batch WHERE name IS NOT NULL ORDER BY created_date DESC LIMIT 1",
+    @Query(value = "SELECT waaw_custom_id from user WHERE waaw_custom_id IS NOT NULL ORDER BY created_date DESC LIMIT 1",
             nativeQuery = true)
     Optional<String> getLastUsedCustomId();
 
@@ -37,11 +37,5 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<User> findAllByEmailInAndDeleteFlag(List<String> email, boolean deleteFlag);
 
     List<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag);
-
-    List<User> findAllByIdInAndDeleteFlag(List<String> id, boolean deleteFlag);
-
-    Page<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag, Pageable pageable);
-
-    Page<User> searchUsersWithLocationRoleIdAndDeleteFlag(String searchKey, String locationRoleId, boolean deleteFlag, Pageable pageable);
 
 }

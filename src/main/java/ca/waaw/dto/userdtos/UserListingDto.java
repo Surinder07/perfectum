@@ -1,33 +1,33 @@
 package ca.waaw.dto.userdtos;
 
-import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.AccountStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BaseUserDetails {
+public class UserListingDto {
 
-    private String employeeId;
+    private String id;
 
     private String waawId;
 
     private String email;
 
-    private String username;
-
     private String firstName;
 
     private String lastName;
 
-    private String mobile;
+    private String location;
 
-    private Instant lastLogin;
+    private String role;
 
-    private Authority role;
+    private String lastLogin;
+
+    private boolean isFullTime;
+
+    private AccountStatus status;
 
 }

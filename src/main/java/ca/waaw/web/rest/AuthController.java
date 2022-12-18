@@ -85,7 +85,6 @@ public class AuthController {
                     return user;
                 })
                 .map(User::getAccountStatus).orElse(null);
-
         final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe(), accountStatus);
         assert accountStatus != null;
         if(accountStatus.equals(AccountStatus.TRIAL_PERIOD)) {

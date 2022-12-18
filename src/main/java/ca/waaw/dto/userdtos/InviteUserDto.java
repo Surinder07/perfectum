@@ -1,5 +1,6 @@
 package ca.waaw.dto.userdtos;
 
+import ca.waaw.enumration.Authority;
 import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.ValidateRegex;
@@ -15,13 +16,12 @@ import javax.validation.constraints.NotEmpty;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.ROLE_TO_LOCATION_AND_LOCATION_ROLE,
-        message = "location_id is required for manager/ both location_id and location_role_id is required for a employee / role has an invalid value")
+@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.LOCATION_ROLE_TO_USER_ROLE,
+        message = "Location is required")
 public class InviteUserDto {
 
-    @NotEmpty
-    @Schema(allowableValues = {"ADMIN", "MANAGER", "EMPLOYEE"})
-    private String role;
+    @Schema(hidden = true)
+    private Authority authority;
 
     @NotEmpty
     @ValidateRegex(type = RegexValidatorType.EMAIL, message = "Pass a valid email")
@@ -35,12 +35,11 @@ public class InviteUserDto {
 
     private String employeeId;
 
-    private Boolean isFullTime;
+    private boolean isFullTime;
 
-    @Schema(description = "Required if role is <b>EMPLOYEE</b> or <b>MANAGER</b>")
     private String locationId;
 
-    @Schema(description = "Required if role is <b>EMPLOYEE</b>")
+    @NotEmpty
     private String locationRoleId;
 
 }

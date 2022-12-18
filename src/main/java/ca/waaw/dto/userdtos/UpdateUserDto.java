@@ -1,30 +1,30 @@
 package ca.waaw.dto.userdtos;
 
-import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateUserDto {
 
-    @CapitalizeFirstLetter
-    private String firstName;
-
-    @CapitalizeFirstLetter
-    private String lastName;
+    private String id;
 
     private String countryCode;
 
-    private String mobile;
+    @Min(value = 1000000000L, message = "Mobile has to be 10 digits")
+    @Max(value = 9999999999L, message = "Mobile has to be 10 digits")
+    private Long mobile;
 
-    private String langKey;
+    private String country;
 
-    private Boolean isEmailNotifications;
+    private String locationId;
 
-    private Boolean isSmsNotifications;
+    private String roleId;
 
     private Boolean isFullTime;
 

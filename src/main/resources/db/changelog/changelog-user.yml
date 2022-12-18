@@ -40,6 +40,9 @@ databaseChangeLog:
                   name: last_name
                   type: VARCHAR(50)
               - column:
+                  name: country
+                  type: VARCHAR(5)
+              - column:
                   name: country_code
                   type: VARCHAR(5)
               - column:
@@ -121,13 +124,6 @@ databaseChangeLog:
                   name: last_modified_date
                   type: TIMESTAMP
                   defaultValueDate: now()
-        - createIndex:
-            indexName: idx_username
-            tableName: user
-            unique: true
-            column:
-              name: username
-              type: VARCHAR(100)
         - createIndex:
             indexName: idx_user_email
             tableName: user

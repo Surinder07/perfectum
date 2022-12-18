@@ -39,10 +39,6 @@ databaseChangeLog:
                   name: date
                   type: SMALLINT
               - column:
-                  name: status
-                  type: VARCHAR(50)
-                  defaultValue: PENDING
-              - column:
                   name: del_flg
                   type: BOOLEAN
                   defaultValue: false
