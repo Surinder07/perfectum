@@ -74,10 +74,12 @@ public class JWTFilter extends OncePerRequestFilter {
                 return ErrorCodes.WE_004;
             case PAYMENT_INFO_PENDING:
                 if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.completeRegistration"))))
-                return ErrorCodes.WE_002;
+                    return ErrorCodes.WE_002;
+                break;
             case PROFILE_PENDING:
                 if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.completeRegistration"))))
                     return ErrorCodes.WE_001;
+                break;
             case TRIAL_EXPIRED:
                 if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.getUserDetails")))) {
                     return ErrorCodes.WE_003;

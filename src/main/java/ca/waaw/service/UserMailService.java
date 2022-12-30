@@ -20,15 +20,16 @@ public class UserMailService {
 
     private final MailService mailService;
 
-    public void sendActivationEmail(User userMessage, String activationLink) {
+    public void sendVerificationEmail(User userMessage, String activationLink) {
         MailDto messageDto = MailDto.builder()
+                .name("User")
                 .email(userMessage.getEmail())
                 .actionUrl(activationLink)
                 .langKey(userMessage.getLangKey())
                 .message(userMessage)
                 .build();
-        log.debug("Sending activation email to '{}'", userMessage.getEmail());
-        mailService.sendEmailFromTemplate(messageDto, "mail/activationEmail", "email.activation.title");
+        log.debug("Sending verification email to '{}'", userMessage.getEmail());
+        mailService.sendEmailFromTemplate(messageDto, "mail/verifyEmail", "email.verification.title");
     }
 
     public void sendInvitationEmail(List<InviteUserMailDto> mailDtoList, String organizationName) {

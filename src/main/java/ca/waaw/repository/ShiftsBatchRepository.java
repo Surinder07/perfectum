@@ -13,9 +13,9 @@ public interface ShiftsBatchRepository extends JpaRepository<ShiftsBatch, String
 
     Optional<ShiftsBatch> findOneByIdAndDeleteFlag(String batchId, boolean deleteFlag);
 
-    @Query(value = "SELECT name from shifts_batch WHERE name IS NOT NULL AND organization_id = ? " +
+    @Query(value = "SELECT waaw_id from shifts_batch WHERE waaw_id IS NOT NULL AND organization_id = ? " +
             "ORDER BY created_date DESC LIMIT 1", nativeQuery = true)
-    Optional<String> getLastUsedName(String organizationId);
+    Optional<String> getLastUsedId(String organizationId);
 
     List<ShiftsBatch> findAllByOrganizationIdAndDeleteFlag(String organizationId, boolean deleteFlag);
 

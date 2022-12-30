@@ -41,7 +41,7 @@ public class MemberController {
     @Operation(description = "${api.description.member.sendInvite}")
     @PostMapping("${api.endpoints.member.sendInvite}")
     public void sendInvite(@Valid @RequestBody InviteUserDto inviteUserDto) {
-            memberService.inviteNewUsers(inviteUserDto);
+        memberService.inviteNewUsers(inviteUserDto);
     }
 
     @SwaggerOk
@@ -86,8 +86,13 @@ public class MemberController {
         if (StringUtils.isEmpty(roleId)) roleId = null;
         if (StringUtils.isEmpty(type)) type = null;
         if (StringUtils.isEmpty(status)) status = null;
-        return ResponseEntity.ok(memberService.getAllUsers(pageNo, pageSize, searchKey, locationId, roleId,
-                type, status));
+        try {
+            return ResponseEntity.ok(memberService.getAllUsers(pageNo, pageSize, searchKey, locationId, roleId,
+                    type, status));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerBadRequest
@@ -117,9 +122,31 @@ public class MemberController {
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.member.updateMember}")
-    @PostMapping("${api.endpoints.member.updateMember}")
+    @PutMapping("${api.endpoints.member.updateMember}")
     public void updateMemberDetails(@Valid @RequestBody UpdateUserDto memberDto) {
         memberService.updateMember(memberDto);
+    }
+
+    @SwaggerOk
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.member.deleteMember}")
+    @DeleteMapping("${api.endpoints.member.deleteMember}")
+    public void deleteMember(@RequestParam String id) {
+        memberService.deleteMember(id);
+    }
+
+    @SwaggerOk
+    @SwaggerBadRequest
+    @SwaggerUnauthorized
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.member.toggleActiveMember}")
+    @PutMapping("${api.endpoints.member.toggleActiveMember}")
+    public void toggleActiveMember(@RequestParam String id) {
+        memberService.toggleActiveMember(id);
     }
 
 }

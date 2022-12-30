@@ -6,6 +6,7 @@ import ca.waaw.domain.User;
 import ca.waaw.domain.joined.LocationUsers;
 import ca.waaw.dto.locationandroledtos.*;
 import ca.waaw.web.rest.utils.CommonUtils;
+import org.springframework.beans.BeanUtils;
 
 public class LocationAndRoleMapper {
 
@@ -78,6 +79,18 @@ public class LocationAndRoleMapper {
         target.setAdmin(source.isAdminRights());
         target.setLocation(source.getLocation().getName());
         target.setCreatedBy(source.getCreatedByUser().getFullName());
+        return target;
+    }
+
+    /**
+     *
+     * @param source location role info to be updated
+     * @return Dto with preferences to be returned as API response
+     */
+    public static LocationRoleDto entityToMainDto(LocationRole source) {
+        LocationRoleDto target = new LocationRoleDto();
+        BeanUtils.copyProperties(source, target);
+        target.setAdmin(source.isAdminRights());
         return target;
     }
 

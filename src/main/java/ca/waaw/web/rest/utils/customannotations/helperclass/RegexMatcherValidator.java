@@ -42,7 +42,7 @@ public class RegexMatcherValidator implements ConstraintValidator<ValidateRegex,
                         Pattern.matches(appRegexConfig.getEmail(), value);
             case DATE:
                 if (!Pattern.matches(appRegexConfig.getDate(), value)) return false;
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 try {
                     sdf.parse(value.toString());
                     return true;
@@ -60,6 +60,7 @@ public class RegexMatcherValidator implements ConstraintValidator<ValidateRegex,
                 } catch (Exception e) {
                     return false;
                 }
+                return true;
             case REPORT_FORMAT:
                 return String.valueOf(value).equalsIgnoreCase("csv") ||
                         String.valueOf(value).equalsIgnoreCase("xls");

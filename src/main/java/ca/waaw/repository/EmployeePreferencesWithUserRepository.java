@@ -9,9 +9,11 @@ import java.util.List;
 @Repository
 public interface EmployeePreferencesWithUserRepository extends JpaRepository<EmployeePreferencesWithUser, String> {
 
+    List<EmployeePreferencesWithUser> findAllByOrganizationIdAndIsExpiredAndDeleteFlag(String organizationId, boolean isExpired, boolean deleteFlag);
+
     List<EmployeePreferencesWithUser> findAllByLocationIdAndIsExpiredAndDeleteFlag(String locationId, boolean isExpired, boolean deleteFlag);
 
-    List<EmployeePreferencesWithUser> findAllByLocationRoleIdAndIsExpiredAndDeleteFlag(String locationRoleId, boolean isExpired, boolean deleteFlag);
+    List<EmployeePreferencesWithUser> findAllByLocationRoleIdInAndIsExpiredAndDeleteFlag(List<String> locationRoleIds, boolean isExpired, boolean deleteFlag);
 
     List<EmployeePreferencesWithUser> findAllByIsExpiredAndDeleteFlagAndUserIdIn(boolean isExpired, boolean deleteFlag, List<String> userIds);
 

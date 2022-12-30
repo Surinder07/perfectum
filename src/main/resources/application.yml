@@ -32,6 +32,8 @@ spring:
     port: 587
     properties:
       mail:
+        transport:
+          protocol: smtp
         smtp:
           auth: true
           connectiontimeout: 5000
@@ -98,17 +100,14 @@ application:
       # The number of characters must be between 5 and 20.
       username: ^[a-zA-Z0-9]([._-](?![._-])|[a-zA-Z0-9]){3,18}[a-zA-Z0-9]$
       email: ^[\w-\+]+(\.[\w]+)*@[\w-]+(\.[\w]+)*(\.[a-zA-Z]{2,})$
-      date: \d{4}\/\d{2}\/\d{2}
+      date: ^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$
   urls:
-    activate-account: /api/v1/unAuth/activateAccount?key=
-    reset-password: /resetPassword?key=
-    invite-user: /api/v1/unAuth/acceptInvitation?key=
-    registration: /register
-    login: /login
+    activate-account: /account/verify-email?key=
+    invite-user: /account/accept-invite?key=
   validity:
-    activation-link: 3
+    activation-link: 1
     password-reset: 1
-    user-invite: 2
+    user-invite: 1
   #Admin and support email info
   mail:
     twitter-url: https://twitter.com/waaw

@@ -15,6 +15,8 @@ public interface LocationRoleRepository extends JpaRepository<LocationRole, Stri
 
     Optional<LocationRole> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
 
+    List<LocationRole> findAllByDeleteFlagAndIdIn(boolean deleteFlag, List<String> id);
+
     @Query(value = "SELECT waaw_id from location_role WHERE waaw_id IS NOT NULL ORDER BY created_date DESC LIMIT 1", nativeQuery = true)
     Optional<String>getLastUsedWaawId();
 
@@ -22,7 +24,7 @@ public interface LocationRoleRepository extends JpaRepository<LocationRole, Stri
 
     Page<LocationRole> findAllByOrganizationIdAndDeleteFlag(String organizationId, boolean deleteFlag, Pageable pageable);
 
-    Page<LocationRole> findAllByLocationIdAndDeleteFlag(String locationId, boolean deleteFlag, Pageable pageable);
+    Page<LocationRole> findAllByLocationIdAndDeleteFlagAndAdminRights(String locationId, boolean deleteFlag, boolean adminRights, Pageable pageable);
 
     List<LocationRole> getListByNameAndLocation(List<String> name, List<String> locationId);
 

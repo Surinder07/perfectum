@@ -25,44 +25,44 @@ public class EmployeePreferencesWithUser {
     @Column(table = "employee_preferences", name = "monday_start_time")
     private String mondayStartTime;
 
-    @Column(table = "employee_preferences", name = "monday_working_hours")
-    private float mondayWorkingHours;
+    @Column(table = "employee_preferences", name = "monday_end_time")
+    private String mondayEndTime;
 
     @Column(table = "employee_preferences", name = "tuesday_start_time")
     private String tuesdayStartTime;
 
-    @Column(table = "employee_preferences", name = "tuesday_working_hours")
-    private float tuesdayWorkingHours;
+    @Column(table = "employee_preferences", name = "tuesday_end_time")
+    private String tuesdayEndTime;
 
     @Column(table = "employee_preferences", name = "wednesday_start_time")
     private String wednesdayStartTime;
 
-    @Column(table = "employee_preferences", name = "wednesday_working_hours")
-    private float wednesdayWorkingHours;
+    @Column(table = "employee_preferences", name = "wednesday_end_time")
+    private String wednesdayEndTime;
 
     @Column(table = "employee_preferences", name = "thursday_start_time")
     private String thursdayStartTime;
 
-    @Column(table = "employee_preferences", name = "thursday_working_hours")
-    private float thursdayWorkingHours;
+    @Column(table = "employee_preferences", name = "thursday_end_time")
+    private String thursdayEndTime;
 
     @Column(table = "employee_preferences", name = "friday_start_time")
     private String fridayStartTime;
 
-    @Column(table = "employee_preferences", name = "friday_working_hours")
-    private float fridayWorkingHours;
+    @Column(table = "employee_preferences", name = "friday_end_time")
+    private String fridayEndTime;
 
     @Column(table = "employee_preferences", name = "saturday_start_time")
     private String saturdayStartTime;
 
-    @Column(table = "employee_preferences", name = "saturday_working_hours")
-    private float saturdayWorkingHours;
+    @Column(table = "employee_preferences", name = "saturday_end_time")
+    private String saturdayEndTime;
 
     @Column(table = "employee_preferences", name = "sunday_start_time")
     private String sundayStartTime;
 
-    @Column(table = "employee_preferences", name = "sunday_working_hours")
-    private float sundayWorkingHours;
+    @Column(table = "employee_preferences", name = "sunday_end_time")
+    private String sundayEndTime;
 
     @Column(table = "employee_preferences", name = "is_expired")
     private boolean isExpired;

@@ -8,10 +8,7 @@ import ca.waaw.domain.PromotionCode;
 import ca.waaw.domain.User;
 import ca.waaw.domain.UserTokens;
 import ca.waaw.dto.userdtos.*;
-import ca.waaw.enumration.AccountStatus;
-import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.PromoCodeType;
-import ca.waaw.enumration.UserToken;
+import ca.waaw.enumration.*;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.*;
 import ca.waaw.security.SecurityUtils;
@@ -84,7 +81,7 @@ public class UserService {
         log.info("New activation token generated: {}", token);
         String activationUrl = appUrlConfig.getActivateAccountUrl(token.getToken());
         // @todo email and change activation url
-        userMailService.sendActivationEmail(user, activationUrl);
+        userMailService.sendVerificationEmail(user, activationUrl);
     }
 
     /**
@@ -97,7 +94,7 @@ public class UserService {
         userTokenRepository
                 .findOneByTokenAndTokenTypeAndIsExpired(verificationKey, UserToken.ACTIVATION, false)
                 .flatMap(userTokens -> {
-                    if (userTokens.getCreatedDate().isAfter(Instant.now()
+                    if (userTokens.getCreatedDate().isBefore(Instant.now()
                             .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
                         userTokens.setExpired(true);
                         userTokenRepository.save(userTokens);
@@ -132,8 +129,6 @@ public class UserService {
                                 if (StringUtils.isEmpty(completeRegistrationDto.getOrganizationName())) {
                                     throw new BadRequestException("Organization Name is required.", "Organization.name");
                                 }
-                                Organization organization = new Organization();
-                                UserMapper.completeRegistrationToEntity(completeRegistrationDto, organization, user);
                                 String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
                                         .orElse(appCustomIdConfig.getOrganizationPrefix() + "0000000000");
                                 int trialDays = 0;
@@ -143,17 +138,24 @@ public class UserService {
                                             .map(PromotionCode::getPromotionValue)
                                             .orElseThrow(() -> new EntityNotFoundException("promo code", completeRegistrationDto.getPromoCode()));
                                 }
+                                Organization organization = new Organization();
+                                organization.setName(completeRegistrationDto.getOrganizationName());
+                                organization.setTimezone(completeRegistrationDto.getTimezone());
+                                if (StringUtils.isNotEmpty(completeRegistrationDto.getFirstDayOfWeek())) {
+                                    organization.setFirstDayOfWeek(DaysOfWeek.valueOf(completeRegistrationDto.getFirstDayOfWeek()));
+                                }
                                 organization.setTrialDays(trialDays);
+                                organization.setCreatedBy(user.getId());
                                 organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
                                 organizationRepository.save(organization);
-                            } else {
-                                UserMapper.completeRegistrationToEntity(completeRegistrationDto, null, user);
+                                user.setOrganizationId(organization.getId());
                             }
+                            UserMapper.completeRegistrationToEntity(completeRegistrationDto, user);
                             return user;
                         })
                         .map(userRepository::save)
                 )
-                .orElseThrow(UnauthorizedException::new);
+                .orElseThrow(AuthenticationException::new);
     }
 
     /**

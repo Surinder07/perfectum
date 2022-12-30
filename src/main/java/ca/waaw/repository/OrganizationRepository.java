@@ -19,7 +19,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
             "WHERE id = ?2", nativeQuery = true)
     int getShiftBatchPrefixByOrganization(String organizationName, String organizationId);
 
-    @Query(value = "SELECT name from shifts_batch WHERE name IS NOT NULL ORDER BY created_date DESC LIMIT 1",
+    @Query(value = "SELECT waaw_custom_id from organization WHERE waaw_custom_id IS NOT NULL ORDER BY created_date DESC LIMIT 1",
             nativeQuery = true)
     Optional<String> getLastUsedCustomId();
 

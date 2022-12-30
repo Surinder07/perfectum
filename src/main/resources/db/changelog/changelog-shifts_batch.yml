@@ -18,19 +18,19 @@ databaseChangeLog:
                     nullable: false
                     primaryKey: true
               - column:
-                  name: name
+                  name: waaw_id
                   type: VARCHAR(100)
                   constraints:
                     unique: true
-                    uniqueConstraintName: ux_batch_name
+                    uniqueConstraintName: ux_batch_waaw_id
+              - column:
+                  name: name
+                  type: VARCHAR(50)
               - column:
                   name: organization_id
                   type: VARCHAR(100)
               - column:
                   name: location_id
-                  type: VARCHAR(100)
-              - column:
-                  name: location_role_id
                   type: VARCHAR(100)
               - column:
                   name: start_date
@@ -42,6 +42,9 @@ databaseChangeLog:
                   type: TIMESTAMP
                   constraints:
                     nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(100)
               - column:
                   name: is_released
                   type: BOOLEAN
@@ -63,6 +66,13 @@ databaseChangeLog:
                   name: created_date
                   type: TIMESTAMP
                   defaultValueDate: now()
+              - column:
+                  name: last_modified_by
+                  type: VARCHAR(100)
+              - column:
+                  name: last_modified_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
         - addForeignKeyConstraint:
             baseTableName: shifts_batch
             baseColumnNames: organization_id
@@ -71,20 +81,14 @@ databaseChangeLog:
             referencedTableName: organization
         - addForeignKeyConstraint:
             baseTableName: shifts_batch
-            baseColumnNames: location_role_id
-            constraintName: fk_shifts_batch_location_role_id
-            referencedColumnNames: uuid
-            referencedTableName: location_role
-        - addForeignKeyConstraint:
-            baseTableName: shifts_batch
             baseColumnNames: location_id
             constraintName: fk_shifts_batch_location_id
             referencedColumnNames: uuid
             referencedTableName: location
         - createIndex:
-            indexName: idx_batch_name
+            indexName: idx_batch_waaw_id
             tableName: shifts_batch
             unique: true
             column:
-              name: name
+              name: waaw_id
               type: VARCHAR(100)

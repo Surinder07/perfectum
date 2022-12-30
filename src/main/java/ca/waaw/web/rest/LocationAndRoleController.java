@@ -2,6 +2,7 @@ package ca.waaw.web.rest;
 
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.locationandroledtos.LocationDto;
+import ca.waaw.dto.locationandroledtos.LocationRoleDetailedDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleDto;
 import ca.waaw.dto.locationandroledtos.UpdateLocationRoleDto;
 import ca.waaw.web.rest.service.LocationAndRoleService;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.actuate.trace.http.HttpTrace;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -101,6 +103,17 @@ public class LocationAndRoleController {
             implementation = PaginationDto.class))}, description = "${api.swagger.schema-description.pagination}")
     public ResponseEntity<PaginationDto> getLocationRole(@PathVariable int pageNo, @PathVariable int pageSize) {
         return ResponseEntity.ok(locationAndRoleService.getLocationRoles(pageNo, pageSize));
+    }
+
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.location-and-role.getLocationRoleById}")
+    @GetMapping("${api.endpoints.location-and-role.getLocationRoleById}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
+            implementation = LocationRoleDto.class))})
+    public ResponseEntity<LocationRoleDto> getLocationRoleById(@RequestParam String id) {
+        return ResponseEntity.ok(locationAndRoleService.getLocationRoleById(id));
     }
 
     @SwaggerOk

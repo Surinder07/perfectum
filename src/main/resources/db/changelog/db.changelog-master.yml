@@ -19,16 +19,14 @@ databaseChangeLog:
   - include:
       file: db/changelog/changelog-shifts.yml
   - include:
+      file: db/changelog/changelog-shifts_batch_mapping.yml
+  - include:
       file: db/changelog/changelog-organization_holidays.yml
   - include:
       file: db/changelog/changelog-employee_preference.yml
   - include:
       file: db/changelog/changelog-promotion_codes.yml
   - include:
-      file: db/changelog/changelog-shifts_batch_user_mapping.yml
-  - include:
       file: db/changelog/changelog-user_tokens.yml
-  - include:
-      file: db/changelog/changelog-time_offs.yml
   - include:
       file: db/changelog/changelog-time_sheets.yml

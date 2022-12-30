@@ -12,8 +12,8 @@ import java.util.UUID;
 @Entity
 @ToString
 @EqualsAndHashCode
-@Table(name = "shifts_batch_user_mapping")
-public class ShiftBatchUserMapping implements Serializable {
+@Table(name = "shifts_batch_mapping")
+public class ShiftBatchMapping implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -26,5 +26,8 @@ public class ShiftBatchUserMapping implements Serializable {
 
     @Column(name = "user_id")
     private String userId;
+
+    @Column(name = "location_role_id")
+    private String locationRoleId;
 
 }

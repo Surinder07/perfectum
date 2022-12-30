@@ -21,13 +21,19 @@ import java.time.Instant;
 })
 public class Timesheet extends AbstractEntity {
 
+    @Column
     private Instant start;
 
+    @Column
     private Instant end;
 
     @Column(name = "user_id")
     private String userId;
 
+    @Column
     private TimeSheetType type;
+
+    @Column
+    private String comment;
 
 }

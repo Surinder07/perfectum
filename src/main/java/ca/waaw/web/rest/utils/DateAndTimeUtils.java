@@ -26,8 +26,8 @@ public class DateAndTimeUtils {
      * @return Instant object for the date in given timezone
      */
     public static Instant getDateInstant(String date, String time, String timezone) {
-        DateTimeFormatter formatter = time.length() == 5 ? DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm") :
-                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        DateTimeFormatter formatter = time.length() == 5 ? DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm") :
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(String.format("%s %s", date, time), formatter);
         return dateTime.atZone(ZoneId.of(timezone)).toInstant();
     }
@@ -100,7 +100,7 @@ public class DateAndTimeUtils {
      * @return start and end time
      */
     public static Instant[] getStartAndEndTimeForInstant(String date, String timezone) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         Instant start = LocalDateTime.parse(String.format("%s %s", date, "00:00:00"), formatter)
                 .atZone(ZoneId.of(timezone)).toInstant();
         Instant end = LocalDateTime.parse(String.format("%s %s", date, "23:59:59"), formatter)
@@ -115,7 +115,7 @@ public class DateAndTimeUtils {
      * @return start and end time
      */
     public static Instant[] getStartAndEndTimeForInstant(String startDate, String endDate, String timezone) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         Instant start = LocalDateTime.parse(String.format("%s %s", startDate, "00:00:00"), formatter)
                 .atZone(ZoneId.of(timezone)).toInstant();
         Instant end = LocalDateTime.parse(String.format("%s %s", endDate, "23:59:59"), formatter)
@@ -174,7 +174,7 @@ public class DateAndTimeUtils {
         } else if (timeOfDay.equalsIgnoreCase("end")) {
             time = "23:59:59";
         } else throw new Exception("Invalid timeOfDay");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(String.format("%s %s", date, time), formatter);
         return dateTime.atZone(ZoneId.of(timezone)).toInstant();
     }

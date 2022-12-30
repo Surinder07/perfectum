@@ -56,7 +56,12 @@ public class UserController {
     @Operation(description = "${api.description.user.completeRegistration}")
     @PutMapping("${api.endpoints.user.completeRegistration}")
     public void completeRegistration(@Valid @RequestBody CompleteRegistrationDto registrationDto) {
-        userService.completeRegistration(registrationDto);
+        try {
+            userService.completeRegistration(registrationDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk

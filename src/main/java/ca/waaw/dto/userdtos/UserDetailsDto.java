@@ -37,6 +37,8 @@ public class UserDetailsDto {
 
     private String organizationTimezone;
 
+    private String role;
+
     private OrganizationPreferences organizationPreferences;
 
     private String langKey;
@@ -44,5 +46,7 @@ public class UserDetailsDto {
     private Boolean isEmailNotifications;
 
     private Boolean isSmsNotifications;
+
+    private String status;
 
 }

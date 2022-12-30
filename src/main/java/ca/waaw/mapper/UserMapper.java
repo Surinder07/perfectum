@@ -22,6 +22,8 @@ public class UserMapper {
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
         target.setOrganizationTimezone(source.getOrganization().getTimezone());
+        target.setRole(source.getAuthority().toString());
+        target.setStatus(source.getAccountStatus().toString());
         if (source.getAuthority().equals(Authority.ADMIN)) {
             OrganizationPreferences preferences = new OrganizationPreferences();
             preferences.setDaysBeforeShiftsAssigned(source.getOrganization().getDaysBeforeShiftsAssigned());
@@ -62,23 +64,16 @@ public class UserMapper {
 
     /**
      * @param source     Complete registration dto
-     * @param orgTarget  Organization object to be updated if any
      * @param userTarget User entity to be updated
      */
-    public static void completeRegistrationToEntity(CompleteRegistrationDto source, Organization orgTarget, User userTarget) {
-        if (orgTarget != null) {
-            orgTarget.setTimezone(source.getTimezone());
-            orgTarget.setName(source.getOrganizationName());
-            if (StringUtils.isNotEmpty(source.getFirstDayOfWeek()))
-                orgTarget.setFirstDayOfWeek(DaysOfWeek.valueOf(source.getFirstDayOfWeek()));
-            userTarget.setOrganizationId(orgTarget.getId());
-        }
+    public static void completeRegistrationToEntity(CompleteRegistrationDto source, User userTarget) {
         userTarget.setFirstName(source.getFirstName());
         userTarget.setLastName(source.getLastName());
         userTarget.setUsername(source.getUsername());
         userTarget.setLangKey(source.getLangKey());
         userTarget.setCountryCode(source.getCountryCode());
         userTarget.setMobile(String.valueOf(source.getMobile()));
+        userTarget.setAccountStatus(AccountStatus.PAYMENT_INFO_PENDING);
     }
 
     /**
@@ -123,9 +118,11 @@ public class UserMapper {
     public static UserListingDto entityToUserDetailsForListing(UserOrganization source) {
         UserListingDto target = new UserListingDto();
         BeanUtils.copyProperties(source, target);
+        target.setFullName(source.getFullName());
         target.setLocation(source.getLocation() == null ? "-" : source.getLocation().getName());
         target.setRole(source.getLocationRole() == null ? "-" : source.getLocationRole().getName());
-        target.setLastLogin(source.getLastLogin().toString().split("\\.")[0].replace("T", " "));
+        target.setLastLogin(source.getLastLogin() != null ?
+                source.getLastLogin().toString().split("\\.")[0].replace("T", " ").replace("Z", "") : "-");
         target.setFullTime(source.isFullTime());
         target.setStatus(source.getAccountStatus());
         return target;

@@ -21,6 +21,9 @@ public class Shifts extends AbstractEntity {
     @Column(name = "user_id")
     private String userId;
 
+    @Column(name = "batch_id")
+    private String batchId;
+
     private Instant start;
 
     private Instant end;
@@ -35,15 +38,6 @@ public class Shifts extends AbstractEntity {
 
     @Column(name = "location_role_id")
     private String locationRoleId;
-
-    @Column(name = "assign_to_first_claim")
-    private boolean assignToFirstClaim = false;
-
-    @Column(name = "is_conflict")
-    private boolean isConflict;
-
-    @Column(name = "conflict_reason")
-    private String conflictReason;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "shift_type")

@@ -36,6 +36,7 @@ springdoc:
 application:
   create-dummy-data-on-startup: true
   urls:
+#    hosted-ui: https://staging.waaw.ca
     hosted-ui: http://localhost:3000
     hosted-server: http://localhost:8080
   mail:

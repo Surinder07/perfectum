@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -35,7 +34,7 @@ public class SuperUserService {
         promotionCodeRepository.findOneByCodeAndDeleteFlag(promotionCodeDto.getCode(), false)
                 .ifPresent(code -> {
                     log.debug("Promo code {} already exists", code);
-                    throw new EntityAlreadyExistsException("promo code", code.getCode());
+                    throw new EntityAlreadyExistsException("promo code", "value", code.getCode());
                 });
         PromotionCode promotionCode = new PromotionCode();
         promotionCode.setType(PromoCodeType.valueOf(promotionCodeDto.getType()));

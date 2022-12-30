@@ -29,7 +29,7 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @AllArgsConstructor
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class WebSecurityConfigurer {
 
     private static final Logger log = LogManager.getLogger(WebSecurityConfigurer.class);
@@ -58,12 +58,14 @@ public class WebSecurityConfigurer {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
-                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
                 .antMatchers(appSecurityConfig.getUnAuthUrlPatterns()).permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .anyRequest().authenticated();
+                .anyRequest().authenticated()
+                .and().httpBasic()
+                .and()
+                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -79,9 +81,7 @@ public class WebSecurityConfigurer {
                 registry.addMapping("/**")
                         .allowCredentials(true)
                         .allowedOrigins(appSecurityConfig.getCorsAllowedOrigins())
-                        .allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-                        .allowedHeaders("*")
-                        .maxAge(3600);
+                        .allowedMethods("*");
             }
         };
     }

@@ -1,15 +1,15 @@
 databaseChangeLog:
   - changeSet:
-      id: create-table-shifts_batch_user_mapping
+      id: create-table-shifts_batch_mapping
       author: ${author1}
       preConditions:
         - onFail: MARK_RAN
           not:
             tableExists:
-              tableName: shifts_batch_user_mapping
+              tableName: shifts_batch_mapping
       changes:
         - createTable:
-            tableName: shifts_batch_user_mapping
+            tableName: shifts_batch_mapping
             columns:
               - column:
                   name: uuid
@@ -23,15 +23,24 @@ databaseChangeLog:
               - column:
                   name: user_id
                   type: VARCHAR(100)
+              - column:
+                  name: location_role_id
+                  type: VARCHAR(100)
         - addForeignKeyConstraint:
-            baseTableName: shifts_batch_user_mapping
+            baseTableName: shifts_batch_mapping
             baseColumnNames: batch_id
-            constraintName: fk_shifts_batch_user_mapping_batch_id
+            constraintName: fk_shifts_batch_mapping_batch_id
             referencedColumnNames: uuid
             referencedTableName: shifts_batch
         - addForeignKeyConstraint:
-            baseTableName: shifts_batch_user_mapping
+            baseTableName: shifts_batch_mapping
             baseColumnNames: user_id
-            constraintName: fk_shifts_batch_user_mapping_user_id
+            constraintName: fk_shifts_batch_mapping_user_id
             referencedColumnNames: uuid
             referencedTableName: user
+        - addForeignKeyConstraint:
+            baseTableName: shifts_batch_mapping
+            baseColumnNames: location_role_id
+            constraintName: fk_shifts_batch_mapping_location_role_id
+            referencedColumnNames: uuid
+            referencedTableName: location_role

@@ -1,6 +1,8 @@
 package ca.waaw.dto.shifts;
 
 import ca.waaw.dto.DateTimeDto;
+import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
+import ca.waaw.web.rest.utils.customannotations.ToUppercase;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,17 +11,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.SHIFT_USER_ID_TO_LOCATION_ROLE_ID,
-        message = "Pass userId to assign shift or locationRoleId for an unassigned shift")
+@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.NEW_SHIFT_REQUIRED_FIELD, message = "Pass all required values")
 public class NewShiftDto {
 
-    @Schema(description = "Required for assigned shifts")
-    private String userId;
+    @NotEmpty
+    @ToUppercase
+    @Schema(allowableValues = {"SINGLE", "BATCH"})
+    private String type;
+
+    @CapitalizeFirstLetter
+    private String shiftName;
 
     @Valid
     @NotNull
@@ -29,16 +37,15 @@ public class NewShiftDto {
     @NotNull
     private DateTimeDto end;
 
+    private List<String> userIds;
+
+    private String locationId;
+
+    private List<String> locationRoleIds;
+
     private String notes;
-
-    private String locationRoleId;
-
-    @Schema(description = "If userId is not passed <b>(i.e. Shift is unassigned), send true if anyone can claim the " +
-            "shift, and false if admin approval is required.</b>")
-    private boolean assignToFirstClaim;
 
     @Schema(description = "Send true if the shift is to be immediately released to employees")
     private boolean instantRelease;
-
 
 }

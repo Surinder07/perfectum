@@ -18,6 +18,8 @@ import java.util.List;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @SecondaryTable(name = "employee_preferences", pkJoinColumns = @PrimaryKeyJoinColumn(name = "user_id"))
+//@NamedQuery(name = "UserReports.getByOrganizationIdAndDates", query = "SELECT ur FROM UserReports ur " +
+//        "WHERE ur.organization.id = ?1 AND (ur.start BETWEEN ?2 AND ?3) AND dt.deleteFlag = FALSE")
 public class UserReports extends AbstractEntity {
 
     @Column(name = "first_name")

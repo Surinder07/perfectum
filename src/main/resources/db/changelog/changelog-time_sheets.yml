@@ -32,15 +32,14 @@ databaseChangeLog:
                   name: type
                   type: VARCHAR(50)
               - column:
+                  name: comment
+                  type: VARCHAR(5000)
+              - column:
                   name: del_flg
                   type: BOOLEAN
                   defaultValue: false
                   constraints:
                     nullable: false
-              - column:
-                  name: status
-                  type: VARCHAR(50)
-                  defaultValue: ACTIVE
               - column:
                   name: created_by
                   type: VARCHAR(100)

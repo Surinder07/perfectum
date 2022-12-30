@@ -8,7 +8,6 @@ import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.locationandroledtos.LocationDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleDto;
 import ca.waaw.dto.locationandroledtos.UpdateLocationRoleDto;
-import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
 import ca.waaw.mapper.LocationAndRoleMapper;
 import ca.waaw.repository.LocationRepository;
@@ -30,6 +29,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -113,8 +113,14 @@ public class LocationAndRoleService {
                         })
                         .map(locationRepository::save)
                         .map(Location::getId)
+                        .map(locationId -> {
+                            List<LocationRole> roles = locationRoleRepository.findAllByLocationIdAndDeleteFlag(locationId, true)
+                                    .stream().peek(role -> role.setDeleteFlag(true)).collect(Collectors.toList());
+                            locationRoleRepository.saveAll(roles);
+                            return locationId;
+                        })
                         .map(locationId -> userRepository.findAllByLocationIdAndDeleteFlag(locationId, false)
-                                .stream().peek(user -> user.setAccountStatus(AccountStatus.DISABLED)).collect(Collectors.toList())
+                                .stream().peek(user -> user.setDeleteFlag(true)).collect(Collectors.toList())
                         ).map(userRepository::saveAll)
                         .orElseThrow(() -> new EntityNotFoundException("location"))
                 );
@@ -142,7 +148,7 @@ public class LocationAndRoleService {
                         })
                         .map(locationRepository::save)
                         .map(location -> CommonUtils.logMessageAndReturnObject(location, "info", LocationAndRoleService.class,
-                                "Successfully updated the location({}) from {} to {}", location.getName(), location.isActive(), !location.isActive()))
+                                "Successfully updated the location({}) from {} to {}", location.getName(), !location.isActive(), location.isActive()))
                         .orElseThrow(() -> new EntityNotFoundException("location"))
                 );
     }
@@ -161,10 +167,31 @@ public class LocationAndRoleService {
                     if (user.getAuthority().equals(Authority.ADMIN))
                         return locationRoleRepository.findAllByOrganizationIdAndDeleteFlag(user.getOrganizationId(), false, getSortedByName);
                     else
-                        return locationRoleRepository.findAllByLocationIdAndDeleteFlag(user.getLocationId(), false, getSortedByName);
+                        return locationRoleRepository.findAllByLocationIdAndDeleteFlagAndAdminRights(user.getLocationId(), false, false, getSortedByName);
                 })
                 .orElseThrow(AuthenticationException::new);
         return CommonUtils.getPaginationResponse(locationPage, LocationAndRoleMapper::entityToDto);
+    }
+
+    /**
+     * @param id role id for which info is required
+     * @return Role Info
+     */
+    public LocationRoleDto getLocationRoleById(String id) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(loggedUser -> locationRoleRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(role -> {
+                            if (!role.getOrganizationId().equals(loggedUser.getOrganizationId()) ||
+                                    (loggedUser.getAuthority().equals(Authority.MANAGER) &&
+                                            !role.getLocationId().equals(loggedUser.getLocationId()))) {
+                                return null;
+                            }
+                            return LocationAndRoleMapper.entityToMainDto(role);
+                        })
+                )
+                .orElseThrow(() -> new EntityNotFoundException("role"));
     }
 
     /**
@@ -189,6 +216,7 @@ public class LocationAndRoleService {
                 .map(locationRole -> {
                     String currentWaawId = locationRoleRepository.getLastUsedWaawId()
                             .orElse(appCustomIdConfig.getRolePrefix() + "0000000000");
+                    System.out.println(currentWaawId);
                     locationRole.setWaawId(CommonUtils.getNextCustomId(currentWaawId, appCustomIdConfig.getLength()));
                     log.info("Adding new role: {}", locationRole);
                     return locationRole;
@@ -221,7 +249,7 @@ public class LocationAndRoleService {
                         .map(locationRoleRepository::save)
                         .map(LocationRole::getId)
                         .map(locationRoleId -> userRepository.findAllByLocationRoleIdAndDeleteFlag(locationRoleId, false)
-                                .stream().peek(user -> user.setAccountStatus(AccountStatus.DISABLED)).collect(Collectors.toList())
+                                .stream().peek(user -> user.setDeleteFlag(true)).collect(Collectors.toList())
                         ).map(userRepository::saveAll)
                 );
         log.info("Successfully deleted the location role and suspended all users for the location: {}", id);

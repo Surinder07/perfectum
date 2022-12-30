@@ -9,6 +9,7 @@ import ca.waaw.enumration.Authority;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
@@ -25,7 +26,7 @@ import java.time.Instant;
                 "CONCAT('%', ?1, '%') OR u.lastName LIKE CONCAT('%', ?1, '%') OR u.waawId LIKE CONCAT('%', ?1, '%') " +
                 "OR u.email LIKE CONCAT('%', ?1, '%'))) AND (?2 IS NULL OR u.organizationId = ?2) AND (?3 IS NULL " +
                 "OR u.locationId = ?3) AND (?4 IS NULL OR u.locationRoleId = ?4) AND (?5 IS NULL OR " +
-                "u.isFullTime = ?5) AND (?6 IS NULL OR u.accountStatus = ?6) AND u.deleteFlag = FALSE"),
+                "u.isFullTime = ?5) AND (?6 IS NULL OR u.accountStatus = ?6) AND u.id <> ?7 AND u.deleteFlag = FALSE"),
         @NamedQuery(name = "UserOrganization.searchUsersWithOrganizationIdAndLocationIdAndDeleteFlagAndAuthority",
                 query = "SELECT u FROM UserOrganization u WHERE (u.firstName LIKE ?1 OR u.lastName LIKE ?1 " +
                         "or u.email LIKE ?1 OR u.employeeId LIKE ?1 OR u.waawId LIKE ?1) " +
@@ -120,5 +121,9 @@ public class UserOrganization extends AbstractEntity {
 
     @Column(name = "last_login")
     private Instant lastLogin;
+
+    public String getFullName() {
+        return firstName + (StringUtils.isNotEmpty(lastName) ? " " + lastName : "");
+    }
 
 }

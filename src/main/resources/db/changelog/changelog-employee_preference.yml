@@ -24,44 +24,44 @@ databaseChangeLog:
                   name: monday_start_time
                   type: VARCHAR(5)
               - column:
-                  name: monday_working_hours
-                  type: DECIMAL
+                  name: monday_end_time
+                  type: VARCHAR(5)
               - column:
                   name: tuesday_start_time
                   type: VARCHAR(5)
               - column:
-                  name: tuesday_working_hours
-                  type: DECIMAL
+                  name: tuesday_end_time
+                  type: VARCHAR(5)
               - column:
                   name: wednesday_start_time
                   type: VARCHAR(5)
               - column:
-                  name: wednesday_working_hours
-                  type: DECIMAL
+                  name: wednesday_end_time
+                  type: VARCHAR(5)
               - column:
                   name: thursday_start_time
                   type: VARCHAR(5)
               - column:
-                  name: thursday_working_hours
-                  type: DECIMAL
+                  name: thursday_end_time
+                  type: VARCHAR(5)
               - column:
                   name: friday_start_time
                   type: VARCHAR(5)
               - column:
-                  name: friday_working_hours
-                  type: DECIMAL
+                  name: friday_end_time
+                  type: VARCHAR(5)
               - column:
                   name: saturday_start_time
                   type: VARCHAR(5)
               - column:
-                  name: saturday_working_hours
-                  type: DECIMAL
+                  name: saturday_end_time
+                  type: VARCHAR(5)
               - column:
                   name: sunday_start_time
                   type: VARCHAR(5)
               - column:
-                  name: sunday_working_hours
-                  type: DECIMAL
+                  name: sunday_end_time
+                  type: VARCHAR(5)
               - column:
                   name: wages_per_hour
                   type: DECIMAL

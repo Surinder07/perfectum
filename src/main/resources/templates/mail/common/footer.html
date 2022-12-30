@@ -5,7 +5,7 @@
     <p style="text-align: center;">
         <a th:text="${dto.actionUrl}" th:href="${dto.actionUrl}">Action Link</a>
     </p>
-    <p style="text-align: center;">For more info visit
+    <p style="text-align: center;">For more info visit:
         <a th:href="${dto.websiteUrl}" th:text="${dto.websiteUrl}" target="_blank">Click Here</a>
     </p>
     <div style="margin: auto; width:90%; border-bottom: #9da2a3 solid 1px;"></div>
@@ -14,10 +14,16 @@
         <tr>
             <td class="social" style="display:inline-block">
                 <a th:href="${dto.twitterUrl}">
-                    <img class="fa" src="twitter.png" th:src="|cid:${twitter}|" alt='twitter'/>
+                    <img class="fa" th:src="${dto.websiteUrl} + '/png/twitter.png'" alt='twitter' src=""/>
                 </a>
                 <a th:href="${dto.linkedinUrl}">
-                    <img class="fa" src="twitter.png" th:src="|cid:${linkedin}|" alt='linkedin'/>
+                    <img class="fa" th:src="${dto.websiteUrl} + '/png/linked-in.png'" alt='linkedin' src=""/>
+                </a>
+                <a th:href="${dto.facebookUrl}">
+                    <img class="fa" th:src="${dto.websiteUrl} + '/png/facebook.png'" alt='linkedin' src=""/>
+                </a>
+                <a th:href="${dto.instagramUrl}">
+                    <img class="fa" th:src="${dto.websiteUrl} + '/png/instagram.png'" alt='instagram' src=""/>
                 </a>
             </td>
         </tr>

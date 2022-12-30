@@ -56,10 +56,10 @@ public class TimesheetMapper {
         user.setEmail(source.getUserDetails().getEmail());
         user.setFullName(CommonUtils.combineFirstAndLastName(source.getUserDetails().getFirstName(),
                 source.getUserDetails().getLastName()));
-        user.setAuthority(source.getUserDetails().getAuthority());
+//        user.setAuthority(source.getUserDetails().getAuthority());
         target.setUser(user);
-        target.setLocationAndRole(LocationRoleMapper.locationEntityToDetailDto(source.getUserDetails().getLocation(),
-                source.getUserDetails().getLocationRole()));
+//        target.setLocationAndRole(LocationRoleMapper.locationEntityToDetailDto(source.getUserDetails().getLocation(),
+//                source.getUserDetails().getLocationRole()));
         return target;
     }
 

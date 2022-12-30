@@ -66,16 +66,6 @@ public class CommonUtils {
     }
 
     /**
-     * @param countryCode country code
-     * @param mobile      mobile
-     * @return combined string without any white spaces
-     */
-    public static String combinePhoneNumber(String countryCode, String mobile) {
-        if (StringUtils.isEmpty(countryCode) && StringUtils.isEmpty(mobile)) return null;
-        return StringUtils.isNotEmpty(countryCode) ? countryCode + " " + mobile : mobile;
-    }
-
-    /**
      * @param enumClass Enum class to match string with
      * @param value     value to be matched with enum
      * @param field     field that will be shown in exception thrown
@@ -139,17 +129,36 @@ public class CommonUtils {
     }
 
     /**
-     * @param page     Page object containing all data
-     * @param mapper   mapper function to convert to dto list
-     * @param timezone timezone to convert the dates to
-     * @param <M>      Class type for Page entity
-     * @param <S>      Class type for DTO response
+     * @param page         Page object containing all data
+     * @param mapper       mapper function to convert to dto list
+     * @param secondObject second argument for mapper function
+     * @param <M>          Class type for Page entity
+     * @param <S>          Class type for DTO response
      * @return PaginationDto containing list of dto and page info
      */
-    public static <M, S> PaginationDto getPaginationResponse(Page<M> page, BiFunction<M, String, S> mapper,
-                                                             String timezone) {
+    public static <M, T, S> PaginationDto getPaginationResponse(Page<M> page, BiFunction<M, T, S> mapper,
+                                                                T secondObject) {
         List<S> data = page.getContent().stream()
-                .map(obj -> mapper.apply(obj, timezone))
+                .map(obj -> mapper.apply(obj, secondObject))
+                .collect(Collectors.toList());
+        return PaginationDto.builder()
+                .totalEntries((int) page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .data(data)
+                .build();
+    }
+
+    /**
+     * @param page         Page object containing all data
+     * @param mapper       mapper function to convert to dto list
+     * @param secondObject second argument for mapper function
+     * @param thirdObject  third argument for mapper function
+     * @return PaginationDto containing list of dto and page info
+     */
+    public static <M, T, R, S> PaginationDto getPaginationResponse(Page<M> page, TriFunction<M, T, R, S> mapper,
+                                                                   T secondObject, R thirdObject) {
+        List<S> data = page.getContent().stream()
+                .map(obj -> mapper.apply(obj, secondObject, thirdObject))
                 .collect(Collectors.toList());
         return PaginationDto.builder()
                 .totalEntries((int) page.getTotalElements())
@@ -164,10 +173,9 @@ public class CommonUtils {
      * @return next id in the sequence
      */
     public static String getNextCustomId(String currentCustomId, int numericLength) {
-        String newNumber = String.valueOf(Integer.parseInt(currentCustomId.substring(3)) + 1);
-        String nameSuffix = StringUtils.leftPad(newNumber, numericLength
-                - newNumber.length(), '0');
-        return currentCustomId.substring(0, 3) + nameSuffix;
+        String newNumber = String.valueOf(Integer.parseInt(currentCustomId.substring(1)) + 1);
+        String nameSuffix = StringUtils.leftPad(newNumber, numericLength, '0');
+        return currentCustomId.charAt(0) + nameSuffix;
     }
 
     /**

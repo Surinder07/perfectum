@@ -1,7 +1,6 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass;
 
 import ca.waaw.dto.EmployeePreferencesDto;
-import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.timeoff.NewTimeOffDto;
 import ca.waaw.dto.userdtos.OrganizationPreferences;
@@ -35,32 +34,27 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
 
     /**
      * <p>
-     * 1. {@link DependentDtoFieldsValidatorType#SHIFT_USER_ID_TO_LOCATION_ROLE_ID}
+     * 1. {@link DependentDtoFieldsValidatorType#NEW_SHIFT_REQUIRED_FIELD}
      * Used in {@link NewShiftDto}
-     * If both userId and locationRoleId are null or empty, it throws an error.
+     * Check for different validations required.
      * </p>
      * <p>
-     * 2. {@link DependentDtoFieldsValidatorType#SHIFT_BATCH_LOCATION_ID_TO_USER_ROLE}
-     * Used in {@link NewShiftBatchDto}
-     * If logged-in user is admin, locationId, locationRoleId or userIds is required
-     * </p>
-     * <p>
-     * 3. {@link DependentDtoFieldsValidatorType#TIME_OFF_USER_ID_TO_USER_ROLE}
+     * 2. {@link DependentDtoFieldsValidatorType#TIME_OFF_USER_ID_TO_USER_ROLE}
      * Used in {@link NewTimeOffDto}
      * If logged-in user is admin or manager, userId cannot be null
      * </p>
      * <p>
-     * 4. {@link DependentDtoFieldsValidatorType#ORGANIZATION_PREFERENCES_PAYROLL}
+     * 3. {@link DependentDtoFieldsValidatorType#ORGANIZATION_PREFERENCES_PAYROLL}
      * Used in {@link OrganizationPreferences}
      * If frequency is set to weekly, day should be passed in dayDate, or else a date (1-31) should be passed.
      * </p>
      * <p>
-     * 5. {@link DependentDtoFieldsValidatorType#EMPLOYEE_PREFERENCES_WAGES}
+     * 4. {@link DependentDtoFieldsValidatorType#EMPLOYEE_PREFERENCES_WAGES}
      * Used in {@link EmployeePreferencesDto}
      * If wages are sent in the preferences both amount and currency should be there
      * </p>
      * <p>
-     * 6. {@link DependentDtoFieldsValidatorType#LOCATION_ROLE_TO_USER_ROLE}
+     * 5. {@link DependentDtoFieldsValidatorType#LOCATION_ROLE_TO_USER_ROLE}
      * Used in various DTOs
      * If logged-in user ha role of ADMIN locationId is required to be sent in request
      * </p>
@@ -68,31 +62,29 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
         switch (type) {
-            case SHIFT_USER_ID_TO_LOCATION_ROLE_ID:
-                String userId = null;
-                String locationRoleId = null;
-                if (PARSER.parseExpression("userId").getValue(value) != null &&
-                        !String.valueOf(PARSER.parseExpression("userId").getValue(value)).equals(""))
-                    userId = String.valueOf(PARSER.parseExpression("userId").getValue(value));
-                if (PARSER.parseExpression("locationRoleId").getValue(value) != null &&
-                        !String.valueOf(PARSER.parseExpression("locationRoleId").getValue(value)).equals(""))
-                    locationRoleId = String.valueOf(PARSER.parseExpression("locationRoleId").getValue(value));
-                return !(userId == null && locationRoleId == null);
-            case SHIFT_BATCH_LOCATION_ID_TO_USER_ROLE:
-                if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN)) {
+            case NEW_SHIFT_REQUIRED_FIELD:
+                String shiftType = null;
+                if (PARSER.parseExpression("type").getValue(value) != null &&
+                        !String.valueOf(PARSER.parseExpression("type").getValue(value)).equals(""))
+                    shiftType = String.valueOf(PARSER.parseExpression("type").getValue(value));
+                if (shiftType == null ||
+                        !(shiftType.equalsIgnoreCase("SINGLE") || shiftType.equalsIgnoreCase("BATCH"))) {
+                    return false;
+                }
+                if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN) && shiftType.equalsIgnoreCase("single")) {
                     List<String> userIds = null;
                     String locationId = null;
-                    locationRoleId = null;
+                    List<String> locationRoleIds = null;
                     if (PARSER.parseExpression("locationId").getValue(value) != null &&
                             !String.valueOf(PARSER.parseExpression("locationId").getValue(value)).equals(""))
                         locationId = String.valueOf(PARSER.parseExpression("locationId").getValue(value));
-                    if (PARSER.parseExpression("locationRoleId").getValue(value) != null &&
-                            !String.valueOf(PARSER.parseExpression("locationRoleId").getValue(value)).equals(""))
-                        locationRoleId = String.valueOf(PARSER.parseExpression("locationRoleId").getValue(value));
+                    if (PARSER.parseExpression("locationRoleIds").getValue(value) != null)
+                        locationRoleIds = ((List<?>) Objects.requireNonNull(PARSER.parseExpression("locationRoleIds")
+                                .getValue(value))).stream().map(Objects::toString).collect(Collectors.toList());
                     if (PARSER.parseExpression("userIds").getValue(value) != null)
                         userIds = ((List<?>) Objects.requireNonNull(PARSER.parseExpression("userIds")
                                 .getValue(value))).stream().map(Objects::toString).collect(Collectors.toList());
-                    return StringUtils.isNotEmpty(locationId) || StringUtils.isNotEmpty(locationRoleId) ||
+                    return (StringUtils.isNotEmpty(locationId) && (locationRoleIds != null && locationRoleIds.size() > 0)) ||
                             (userIds != null && userIds.size() > 0);
                 }
                 return true;

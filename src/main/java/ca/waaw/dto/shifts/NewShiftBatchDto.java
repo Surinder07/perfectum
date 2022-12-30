@@ -14,8 +14,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.SHIFT_BATCH_LOCATION_ID_TO_USER_ROLE,
-        message = "locationId, locationRoleId or userIds are required for Admin role.")
+//@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.SHIFT_BATCH_LOCATION_ID_TO_USER_ROLE,
+//        message = "locationId, locationRoleId or userIds are required for Admin role.")
 public class NewShiftBatchDto {
 
     @Schema(description = "Required for global admin only")

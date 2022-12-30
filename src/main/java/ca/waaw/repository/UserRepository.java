@@ -32,6 +32,8 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<List<User>> findAllByAccountStatusAndCreatedDateBefore(AccountStatus status, Instant date);
 
+    List<User> findAllByOrganizationIdAndDeleteFlag(String organizationId, boolean deleteFlag);
+
     List<User> findAllByLocationIdAndDeleteFlag(String locationId, boolean deleteFlag);
 
     List<User> findAllByEmailInAndDeleteFlag(List<String> email, boolean deleteFlag);

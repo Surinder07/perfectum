@@ -11,14 +11,14 @@ api:
       registerUser: /v1/unAuth/user/registration/new
       verifyEmail: /v1/unAuth/user/registration/verifyEmail
       completeRegistration: /v1/user/registration/completeProfile
-      addPaymentInfo: /v1/user/registration/addPaymentInfo // Pending
+      addPaymentInfo: /v1/user/registration/addPaymentInfo # Pending
       validatePromoCode: /v1/registration/user/validatePromoCode
       checkInviteKey: /v1/unAuth/user/invitation/validateKey
       acceptInvite: /v1/unAuth/user/invitation/register
       resetPasswordInit: /v1/unAuth/user/resetPassword/init
       resetPasswordFinish: /v1/unAuth/user/resetPassword/finish
       updatePassword: v1/user/updatePassword
-      updateProfileImage: /v1/user/updateProfileImage // Not making now
+      updateProfileImage: /v1/user/updateProfileImage # Not making now
       getUserDetails: /v1/user/getAccount
       updateUser: /v1/user/update
     dashboard:
@@ -34,9 +34,11 @@ api:
       sendInvite: /v1/member/invite/send
       resendInvite: /v1/member/invite/resend
       sendInviteByUpload: /v1/member/invite/upload
-      getAllMembers: /v1/member/getAll
+      getAllMembers: /v1/member/getAll/{pageNo}/{pageSize}
       getMemberById: /v1/member/getById
       updateMember: /v1/member/update
+      deleteMember: /v1/member/delete
+      toggleActiveMember: /v1/member/toggleActive
       addEmployeePreferences: /v1/member/addPreference
     notification:
       getAllNotification: /v1/notifications/getAll/{pageNo}/{pageSize}
@@ -49,6 +51,7 @@ api:
       deleteLocation: /v1/location/delete
       toggleActiveLocation: /v1/location/toggleActive
       getLocationRole: /v1/location/role/get/{pageNo}/{pageSize}
+      getLocationRoleById: /v1/location/role/get
       addLocationRole: /v1/location/role/save
       deleteLocationRole: /v1/location/role/delete
       updateLocationRole: /v1/location/role/update
@@ -59,8 +62,8 @@ api:
       deleteShift: /v1/shifts/delete
       assignShift: /v1/shifts/assign
       releaseShift: /v1/shifts/release
-      getAllShifts: /v1/shifts/getAll
-      getAllShiftsUser: /v1/shifts/user/getAll
+      getAllShifts: /v1/shifts/getAll/{pageNo}/{pageSize}
+      getAllShiftsUser: /v1/shifts/user/getAll/{pageNo}/{pageSize}
     requests:
       newRequest:
       updateRequest:
@@ -83,11 +86,11 @@ api:
       deleteCode: /v1/promoCode/delete
       getAllCodes: /v1/promoCode/get
     dropdown:
-      getTimezones: /v1/dropdown/timezones
+      getTimezones: /v1/unAuth/dropdown/timezones
       getEnums: /v1/unAuth/dropdown/enums
       getLocations: /v1/dropdown/locations
       getRoles: /v1/dropdown/roles
-      getUsers: /v1/dropdown/Users
+      getUsers: /v1/dropdown/users
   description:
     authentication: |
       Authenticate login and password to get a jwt token.
@@ -117,6 +120,8 @@ api:
         Get Logged in user's account details.
         ${profile-status-message}
       updateUser: Update logged in user details. For notification preference only.
+    dashboard:
+      getData: Get all data for dashboard.
     organization:
       updateOrganizationPreferences: Update organization preferences under logged-in admin
       getHolidays: |
@@ -158,6 +163,7 @@ api:
       addLocationRole: Adds a new location role under logged in admins organization.
       deleteLocationRole: Deletes the location role with given Id and suspends the account of related users.
       getLocationRole: Api to get information about location roles.
+      getLocationRoleById: Get all role details by an ID
       updateLocationRole: Update a location role under logged in admins organization.
       toggleActiveLocationRole: Toggle between active and disabled status
     shift-management:
@@ -196,7 +202,7 @@ api:
         * This Api is only available in non development environments.
         * Developers can use the api to check possible values for different enums required for different APIs.
       getLocations: Get all locations under logged-in user for dropdown
-      getRoles: Get all roles under logged-in user for dropdown
+      getRoles: Get all roles under logged-in user for a particular location for dropdown
       getUsers: Get all users under logged-in user for dropdown
   swagger:
     groups:

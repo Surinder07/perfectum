@@ -15,6 +15,8 @@ public interface LocationRepository extends JpaRepository<Location, String> {
 
     Optional<Location> getByNameAndOrganizationId(String name, String organizationId);
 
+    List<Location> findAllByOrganizationIdAndDeleteFlag(String organizationId, boolean deleteFlg);
+
     @Query(value = "SELECT waaw_id from location WHERE waaw_id IS NOT NULL ORDER BY created_date DESC LIMIT 1", nativeQuery = true)
     Optional<String>getLastUsedWaawId();
 

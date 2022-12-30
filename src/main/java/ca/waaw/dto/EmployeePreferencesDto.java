@@ -19,6 +19,7 @@ import java.time.Instant;
         "Pass both Wages per hour with a valid currency or neither")
 public class EmployeePreferencesDto {
 
+    @Schema(hidden = true)
     private String id;
 
     @NotEmpty
@@ -28,43 +29,57 @@ public class EmployeePreferencesDto {
     @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
     private String mondayStartTime;
 
-    private float mondayWorkingHours;
+    @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
+    @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
+    private String mondayEndTime;
 
     @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
     @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
     private String tuesdayStartTime;
 
-    private float tuesdayWorkingHours;
+    @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
+    @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
+    private String tuesdayEndTime;
 
     @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
     @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
     private String wednesdayStartTime;
 
-    private float wednesdayWorkingHours;
+    @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
+    @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
+    private String wednesdayEndTime;
 
     @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
     @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
     private String thursdayStartTime;
 
-    private float thursdayWorkingHours;
+    @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
+    @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
+    private String thursdayEndTime;
 
     @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
     @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
     private String fridayStartTime;
 
-    private float fridayWorkingHours;
+    @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
+    @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
+    private String fridayEndTime;
 
     @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
     @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
     private String saturdayStartTime;
 
-    private float saturdayWorkingHours;
+    @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
+    @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
+    private String saturdayEndTime;
 
     @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
     @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
     private String sundayStartTime;
 
-    private float sundayWorkingHours;
+    @ValidateRegex(type = RegexValidatorType.TIME, message = "Pass a valid time")
+    @Schema(description = "Time Format: <b>24 hours (HH:MM)</b>")
+    private String sundayEndTime;
 
     @Schema(description = "wages per hour for payroll purposes")
     private float wagesPerHour;

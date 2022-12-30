@@ -95,11 +95,9 @@ public class MemberService {
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(loggedUser -> userRepository.findOneByIdAndDeleteFlag(userId, false)
                         .map(user -> {
-                            if (!user.getId().equals(loggedUser.getId()) ||
-                                    (loggedUser.getAuthority().equals(Authority.MANAGER) &&
-                                            !user.getLocationId().equals(loggedUser.getLocationId())) ||
-                                    (loggedUser.getAuthority().equals(Authority.ADMIN) &&
-                                            !user.getOrganizationId().equals(loggedUser.getOrganizationId()))) {
+                            if ((loggedUser.getAuthority().equals(Authority.MANAGER) &&
+                                    !user.getLocationId().equals(loggedUser.getLocationId())) ||
+                                    !user.getOrganizationId().equals(loggedUser.getOrganizationId())) {
                                 return null;
                             }
                             if (user.getAccountStatus().equals(AccountStatus.INVITED)) {
@@ -126,7 +124,7 @@ public class MemberService {
                                         });
                                 return user;
                             }
-                            return null; // TODO throw user already active error
+                            return null;
                         })
                         .orElseThrow(() -> new EntityNotFoundException("user"))
                 );
@@ -225,7 +223,7 @@ public class MemberService {
                     }
                     String finalLocationId = admin.getAuthority().equals(Authority.MANAGER) ? admin.getLocationId() : locationId;
                     return userOrganizationRepository.searchAndFilterUsers(searchKey, admin.getOrganizationId(), finalLocationId,
-                            roleId, isFullTime, accountStatus, pageable);
+                            roleId, isFullTime, accountStatus, admin.getId(), pageable);
                 })
                 .orElseThrow(UnauthorizedException::new);
         return CommonUtils.getPaginationResponse(userPage, UserMapper::entityToUserDetailsForListing);
@@ -339,6 +337,51 @@ public class MemberService {
                 )
                 .orElseThrow(() -> new EntityNotFoundException("user"));
         // TODO Send notification to employee
+    }
+
+    /**
+     * @param id id for which user is to be deleted
+     */
+    public void deleteMember(String id) {
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(admin -> userRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(user -> {
+                            if (!user.getOrganizationId().equals(admin.getOrganizationId()) ||
+                                    (admin.getAuthority().equals(Authority.MANAGER) &&
+                                            !admin.getLocationId().equals(user.getLocationId()))) {
+                                return null;
+                            }
+                            user.setDeleteFlag(true);
+                            user.setLastModifiedBy(admin.getId());
+                            return user;
+                        })
+                )
+                .map(userRepository::save)
+                .orElseThrow(() -> new EntityNotFoundException("user"));
+    }
+
+    /**
+     * @param id id for which user's status is to be changed
+     */
+    public void toggleActiveMember(String id) {
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(admin -> userRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(user -> {
+                            if (!user.getOrganizationId().equals(admin.getOrganizationId()) ||
+                                    (admin.getAuthority().equals(Authority.MANAGER) &&
+                                            !admin.getLocationId().equals(user.getLocationId()))) {
+                                return null;
+                            }
+                            user.setAccountStatus(user.getAccountStatus().equals(AccountStatus.DISABLED) ?
+                                    AccountStatus.PAID_AND_ACTIVE : AccountStatus.DISABLED);
+                            user.setLastModifiedBy(admin.getId());
+                            return user;
+                        })
+                )
+                .map(userRepository::save)
+                .orElseThrow(() -> new EntityNotFoundException("user"));
     }
 
     /**

@@ -13,6 +13,8 @@ public class MailDto {
 
     private String email;
 
+    private String name;
+
     private String langKey;
 
     private String actionUrl;
@@ -22,6 +24,10 @@ public class MailDto {
     private String twitterUrl;
 
     private String linkedinUrl;
+
+    private String facebookUrl;
+
+    private String instagramUrl;
 
     private Object message;
 

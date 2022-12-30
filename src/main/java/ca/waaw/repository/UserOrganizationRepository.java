@@ -17,13 +17,16 @@ public interface UserOrganizationRepository extends JpaRepository<UserOrganizati
 
     List<UserOrganization> findAllByDeleteFlagAndIdIn(boolean deleteFlag, List<String> ids);
 
+    List<UserOrganization> findAllByOrganizationIdAndDeleteFlag(String organizationId, boolean deleteFlag);
+
     Optional<UserOrganization> findOneByUsernameAndDeleteFlag(String username, boolean deleteFlag);
 
     /**
      * If a value is passed in any of the below options it will be considered or all data will be shown
+     * loggedUserId is passed to ignore the logged-user in listing
      */
     Page<UserOrganization> searchAndFilterUsers(String searchKey, String organizationId, String locationId, String locationRoleId,
-                                    Boolean isFullTime, AccountStatus status, Pageable pageable);
+                                    Boolean isFullTime, AccountStatus status, String loggedUserId, Pageable pageable);
 
     /**
      * Location id and role are only considered if they have non-null values

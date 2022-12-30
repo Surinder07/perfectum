@@ -29,44 +29,44 @@ public class EmployeePreferences implements Serializable {
     @Column(name = "monday_start_time")
     private String mondayStartTime;
 
-    @Column(name = "monday_working_hours")
-    private float mondayWorkingHours;
+    @Column(name = "monday_end_time")
+    private String mondayEndTime;
 
     @Column(name = "tuesday_start_time")
     private String tuesdayStartTime;
 
-    @Column(name = "tuesday_working_hours")
-    private float tuesdayWorkingHours;
+    @Column(name = "tuesday_end_time")
+    private String tuesdayEndTime;
 
     @Column(name = "wednesday_start_time")
     private String wednesdayStartTime;
 
-    @Column(name = "wednesday_working_hours")
-    private float wednesdayWorkingHours;
+    @Column(name = "wednesday_end_time")
+    private String wednesdayEndTime;
 
     @Column(name = "thursday_start_time")
     private String thursdayStartTime;
 
-    @Column(name = "thursday_working_hours")
-    private float thursdayWorkingHours;
+    @Column(name = "thursday_end_time")
+    private String thursdayEndTime;
 
     @Column(name = "friday_start_time")
     private String fridayStartTime;
 
-    @Column(name = "friday_working_hours")
-    private float fridayWorkingHours;
+    @Column(name = "friday_end_time")
+    private String fridayEndTime;
 
     @Column(name = "saturday_start_time")
     private String saturdayStartTime;
 
-    @Column(name = "saturday_working_hours")
-    private float saturdayWorkingHours;
+    @Column(name = "saturday_end_time")
+    private String saturdayEndTime;
 
     @Column(name = "sunday_start_time")
     private String sundayStartTime;
 
-    @Column(name = "sunday_working_hours")
-    private float sundayWorkingHours;
+    @Column(name = "sunday_end_time")
+    private String sundayEndTime;
 
     @Column(name = "wages_per_hour")
     private float wagesPerHour;

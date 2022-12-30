@@ -2,16 +2,14 @@ package ca.waaw.web.rest;
 
 import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.dto.ApiResponseMessageDto;
-import ca.waaw.dto.OvertimeDto;
+import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.shifts.BatchDetailsDto;
-import ca.waaw.dto.shifts.NewShiftBatchDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.shifts.ShiftDetailsDto;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.service.ShiftSchedulingService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,9 +22,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 @RestController
@@ -46,8 +45,8 @@ public class ShiftSchedulingController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(description = "${api.description.shift-management.createShift}")
     @PostMapping("${api.endpoints.shift-management.createShift}")
-    public void createShift(@Valid @RequestBody NewShiftDto newShiftDto) {
-        shiftSchedulingService.createShift(newShiftDto);
+    public ResponseEntity<ApiResponseMessageDto> createShift(@Valid @RequestBody NewShiftDto newShiftDto) {
+        return ResponseEntity.ok(shiftSchedulingService.createShift(newShiftDto));
     }
 
     @SwaggerOk
@@ -102,84 +101,40 @@ public class ShiftSchedulingController {
     @Operation(description = "${api.description.shift-management.getAllShifts}")
     @GetMapping("${api.endpoints.shift-management.getAllShifts}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = ShiftDetailsDto.class)))})
-    public ResponseEntity<List<ShiftDetailsDto>> getAllShifts(@Parameter(description = "${api.swagger.param-description.getShift-batchId}")
-                                                              @RequestParam(required = false) String batchId,
-                                                              @RequestParam String date,
-                                                              @Parameter(description = "${api.swagger.param-description.getShift-endDate}")
-                                                              @RequestParam(required = false) String endDate) {
+            schema = @Schema(implementation = BatchDetailsDto.class)))}, description = "${api.swagger.schema-description.pagination}")
+    public ResponseEntity<PaginationDto> getAllShifts(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                      @RequestParam(required = false) String searchKey,
+                                                      @RequestParam(required = false) String locationId,
+                                                      @RequestParam(required = false) String roleId,
+                                                      @RequestParam(required = false) String startDate,
+                                                      @RequestParam(required = false) String endDate,
+                                                      @RequestParam(required = false) String batchStatus,
+                                                      @RequestParam(required = false) String shiftStatus) {
         List<String> field = new ArrayList<>();
-        if (!Pattern.matches(appRegexConfig.getDate(), date)) field.add("date");
-        if (StringUtils.isNotEmpty(endDate) && !Pattern.matches(appRegexConfig.getDate(), endDate))
-            field.add("endDate");
-        if (!field.isEmpty()) {
-            throw new BadRequestException("Invalid value", field.toArray(new String[0]));
+        if (StringUtils.isNotEmpty(startDate) && StringUtils.isNotEmpty(endDate)) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            try {
+                sdf.parse(startDate);
+                sdf.parse(endDate);
+            } catch (ParseException e) {
+                throw new BadRequestException("Please enter valid date values (yyyy-MM-dd)", "startDate", "endDate");
+            }
         }
-        return ResponseEntity.ok(shiftSchedulingService.getAllShifts(batchId, date, endDate));
-    }
-
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @SwaggerRespondWithMessage
-    @Operation(description = "${api.description.shift-management.createShiftsBatch}")
-    @PostMapping("${api.endpoints.shift-management.createShiftsBatch}")
-    public ResponseEntity<ApiResponseMessageDto> createShiftsBatch(@Valid @RequestBody NewShiftBatchDto newShiftBatchDto) {
-        return ResponseEntity.ok(shiftSchedulingService.createNewBatch(newShiftBatchDto));
-    }
-
-    @SwaggerOk
-    @SwaggerNotFound
-    @SwaggerBadRequest
-    @SwaggerUnauthorized
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.shift-management.releaseShiftsBatch}")
-    @PutMapping("${api.endpoints.shift-management.releaseShiftsBatch}")
-    public ResponseEntity<ApiResponseMessageDto> releaseShiftsBatch(@RequestParam String batchId) {
-        return ResponseEntity.ok(shiftSchedulingService.releaseShiftBatch(batchId));
+        return ResponseEntity.ok(shiftSchedulingService.getAllShifts(pageNo, pageSize, searchKey, locationId, roleId,
+                startDate, endDate, batchStatus, shiftStatus));
     }
 
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.shift-management.getAllShiftsBatch}")
-    @GetMapping("${api.endpoints.shift-management.getAllShiftsBatch}")
+    @Operation(description = "${api.description.shift-management.getAllShiftsUser}")
+    @GetMapping("${api.endpoints.shift-management.getAllShiftsUser}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = BatchDetailsDto.class)))})
-    public ResponseEntity<List<BatchDetailsDto>> getAllShiftsBatch() {
-        return ResponseEntity.ok(shiftSchedulingService.getAllBatchDetails());
-    }
-
-    @SwaggerCreated
-    @SwaggerBadRequest
-    @SwaggerAlreadyExist
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(description = "${api.description.shift-management.requestOvertime}")
-    @PostMapping("${api.endpoints.shift-management.requestOvertime}")
-    public void addNewOvertime(@Valid @RequestBody OvertimeDto overtimeDto) {
-        shiftSchedulingService.requestOvertime(overtimeDto);
-    }
-
-    @SwaggerOk
-    @SwaggerNotFound
-    @SwaggerBadRequest
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.shift-management.respondToOvertime}")
-    @PutMapping("${api.endpoints.shift-management.respondToOvertime}")
-    public void respondToOvertime(@RequestParam String requestId, @RequestParam boolean accept) {
-        shiftSchedulingService.respondToOvertime(requestId, accept);
-    }
-
-    @SwaggerOk
-    @SwaggerNotFound
-    @SwaggerBadRequest
-    @SwaggerAuthenticated
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.shift-management.deleteOvertime}")
-    @DeleteMapping("${api.endpoints.shift-management.deleteOvertime}")
-    public void deleteOvertime(@RequestParam String requestId) {
-        shiftSchedulingService.deleteOvertimeRequest(requestId);
+            schema = @Schema(implementation = ShiftDetailsDto.class)))})
+    public ResponseEntity<PaginationDto> getAllShiftsUser(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                                  @RequestParam String userId,
+                                                                  @RequestParam(required = false) String startDate,
+                                                                  @RequestParam(required = false) String endDate,
+                                                                  @RequestParam(required = false) String shiftStatus) {
+        return ResponseEntity.ok(shiftSchedulingService.getAllShiftsUser(pageNo, pageSize, userId, startDate, endDate, shiftStatus));
     }
 
 }
