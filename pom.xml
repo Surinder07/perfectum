@@ -168,6 +168,27 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- Azure Storage Service -->
+        <dependency>
+           <groupId>com.azure.spring</groupId>
+           <artifactId>spring-cloud-azure-starter-storage-blob</artifactId>
+           <version>4.5.0</version>
+       </dependency>
+       
+       <!--Azure Sand Grid SDK-->
+       <dependency>
+          <groupId>com.sendgrid</groupId>
+          <artifactId>sendgrid-java</artifactId>
+       </dependency>
+      
+      <!--Azure SMS Service-->
+      <dependency>
+         <groupId>com.azure</groupId>
+         <artifactId>azure-communication-sms</artifactId>
+         <version>1.1.8</version>
+      </dependency>
+      
     </dependencies>
 
     <build>

@@ -169,3 +169,13 @@ files:
       last_name: lastName
       employee_id: employeeId
       is_full_time: isFullTime
+#######################################
+####### Azure Config ##############
+#######################################
+azure:
+   end-point: https://<resource-name>.communication.azure.com/
+   key-credential: <access-key-credential>
+blob:
+   account-name: [storage-account-name]
+   account-key: [storage-account-access-key]
+   endpoint: [storage-blob-service-endpoint]
