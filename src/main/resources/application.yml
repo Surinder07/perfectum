@@ -175,6 +175,7 @@ files:
 azure:
    end-point: https://<resource-name>.communication.azure.com/
    key-credential: <access-key-credential>
+   from-mobile: 99364775858
 blob:
    account-name: [storage-account-name]
    account-key: [storage-account-access-key]

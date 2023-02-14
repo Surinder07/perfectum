@@ -27,6 +27,8 @@ public class SMSService {
 	private String endpoint;
 
 	private AzureKeyCredential keyCredential;
+	
+	private String fromMobile;
 
 	@Autowired
 	private MessageSource messageSource;
@@ -51,9 +53,9 @@ public class SMSService {
 	 * @param to
 	 * @param msgKey
 	 */
-	public void sendOneToOneSMS(String from, String to, String msgKey) {
+	public void sendOneToOneSMS(String to, String msgKey) {
 		CompletableFuture.runAsync(() -> {
-			SmsSendResult sendResult = getSMSClient().send(from, to, messageBuilder.apply(msgKey, Locale.ENGLISH));
+			SmsSendResult sendResult = getSMSClient().send(fromMobile, to, messageBuilder.apply(msgKey, Locale.ENGLISH));
 			LOGGER.info("Message Id: " + sendResult.getMessageId() + " Recipient Number: " + sendResult.getTo() + " Send Result Successful:" + sendResult.isSuccessful());
 		});
 	}

@@ -189,6 +189,20 @@
          <version>1.1.8</version>
       </dependency>
       
+      <!--Azure Blob Storage-->
+      <dependency>
+        <groupId>com.azure</groupId>
+        <artifactId>azure-storage-blob</artifactId>
+        <version>12.20.1</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>com.azure</groupId>
+        <artifactId>azure-identity</artifactId>
+        <version>1.7.3</version>
+        <scope>compile</scope>
+      </dependency>
+    
     </dependencies>
 
     <build>
