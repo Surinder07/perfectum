@@ -4,7 +4,7 @@ import ca.waaw.enumration.ErrorCodes;
 import lombok.Getter;
 
 @Getter
-public class AccessDeniedException  extends RuntimeException {
+public class AccessDeniedException extends RuntimeException {
 
     private final ErrorCodes errorCode;
 

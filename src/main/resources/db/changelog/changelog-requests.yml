@@ -1,0 +1,107 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-requests
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: requests
+      changes:
+        - createTable:
+            tableName: requests
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: waaw_id
+                  type: VARCHAR(25)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: ux_waaw_request_id
+              - column:
+                  name: user_id
+                  type: VARCHAR(100)
+              - column:
+                  name: organization_id
+                  type: VARCHAR(100)
+              - column:
+                  name: location_id
+                  type: VARCHAR(100)
+              - column:
+                  name: location_role_id
+                  type: VARCHAR(100)
+              - column:
+                  name: description
+                  type: VARCHAR(1000)
+              - column:
+                  name: start
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: end
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+              - column:
+                  name: sub_type
+                  type: VARCHAR(50)
+              - column:
+                  name: assigned_to
+                  type: VARCHAR(100)
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+        - addForeignKeyConstraint:
+            baseTableName: requests
+            baseColumnNames: user_id
+            constraintName: fk_requests_user_id
+            referencedColumnNames: uuid
+            referencedTableName: user
+        - addForeignKeyConstraint:
+            baseTableName: requests
+            baseColumnNames: organization_id
+            constraintName: fk_requests_organization_id
+            referencedColumnNames: uuid
+            referencedTableName: organization
+        - addForeignKeyConstraint:
+            baseTableName: requests
+            baseColumnNames: assigned_to
+            constraintName: fk_requests_assigned_to
+            referencedColumnNames: uuid
+            referencedTableName: user
+        - addForeignKeyConstraint:
+            baseTableName: requests
+            baseColumnNames: location_id
+            constraintName: fk_requests_location_id
+            referencedColumnNames: uuid
+            referencedTableName: location
+        - addForeignKeyConstraint:
+            baseTableName: requests
+            baseColumnNames: location_role_id
+            constraintName: fk_requests_location_role_id
+            referencedColumnNames: uuid
+            referencedTableName: location_role
+        - createIndex:
+            indexName: idx_waaw_request_id
+            tableName: requests
+            unique: true
+            column:
+              name: waaw_id
+              type: VARCHAR(25)

@@ -1,30 +1,34 @@
 package ca.waaw.web.rest.service;
 
+import ca.waaw.domain.Timesheet;
+import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.DateTimeDto;
-import ca.waaw.dto.TimesheetDetailDto;
+import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.TimesheetDto;
+import ca.waaw.dto.timesheet.ActiveTimesheetDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.mapper.TimesheetMapper;
-import ca.waaw.repository.DetailedTimesheetRepository;
 import ca.waaw.repository.TimesheetRepository;
-import ca.waaw.repository.UserOrganizationRepository;
 import ca.waaw.repository.UserRepository;
+import ca.waaw.repository.joined.DetailedTimesheetRepository;
+import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
-import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
 import ca.waaw.web.rest.errors.exceptions.application.ActiveTimesheetPresentException;
 import ca.waaw.web.rest.errors.exceptions.application.TimesheetOverlappingException;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -42,7 +46,7 @@ public class TimesheetService {
      * Start timesheet recording for logged-in user
      */
     public void startTimesheetRecording() {
-        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE);
+        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .map(loggedUser -> {
@@ -63,7 +67,7 @@ public class TimesheetService {
      * Stop timesheet recording for logged-in user
      */
     public void stopTimesheetRecording() {
-        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE);
+        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .map(loggedUser -> timesheetRepository.getActiveTimesheet(loggedUser.getId())
@@ -82,46 +86,62 @@ public class TimesheetService {
     /**
      * @return Date time info for timer start if active timer is present
      */
-    public DateTimeDto getActiveTimesheet() {
-        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE);
-        return SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
-                        .flatMap(loggedUser -> timesheetRepository.getActiveTimesheet(loggedUser.getId())
-                                .map(timesheet -> DateAndTimeUtils.getDateTimeObject(timesheet.getStart(),
-                                        loggedUser.getLocation().getTimezone()))
-                        )
-                ).orElse(null);
+    public ActiveTimesheetDto getActiveTimesheet() {
+        CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE, Authority.MANAGER);
+        Instant[] todayRange = DateAndTimeUtils.getStartAndEndTimeForInstant(Instant.now());
+        UserOrganization loggedUser = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .orElseThrow(AuthenticationException::new);
+        ActiveTimesheetDto response = timesheetRepository.getActiveTimesheet(loggedUser.getId())
+                .map(timesheet -> mapActiveTimesheet(timesheet, loggedUser.getLocation().getTimezone()))
+                .orElse(null);
+        if (response == null) {
+            response = timesheetRepository.getByUserIdBetweenDates(loggedUser.getId(), todayRange[0], todayRange[1])
+                    .map(timesheet -> mapActiveTimesheet(timesheet, loggedUser.getLocation().getTimezone()))
+                    .orElse(null);
+        }
+        return response;
+    }
+
+    private ActiveTimesheetDto mapActiveTimesheet(Timesheet source, String timezone) {
+        ActiveTimesheetDto target = new ActiveTimesheetDto();
+        DateTimeDto start = DateAndTimeUtils.getDateTimeObject(source.getStart(), timezone);
+        target.setStartTime(start.getTime());
+        target.setStartDate(start.getDate());
+        target.setStartTimestamp(source.getStart());
+        if (source.getEnd() != null) {
+            DateTimeDto end = DateAndTimeUtils.getDateTimeObject(source.getEnd(), timezone);
+            target.setEndTime(end.getTime());
+            target.setEndDate(end.getDate());
+            target.setEndTimestamp(source.getEnd());
+        }
+        return target;
     }
 
     /**
+     * @param pageNo    page number for pagination
+     * @param pageSize  page size for pagination
      * @param startDate start date for range
      * @param endDate   end date for range
-     * @return list of all time sheets
+     * @param type      type of added timesheet
+     * @return pagination list of all time sheets
      */
-    public List<TimesheetDetailDto> getAllTimeSheet(String startDate, String endDate) {
-        AtomicReference<String> timezone = new AtomicReference<>(null);
-        return SecurityUtils.getCurrentUserLogin()
+    public PaginationDto getAllTimeSheet(int pageNo, int pageSize, String startDate, String endDate, String type, String userId) {
+        UserOrganization loggedUser = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(loggedUser -> {
-                    timezone.set(loggedUser.getAuthority().equals(Authority.ADMIN) ? loggedUser.getOrganization().getTimezone() :
-                            loggedUser.getLocation().getTimezone());
-                    Instant start = DateAndTimeUtils.getDateInstant(startDate, "00:00:00", timezone.get());
-                    Instant end = DateAndTimeUtils.getDateInstant(endDate, "23:59:59", timezone.get());
-                    if (loggedUser.getAuthority().equals(Authority.ADMIN))
-                        return detailedTimesheetRepository.getByOrganizationIdAndDates(loggedUser.getOrganizationId(),
-                                start, end);
-                    else if (loggedUser.getAuthority().equals(Authority.MANAGER))
-                        return detailedTimesheetRepository.getByLocationIdAndDates(loggedUser.getLocationId(),
-                                start, end);
-                    else
-                        return detailedTimesheetRepository.getByUserIdAndDates(loggedUser.getId(),
-                                start, end);
-                })
-                .map(timeSheets -> timeSheets.stream()
-                        .map(timesheet -> TimesheetMapper.entityToDto(timesheet, timezone.get()))
-                        .collect(Collectors.toList())
-                )
-                .orElseThrow(UnauthorizedException::new);
+                .orElseThrow(AuthenticationException::new);
+        String timezone = loggedUser.getAuthority().equals(Authority.ADMIN) ? loggedUser.getOrganization().getTimezone() :
+                loggedUser.getLocation().getTimezone();
+        Pageable getSortedByCreatedDate = PageRequest.of(pageNo, pageSize, Sort.by("createdDate").descending());
+        if (loggedUser.getAuthority().equals(Authority.ADMIN) && userId == null)
+            throw new BadRequestException("userId is required");
+        else if (loggedUser.getAuthority().equals(Authority.MANAGER) && userId == null) userId = loggedUser.getId();
+        else if (!loggedUser.getAuthority().equals(Authority.ADMIN)) userId = loggedUser.getId();
+        Instant[] dateRange = startDate == null ? new Instant[]{null, null} :
+                DateAndTimeUtils.getStartAndEndTimeForInstant(startDate, endDate, timezone);
+        Page<Timesheet> timesheetPage = timesheetRepository.filterTimesheet(userId, dateRange[0],
+                dateRange[1], type, getSortedByCreatedDate);
+        return CommonUtils.getPaginationResponse(timesheetPage, TimesheetMapper::entityToDetailedDto, timezone);
     }
 
     // Add timesheet (admin)

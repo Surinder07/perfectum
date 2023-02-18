@@ -168,41 +168,47 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        
+
         <!-- Azure Storage Service -->
         <dependency>
-           <groupId>com.azure.spring</groupId>
-           <artifactId>spring-cloud-azure-starter-storage-blob</artifactId>
-           <version>4.5.0</version>
-       </dependency>
-       
-       <!--Azure Sand Grid SDK-->
-       <dependency>
-          <groupId>com.sendgrid</groupId>
-          <artifactId>sendgrid-java</artifactId>
-       </dependency>
-      
-      <!--Azure SMS Service-->
-      <dependency>
-         <groupId>com.azure</groupId>
-         <artifactId>azure-communication-sms</artifactId>
-         <version>1.1.8</version>
-      </dependency>
-      
-      <!--Azure Blob Storage-->
-      <dependency>
-        <groupId>com.azure</groupId>
-        <artifactId>azure-storage-blob</artifactId>
-        <version>12.20.1</version>
-      </dependency>
-      
-      <dependency>
-        <groupId>com.azure</groupId>
-        <artifactId>azure-identity</artifactId>
-        <version>1.7.3</version>
-        <scope>compile</scope>
-      </dependency>
-    
+            <groupId>com.azure.spring</groupId>
+            <artifactId>spring-cloud-azure-starter-storage-blob</artifactId>
+            <version>4.5.0</version>
+        </dependency>
+
+        <!--Azure Blob Storage-->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-blob</artifactId>
+            <version>12.20.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+            <version>1.7.3</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--Azure Sand Grid SDK-->
+        <dependency>
+            <groupId>com.sendgrid</groupId>
+            <artifactId>sendgrid-java</artifactId>
+        </dependency>
+
+        <!--Azure SMS Service-->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-communication-sms</artifactId>
+            <version>1.1.8</version>
+        </dependency>
+
+        <!-- Stripe Service-->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>22.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

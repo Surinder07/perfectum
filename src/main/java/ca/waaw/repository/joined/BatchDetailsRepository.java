@@ -13,6 +13,6 @@ import java.time.Instant;
 public interface BatchDetailsRepository extends JpaRepository<BatchDetails, String> {
 
     Page<BatchDetails> searchAndFilterShifts(String searchKey, String organizationId, String locationId, Instant startDate,
-                                             Instant endDate, ShiftBatchStatus status, Pageable pageable);
+                                             Instant endDate, String status, Pageable pageable);
 
 }

@@ -23,6 +23,9 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: image_url
+                  type: VARCHAR(500)
+              - column:
                   name: start_of_week
                   type: VARCHAR(20)
                   defaultValue: 'MONDAY'

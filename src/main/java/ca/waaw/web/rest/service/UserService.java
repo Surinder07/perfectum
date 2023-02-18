@@ -3,15 +3,14 @@ package ca.waaw.web.rest.service;
 import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
-import ca.waaw.domain.Organization;
-import ca.waaw.domain.PromotionCode;
-import ca.waaw.domain.User;
-import ca.waaw.domain.UserTokens;
+import ca.waaw.domain.*;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.*;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.*;
+import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
 import ca.waaw.web.rest.errors.exceptions.*;
@@ -35,6 +34,8 @@ public class UserService {
 
     private final Logger log = LogManager.getLogger(UserService.class);
 
+    private final TokenProvider tokenProvider;
+
     private final UserRepository userRepository;
 
     private final UserTokenRepository userTokenRepository;
@@ -44,6 +45,8 @@ public class UserService {
     private final PromotionCodeRepository promotionCodeRepository;
 
     private final UserOrganizationRepository userOrganizationRepository;
+
+    private final EmployeePreferencesRepository employeePreferencesRepository;
 
     private final AppValidityTimeConfig appValidityTimeConfig;
 
@@ -72,7 +75,7 @@ public class UserService {
         User user = UserMapper.registerDtoToUserEntity(registrationDto);
         user.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
         user.setPasswordHash(passwordEncoder.encode(registrationDto.getPassword()));
-        UserTokens token = new UserTokens(UserToken.ACTIVATION);
+        UserTokens token = new UserTokens(UserTokenType.ACTIVATION);
         token.setUserId(user.getId());
         token.setCreatedBy("SYSTEM");
         userRepository.save(user);
@@ -92,7 +95,7 @@ public class UserService {
     public void verifyEmail(String verificationKey) {
         log.info("Activating user for verificationKey {}", verificationKey);
         userTokenRepository
-                .findOneByTokenAndTokenTypeAndIsExpired(verificationKey, UserToken.ACTIVATION, false)
+                .findOneByTokenAndTokenTypeAndIsExpired(verificationKey, UserTokenType.ACTIVATION, false)
                 .flatMap(userTokens -> {
                     if (userTokens.getCreatedDate().isBefore(Instant.now()
                             .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
@@ -121,8 +124,8 @@ public class UserService {
      * @param completeRegistrationDto Complete registration details
      */
     @Transactional(rollbackFor = Exception.class)
-    public void completeRegistration(CompleteRegistrationDto completeRegistrationDto) {
-        SecurityUtils.getCurrentUserLogin()
+    public LoginResponseDto completeRegistration(CompleteRegistrationDto completeRegistrationDto) {
+        User loggedUser = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .map(user -> {
                             if (user.getAuthority().equals(Authority.ADMIN)) {
@@ -156,6 +159,9 @@ public class UserService {
                         .map(userRepository::save)
                 )
                 .orElseThrow(AuthenticationException::new);
+        // Updating jwt with the new username
+        final String jwt = tokenProvider.updateUsernameOrStatusInToken(loggedUser.getUsername(), loggedUser.getAccountStatus());
+        return new LoginResponseDto(jwt);
     }
 
     /**
@@ -165,12 +171,12 @@ public class UserService {
     public Map<String, String> validatePromoCode(String promoCode) {
         return promotionCodeRepository.findOneByCodeAndDeleteFlag(promoCode, false)
                 .map(code -> {
-                    if (code.getExpiryDate().isBefore(Instant.now())) {
+                    if (code.getExpiryDate() != null && code.getExpiryDate().isBefore(Instant.now())) {
                         return null;
                     }
                     Map<String, String> response = new HashMap<>();
                     if (code.getType().equals(PromoCodeType.TRIAL)) {
-                        response.put("message", String.format("Trial Period for %s days added", code.getPromotionValue()));
+                        response.put("message", String.format("Trial Period for %s days will be added to your account.", code.getPromotionValue()));
                     }
                     return response;
                 })
@@ -184,9 +190,9 @@ public class UserService {
      */
     public UserListingDto checkInviteLink(String invitationKey) {
         log.info("Getting details for user with invitation key: {}", invitationKey);
-        return userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(invitationKey, UserToken.INVITE, false)
+        return userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(invitationKey, UserTokenType.INVITE, false)
                 .map(token -> {
-                    if (token.getCreatedDate().isAfter(Instant.now()
+                    if (token.getCreatedDate().isBefore(Instant.now()
                             .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))) {
                         token.setExpired(true);
                         userTokenRepository.save(token);
@@ -205,18 +211,30 @@ public class UserService {
      *
      * @param acceptInviteDto invite key and newPassword info
      */
+    @Transactional(rollbackFor = Exception.class)
     public void acceptInvite(AcceptInviteDto acceptInviteDto) {
-        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(acceptInviteDto.getInviteKey(), UserToken.INVITE, false)
+        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(acceptInviteDto.getInviteKey(), UserTokenType.INVITE, false)
                 .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
                         .map(user -> {
+                            String currentCustomId = userRepository.getLastUsedCustomId()
+                                    .orElse(appCustomIdConfig.getUserPrefix() + "0000000000");
+                            user.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
                             user.setPasswordHash(passwordEncoder.encode(acceptInviteDto.getPassword()));
+                            user.setAccountStatus(AccountStatus.PAID_AND_ACTIVE);
+                            user.setLastModifiedBy(user.getId());
                             return user;
                         })
                         .map(userRepository::save)
+                        .map(user -> {
+                            EmployeePreferences preferences = new EmployeePreferences();
+                            preferences.setCreatedBy(user.getId());
+                            preferences.setUserId(user.getId());
+                            employeePreferencesRepository.save(preferences);
+                            return user;
+                        })
                         .flatMap(user -> userOrganizationRepository.findOneByIdAndDeleteFlag(user.getId(), false))
                         .map(user -> userRepository.findOneByIdAndDeleteFlag(token.getCreatedBy(), false)
                                 .map(admin -> {
-                                    // @todo change mail
                                     notificationInternalService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl());
                                     return admin;
                                 })
@@ -256,7 +274,7 @@ public class UserService {
         userRepository
                 .findOneByEmailAndDeleteFlag(email, false)
                 .map(user -> {
-                    UserTokens token = new UserTokens(UserToken.RESET);
+                    UserTokens token = new UserTokens(UserTokenType.RESET);
                     token.setUserId(user.getId());
                     token.setCreatedBy("SYSTEM");
                     userTokenRepository.save(token);
@@ -276,10 +294,10 @@ public class UserService {
      */
     public void completePasswordReset(PasswordResetDto passwordResetDto) {
         log.debug("Reset user password for reset key {}", passwordResetDto.getKey());
-        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(passwordResetDto.getKey(), UserToken.RESET,
+        userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(passwordResetDto.getKey(), UserTokenType.RESET,
                         false)
                 .map(token -> {
-                    if (token.getCreatedDate().isAfter(Instant.now()
+                    if (token.getCreatedDate().isBefore(Instant.now()
                             .minus(appValidityTimeConfig.getPasswordReset(), ChronoUnit.DAYS))) {
                         token.setExpired(true);
                         userTokenRepository.save(token);
@@ -310,7 +328,5 @@ public class UserService {
                 )
                 .orElseThrow(UnauthorizedException::new);
     }
-
-    //@TODO add update user API to update emailPreference and sms preference
 
 }

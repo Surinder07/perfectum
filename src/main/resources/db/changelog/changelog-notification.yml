@@ -27,6 +27,9 @@ databaseChangeLog:
                   name: user_id
                   type: VARCHAR(100)
               - column:
+                  name: action_entity_id
+                  type: VARCHAR(100)
+              - column:
                   name: is_read
                   type: BOOLEAN
                   defaultValue: false

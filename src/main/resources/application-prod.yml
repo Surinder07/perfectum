@@ -1,0 +1,65 @@
+spring:
+  datasource:
+    url: jdbc:mysql://waaw-stage-db.mysql.database.azure.com:3306/waaw_prod?createDatabaseIfNotExist=true&useSSl=true
+    username: waaw
+    password: W@@WGl0b@l
+  mail:
+    userName: akhil@pragra.io
+    password: AkAmSuHi9594
+
+logging:
+  config: classpath:log4j2.yml
+
+#########################################
+#####    Security Configurations    #####
+#########################################
+security:
+  un-auth-url-patterns: /api/*/unAuth/**, /api/unAuth/**, ${application.websocket.connection-endpoint}/**
+  cors-allowed-origins: http://localhost:3000, https://black-sand-0e961ff10.2.azurestaticapps.net, https://waaw.ca, https://www.waaw.ca
+  # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
+  jwt-secret: YjE0OTg3YTEyM2YwY2YyNGJjYmZlYTUwNjJkZDQ0YzYxNmUwNjIyMGVkOTIxNTEyODA1M2I3Yjk0NTU5NmIyNjMwZTJiZTlmNjA0YTAyNGY3MzdjOGNlNzQ4OTQzNTAxYmJiM2VlYmRiZGE1YTM5NjhiNGEyNWE1YzA0YTY1MTI=
+  jwt-default-token-validity-in-seconds: 1800
+  jwt-remember-me-token-validity-in-seconds: 2592000
+
+########################################
+#####    Swagger Configurations    #####
+########################################
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+##############################
+#####    Azure Config    #####
+##############################
+azure:
+  sms:
+    end-point: https://waaw-sms.communication.azure.com
+    key-credential: kEjXJz/2DRm7taUTcr9mPWcB3dOb+lyki8bvhyzjRA3Syi0bRDBLt6q67CuGW9C49TZT2vPBpUn3g2nFBsyaoA==
+  blob:
+    account-name: waawstorage
+    account-key: KJY8QGES7Z3iCzNgj0Z6qt/Vkwm/mQkWsArWgtdyRyjAb3zSssF2dYCH30/MKKH1Leya+WfKM24c+AStNRaKQQ==
+    payrollName: prod-payroll
+    payrollKey: sp=racwdli&st=2023-02-17T18:54:03Z&se=2030-02-18T02:54:03Z&sip=0.0.0.0-255.255.255.255&spr=https&sv=2021-06-08&sr=c&sig=0dO3wY31pXp66HnAPgRhytjj7%2FMRhqNbED4PyF8Zmcc%3D
+    attendanceName: prod-attendance
+    attendanceKey: sp=racwdli&st=2023-02-17T18:52:02Z&se=2030-02-18T02:52:02Z&sip=0.0.0.0-255.255.255.255&spr=https&sv=2021-06-08&sr=c&sig=eQ%2FqofMhnRzL2NdE8uZNA3lmnXXTK4s0LVsUyU2ASLQ%3D
+    holidayName: prod-holiday
+    holidayKey: sp=racwdli&st=2023-02-17T18:53:23Z&se=2030-02-18T02:53:23Z&sip=0.0.0.0-255.255.255.255&spr=https&sv=2021-06-08&sr=c&sig=HntOvBhMgYyS64QbhTtvKrx8hRV1kKpXySYAzjtnG%2F8%3D
+    picturesName: prod-pictures
+    picturesKey: sp=racwdli&st=2023-02-17T18:54:46Z&se=2030-02-18T02:54:46Z&sip=0.0.0.0-255.255.255.255&spr=https&sv=2021-06-08&sr=c&sig=j1wiak2ZmUNMdddw9rg3lnWez02RMXKbUQTNB94Iy%2FM%3D
+  send-grid:
+    sender-name: WaaW
+    sender-email: customer.service@waaw.ca
+    api-key: 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
+
+#################################################
+#####    Application specific properties    #####
+#################################################
+application:
+  create-dummy-data-on-startup: false
+  urls:
+    hosted-ui: https://www.waaw.ca
+    hosted-server: https://api.waaw.ca
+  mail:
+    ui-url: ${application.urls.hosted-ui}

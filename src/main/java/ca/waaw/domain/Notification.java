@@ -32,6 +32,9 @@ public class Notification implements Serializable {
     @Column(name = "user_id")
     private String userId;
 
+    @Column(name = "action_entity_id")
+    private String actionEntityId;
+
     @Column(name = "is_read")
     private boolean isRead;
 
@@ -43,6 +46,6 @@ public class Notification implements Serializable {
     private NotificationType type;
 
     @Column(name = "created_time")
-    private Instant createdTime;
+    private Instant createdTime = Instant.now();
 
 }

@@ -13,4 +13,5 @@ public class PastValueNotDeletableException extends RuntimeException {
         super();
         this.entityType = entityType;
     }
+
 }

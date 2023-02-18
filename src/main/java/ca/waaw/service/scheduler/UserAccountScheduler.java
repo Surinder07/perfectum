@@ -4,7 +4,7 @@ import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.User;
 import ca.waaw.domain.UserTokens;
 import ca.waaw.enumration.AccountStatus;
-import ca.waaw.enumration.UserToken;
+import ca.waaw.enumration.UserTokenType;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.repository.UserTokenRepository;
 import lombok.AllArgsConstructor;
@@ -43,7 +43,7 @@ public class UserAccountScheduler {
                         .minus(appValidityTimeConfig.getActivationLink(), ChronoUnit.DAYS))
                 .ifPresent(users -> {
                     userTokenRepository.findAllByUserIdInAndTokenType(users.stream().map(User::getId)
-                                    .collect(Collectors.toList()), UserToken.ACTIVATION)
+                                    .collect(Collectors.toList()), UserTokenType.ACTIVATION)
                             .ifPresent(userTokenRepository::deleteAll);
                     userRepository.deleteAll(users);
                     log.info("Successfully Deleted users that are not activated for last {} days: {}",
@@ -55,9 +55,9 @@ public class UserAccountScheduler {
     public void expireInviteAndPasswordRestToken() {
         List<UserTokens> expiredTokens = userTokenRepository.findAllByIsExpired(false)
                 .stream()
-                .filter(token -> (token.getTokenType().equals(UserToken.INVITE) && token.getCreatedDate().isBefore(Instant.now()
+                .filter(token -> (token.getTokenType().equals(UserTokenType.INVITE) && token.getCreatedDate().isBefore(Instant.now()
                         .minus(appValidityTimeConfig.getUserInvite(), ChronoUnit.DAYS))) ||
-                        (token.getTokenType().equals(UserToken.RESET) && token.getCreatedDate().isBefore(Instant.now()
+                        (token.getTokenType().equals(UserTokenType.RESET) && token.getCreatedDate().isBefore(Instant.now()
                                 .minus(appValidityTimeConfig.getPasswordReset(), ChronoUnit.DAYS)))
                 )
                 .peek(token -> token.setExpired(true))

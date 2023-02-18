@@ -17,8 +17,6 @@ public class AppUrlConfig {
 
     private String inviteUser;
 
-    private String register;
-
     private String login;
 
     public String getHostedUi() {
@@ -35,10 +33,6 @@ public class AppUrlConfig {
 
     public String getInviteUserUrl(String key) {
         return String.format("%s%s%s", hostedUi, inviteUser, key);
-    }
-
-    public String getRegisterUrl() {
-        return String.format("%s%s", hostedUi, register);
     }
 
     public String getLoginUrl() {

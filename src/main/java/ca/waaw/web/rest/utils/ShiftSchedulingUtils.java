@@ -1,9 +1,6 @@
 package ca.waaw.web.rest.utils;
 
-import ca.waaw.domain.LocationRole;
-import ca.waaw.domain.OrganizationHolidays;
-import ca.waaw.domain.Shifts;
-import ca.waaw.domain.ShiftsBatch;
+import ca.waaw.domain.*;
 import ca.waaw.domain.joined.EmployeePreferencesWithUser;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.ShiftSchedulingPreferences;
@@ -42,20 +39,25 @@ public class ShiftSchedulingUtils {
                 .filter(tempShift -> DateAndTimeUtils.isInstantSameDayAsAnotherInstant(tempShift.getStart(), shift.getStart()))
                 .collect(Collectors.toList());
         long shiftDurationInSeconds = shift.getEnd().getEpochSecond() - shift.getStart().getEpochSecond();
-        long shiftSecondsForSameDay = checkShiftOverlapAndReturnShiftHours(existingSameDatShifts,
-                shift.getStart(), shift.getEnd());
-        // Check for maximum and minimum hours per day of shift
-        if ((shiftDurationInSeconds + shiftSecondsForSameDay) > shiftSchedulingPreferences.getTotalHoursPerDayMax() * 3600L) {
-            conflictReasons.add("Maximum hours for shift per day exceeded.");
-            log.warn("Maximum hours for shift per day exceeded for shift {}", shift.getId());
-        } else if ((shiftDurationInSeconds + shiftSecondsForSameDay) < shiftSchedulingPreferences.getTotalHoursPerDayMin() * 3600L) {
-            conflictReasons.add("Minimum hours for shift per day not reached.");
-            log.warn("Minimum hours for shift per day not reached for shift {}", shift.getId());
+        try {
+            long shiftSecondsForSameDay = checkShiftOverlapAndReturnShiftHours(existingSameDatShifts,
+                    shift.getStart(), shift.getEnd());
+            // Check for maximum and minimum hours per day of shift
+            if ((shiftDurationInSeconds + shiftSecondsForSameDay) > shiftSchedulingPreferences.getTotalHoursPerDayMax() * 3600L) {
+                conflictReasons.add("Maximum hours for shift per day exceeded.");
+                log.warn("Maximum hours for shift per day exceeded for shift {}", shift.getId());
+            } else if ((shiftDurationInSeconds + shiftSecondsForSameDay) < shiftSchedulingPreferences.getTotalHoursPerDayMin() * 3600L) {
+                conflictReasons.add("Minimum hours for shift per day not reached.");
+                log.warn("Minimum hours for shift per day not reached for shift {}", shift.getId());
+            }
+            // Check for Consecutive Days
+            validateMaximumConsecutiveWorkDays(shiftsToCheck, shift, conflictReasons, shiftSchedulingPreferences);
+            // Check for minimum gap in two shifts
+            validateGapBetweenTwoShifts(shiftsToCheck, shift, conflictReasons, shiftSchedulingPreferences);
+        } catch (ShiftOverlappingException e) {
+            shift.setShiftStatus(ShiftStatus.FAILED);
+            shift.setNotes("An existing shift overlaps with this shift.");
         }
-        // Check for Consecutive Days
-        validateMaximumConsecutiveWorkDays(shiftsToCheck, shift, conflictReasons, shiftSchedulingPreferences);
-        // Check for minimum gap in two shifts
-        validateGapBetweenTwoShifts(shiftsToCheck, shift, conflictReasons, shiftSchedulingPreferences);
         return conflictReasons;
     }
 
@@ -233,7 +235,7 @@ public class ShiftSchedulingUtils {
                 break;
             case THURSDAY:
                 startTime = preferences.getThursdayStartTime();
-                workingHours = getTimeDifference(preferences.getThursdayStartTime(),preferences.getThursdayEndTime());
+                workingHours = getTimeDifference(preferences.getThursdayStartTime(), preferences.getThursdayEndTime());
                 break;
             case FRIDAY:
                 startTime = preferences.getFridayStartTime();
@@ -267,7 +269,8 @@ public class ShiftSchedulingUtils {
      */
     public static List<Shifts> validateAndCreateShiftsForBatch(ShiftsBatch batch, List<Shifts> existingShifts, List<OrganizationHolidays> holidays,
                                                                List<ShiftSchedulingPreferences> preferences, List<EmployeePreferencesWithUser> employeePreferenceWithUsers,
-                                                               String timezone, List<String> employeeWithoutPreferences) {
+                                                               String timezone, List<String> employeeWithoutPreferences,
+                                                               List<Requests> timeOff) {
         List<Shifts> newShifts = new ArrayList<>();
         try {
             Instant startDate = batch.getStartDate();
@@ -282,7 +285,8 @@ public class ShiftSchedulingUtils {
                 if (!isHoliday) {
                     // Create a list of new shifts for this day
                     List<Shifts> newShiftsForOneDay = createShiftsForOneDayOfBatch(startDate, existingShifts, preferences,
-                            employeePreferenceWithUsers, timezone, batch.getCreatedBy(), employeeWithoutPreferences, batch.isReleased());
+                            employeePreferenceWithUsers, timezone, batch.getCreatedBy(), employeeWithoutPreferences,
+                            batch.isReleased(), batch.getId(), timeOff);
                     newShifts.addAll(newShiftsForOneDay);
                 } else {
                     // TODO add notification for holiday
@@ -308,7 +312,8 @@ public class ShiftSchedulingUtils {
      */
     private static List<Shifts> createShiftsForOneDayOfBatch(Instant date, List<Shifts> existingShifts, List<ShiftSchedulingPreferences> preferences,
                                                              List<EmployeePreferencesWithUser> employeePreferenceWithUsers, String timezone,
-                                                             String adminId, List<String> employeeWithoutPreferences, boolean instantRelease) {
+                                                             String adminId, List<String> employeeWithoutPreferences, boolean instantRelease,
+                                                             String batchId, List<Requests> timeOff) {
         List<Shifts> newShifts = new ArrayList<>();
         Map<String, List<ShiftSchedulingPreferences>> locationRolePreference = preferences.stream()
                 .collect(Collectors.groupingBy(ShiftSchedulingPreferences::getLocationRoleId, Collectors.toList()));
@@ -327,6 +332,7 @@ public class ShiftSchedulingUtils {
                                     .anyMatch(shift -> DateAndTimeUtils.isInstantSameDayAsAnotherInstant(date, shift.getStart()));
                             if (shiftDuration != null) {
                                 Shifts newShift = new Shifts();
+                                newShift.setBatchId(batchId);
                                 newShift.setUserId(preference.getUserId());
                                 newShift.setStart(shiftDuration[0]);
                                 newShift.setEnd(shiftDuration[1]);
@@ -336,6 +342,12 @@ public class ShiftSchedulingUtils {
                                 newShift.setLocationId(preference.getLocationId());
                                 newShift.setLocationRoleId(preference.getLocationRoleId());
                                 newShift.setCreatedBy(adminId);
+                                boolean isTimeoff = timeOff.stream()
+                                        .filter(request -> request.getUserId().equals(preference.getUserId()))
+                                        .anyMatch(request -> (shiftDuration[0].isAfter(request.getStart()) && shiftDuration[0].isBefore(request.getEnd())) ||
+                                                (shiftDuration[1].isAfter(request.getStart()) && shiftDuration[1].isBefore(request.getEnd())) ||
+                                                (request.getStart().isAfter(shiftDuration[0]) && request.getStart().isBefore(shiftDuration[1])) ||
+                                                (request.getEnd().isAfter(shiftDuration[0]) && request.getEnd().isBefore(shiftDuration[1])));
                                 List<Shifts> checkShifts = shiftsToCheckPerLocationRole.get(preference.getLocationRoleId())
                                         .stream().filter(shifts -> shifts.getUserId().equalsIgnoreCase(preference.getUserId()))
                                         .collect(Collectors.toList());
@@ -349,6 +361,10 @@ public class ShiftSchedulingUtils {
                                     newShift.setNotes("An existing shift overlaps with this shift.");
                                     log.warn("A shift already exist on same day. " +
                                             "Skipping shift for user {}, on date {}", preference.getUserId(), date);
+                                }
+                                if (isTimeoff) {
+                                    newShift.setShiftStatus(ShiftStatus.FAILED);
+                                    newShift.setNotes("A time off request is already approved for this time.");
                                 }
                                 newShifts.add(newShift);
                                 log.info("New shift entity created for user {}: {}", preference.getUserId(), newShift);
@@ -417,7 +433,7 @@ public class ShiftSchedulingUtils {
      * Mainly used in {@link ShiftSchedulingService} method getAllPreferencesForALocationOrUser
      *
      * @param locationRole location role info
-     * @param userId userId for which preference is fetched
+     * @param userId       userId for which preference is fetched
      * @return Shift scheduling preferences for this role
      */
     public static ShiftSchedulingPreferences mappingFunction(LocationRole locationRole, String userId) {

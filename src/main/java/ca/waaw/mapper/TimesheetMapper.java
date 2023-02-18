@@ -1,12 +1,9 @@
 package ca.waaw.mapper;
 
 import ca.waaw.domain.Timesheet;
-import ca.waaw.domain.joined.DetailedTimesheet;
 import ca.waaw.domain.joined.UserOrganization;
-import ca.waaw.dto.TimesheetDetailDto;
-import ca.waaw.dto.userdtos.UserInfoForDropDown;
+import ca.waaw.dto.timesheet.TimesheetDetailsDto;
 import ca.waaw.enumration.TimeSheetType;
-import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 
 import java.time.Instant;
@@ -20,6 +17,9 @@ public class TimesheetMapper {
     public static Timesheet createNewEntityForLoggedInUser(UserOrganization loggedInUser) {
         Timesheet target = new Timesheet();
         target.setStart(DateAndTimeUtils.getCurrentDateTime(loggedInUser.getLocation().getTimezone()));
+        target.setOrganizationId(loggedInUser.getOrganizationId());
+        target.setLocationId(loggedInUser.getLocationId());
+        target.setLocationRoleId(loggedInUser.getLocationRoleId());
         target.setType(TimeSheetType.CLOCKED);
         target.setCreatedBy(loggedInUser.getId());
         target.setUserId(loggedInUser.getId());
@@ -42,24 +42,18 @@ public class TimesheetMapper {
     }
 
     /**
-     * @param source   Detailed timesheet details
+     * @param source   source entity for timesheet
      * @param timezone timezone for logged-in user
-     * @return Dto for timesheet details
+     * @return dto populated with timesheet details
      */
-    public static TimesheetDetailDto entityToDto(DetailedTimesheet source, String timezone) {
-        TimesheetDetailDto target = new TimesheetDetailDto();
+    public static TimesheetDetailsDto entityToDetailedDto(Timesheet source, String timezone) {
+        TimesheetDetailsDto target = new TimesheetDetailsDto();
         target.setId(source.getId());
+        target.setType(source.getType().equals(TimeSheetType.ADDED_BY_ADMIN) ? "Manual" : "Clocked");
         target.setStart(DateAndTimeUtils.getDateTimeObject(source.getStart(), timezone));
-        target.setEnd(DateAndTimeUtils.getDateTimeObject(source.getEnd(), timezone));
-        UserInfoForDropDown user = new UserInfoForDropDown();
-        user.setId(source.getUserDetails().getId());
-        user.setEmail(source.getUserDetails().getEmail());
-        user.setFullName(CommonUtils.combineFirstAndLastName(source.getUserDetails().getFirstName(),
-                source.getUserDetails().getLastName()));
-//        user.setAuthority(source.getUserDetails().getAuthority());
-        target.setUser(user);
-//        target.setLocationAndRole(LocationRoleMapper.locationEntityToDetailDto(source.getUserDetails().getLocation(),
-//                source.getUserDetails().getLocationRole()));
+        target.setEnd(source.getEnd() != null ? DateAndTimeUtils.getDateTimeObject(source.getEnd(), timezone) : null);
+        target.setDuration(source.getEnd() != null ? DateAndTimeUtils.getTimeBetweenInstants(source.getStart(), source.getEnd()) : null);
+        target.setComment(source.getComment());
         return target;
     }
 

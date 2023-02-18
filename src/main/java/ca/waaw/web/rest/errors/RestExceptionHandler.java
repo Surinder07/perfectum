@@ -134,7 +134,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<ErrorVM> handlePastValueNotDeletableException(PastValueNotDeletableException ex) {
         String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.pastValueNotDeletableMessage,
                 null), ex.getEntityType());
-        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(ShiftOverlappingException.class)
@@ -203,6 +203,20 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<ErrorVM> handleAccessDeniedException(AccessDeniedException ex) {
         return new ResponseEntity<>(new ErrorVM(ex.getErrorCode()), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(EntityNotDeletableException.class)
+    protected ResponseEntity<ErrorVM> handleEntityNotDeletableException(EntityNotDeletableException ex) {
+        String message = String.format(CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.entityNotDeletableMessage,
+                null), ex.getReasonEntities(), ex.getEntity());
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(AlreadySubscribedException.class)
+    protected ResponseEntity<ErrorVM> handleAlreadySubscribedException(AlreadySubscribedException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.alreadySubscribedMessage,
+                null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
     }
 
 }

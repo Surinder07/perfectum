@@ -39,6 +39,8 @@ public class UserDetailsDto {
 
     private String role;
 
+    private String startOfWeek;
+
     private OrganizationPreferences organizationPreferences;
 
     private String langKey;

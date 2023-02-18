@@ -72,18 +72,6 @@ BEGIN
 END;
 //
 
---Trigger to update the last_modified_date on table time_offs
---Written date: 21-oct-2022
-DROP TRIGGER IF EXISTS time_offs_updated_by;
-//
-CREATE TRIGGER time_offs_updated_by
-    BEFORE UPDATE ON `time_offs`
-    FOR EACH ROW
-BEGIN
-	SET NEW.last_modified_date = CURRENT_TIMESTAMP();
-END;
-//
-
 --Trigger to update the last_modified_date on table time_sheets
 --Written date: 21-oct-2022
 DROP TRIGGER IF EXISTS time_sheets_updated_by;

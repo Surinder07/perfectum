@@ -1,7 +1,7 @@
 package ca.waaw.filehandler.utils;
 
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
-import ca.waaw.mapper.ReportsMapper;
+//import ca.waaw.mapper.ReportsMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -16,11 +16,12 @@ public class PojoToFileUtils {
     private final static Logger log = LogManager.getLogger(PojoToFileUtils.class);
 
     /**
-     * @param writableList Use {@link ReportsMapper} class to get the list of object array
+     * @param writableList Use  class to get the list of object array
      * @param filename     file name for the workbook
      * @return byte array for the file
      */
     public static ByteArrayResource convertObjectToListOfWritableObject(List<Object[]> writableList, String filename, String format) {
+        if (writableList.size() == 1) throw new BadRequestException("No data available to generate report");
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             if (format.equalsIgnoreCase("xls")) {

@@ -2,8 +2,10 @@ package ca.waaw.security.jwt;
 
 import ca.waaw.config.applicationconfig.AppSecurityConfig;
 import ca.waaw.enumration.AccountStatus;
+import ca.waaw.security.SecurityUtils;
 import io.jsonwebtoken.*;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Configuration;
@@ -11,13 +13,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,25 @@ public class TokenProvider {
                 .setSubject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
                 .claim(ACCOUNT_STATUS_KEY, accountStatus.toString())
+                .signWith(SignatureAlgorithm.HS512, appSecurityConfig.getJwtSecret())
+                .setExpiration(validity)
+                .compact();
+    }
+
+    public String updateUsernameOrStatusInToken(String username, AccountStatus accountStatus) {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        String authorities = securityContext.getAuthentication().getAuthorities()
+                .stream().map(Object::toString).collect(Collectors.joining(","));
+        Date validity = SecurityUtils.getCurrentUserJWT()
+                .map(this::getExpirationDateFromToken).orElse(null);
+        AccountStatus accountStatusOld = SecurityUtils.getCurrentUserJWT()
+                .map(this::checkAccountStatus).orElse(null);
+        String usernameOld = SecurityUtils.getCurrentUserLogin().orElse(null);
+
+        return Jwts.builder()
+                .setSubject(StringUtils.isNotEmpty(username) ? username : usernameOld)
+                .claim(AUTHORITIES_KEY, authorities)
+                .claim(ACCOUNT_STATUS_KEY, accountStatus != null ? accountStatus.toString() : Objects.requireNonNull(accountStatusOld).toString())
                 .signWith(SignatureAlgorithm.HS512, appSecurityConfig.getJwtSecret())
                 .setExpiration(validity)
                 .compact();

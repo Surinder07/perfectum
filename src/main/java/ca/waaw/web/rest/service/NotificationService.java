@@ -3,13 +3,17 @@ package ca.waaw.web.rest.service;
 import ca.waaw.domain.Notification;
 import ca.waaw.domain.User;
 import ca.waaw.dto.PaginationDto;
+import ca.waaw.enumration.Authority;
 import ca.waaw.mapper.NotificationMapper;
 import ca.waaw.repository.NotificationRepository;
 import ca.waaw.repository.UserRepository;
+import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.utils.CommonUtils;
+import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
@@ -18,6 +22,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,15 +34,26 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
 
+    private final UserOrganizationRepository userOrganizationRepository;
+
     private final UserRepository userRepository;
 
-    public PaginationDto getAllNotifications(int pageNo, int pageSize) {
+    public PaginationDto getAllNotifications(int pageNo, int pageSize, String startDate, String endDate, String type,
+                                             Boolean isRead) {
         Pageable getSortedByCreatedDate = PageRequest.of(pageNo, pageSize, Sort.by("createdTime").descending());
+        AtomicReference<String> timezone = new AtomicReference<>(null);
         Page<Notification> notificationPage = SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(user -> notificationRepository.findAllByUserIdAndDeleteFlag(user.getId(), false, getSortedByCreatedDate))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> {
+                    timezone.set(user.getAuthority().equals(Authority.ADMIN) ? user.getOrganization().getTimezone() :
+                            user.getLocation().getTimezone());
+                    Instant[] startEnd = StringUtils.isNotEmpty(startDate) && StringUtils.isNotEmpty(endDate) ?
+                            DateAndTimeUtils.getStartAndEndTimeForInstant(startDate, endDate, timezone.get()) : new Instant[]{null, null};
+                    return notificationRepository.searchAndFilterNotification(user.getId(), type, startEnd[0],
+                            startEnd[1], isRead, getSortedByCreatedDate);
+                })
                 .orElse(Page.empty());
-        return CommonUtils.getPaginationResponse(notificationPage, NotificationMapper::entityToDto);
+        return CommonUtils.getPaginationResponse(notificationPage, NotificationMapper::entityToDto, timezone.get());
     }
 
     public void markNotificationAsRead(String id) {

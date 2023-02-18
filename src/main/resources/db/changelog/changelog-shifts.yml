@@ -18,6 +18,12 @@ databaseChangeLog:
                     nullable: false
                     primaryKey: true
               - column:
+                  name: waaw_id
+                  type: VARCHAR(100)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: ux_batch_waaw_id
+              - column:
                   name: user_id
                   type: VARCHAR(100)
               - column:
@@ -35,6 +41,9 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: notes
+                  type: VARCHAR(2000)
+              - column:
+                  name: conflicts
                   type: VARCHAR(8000)
               - column:
                   name: organization_id
@@ -103,3 +112,10 @@ databaseChangeLog:
             constraintName: fk_shifts_batch_id
             referencedColumnNames: uuid
             referencedTableName: shifts_batch
+        - createIndex:
+            indexName: idx_shifts_waaw_id
+            tableName: shifts
+            unique: true
+            column:
+              name: waaw_id
+              type: VARCHAR(100)

@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +26,8 @@ import java.util.Map;
 @Tag(name = "${api.swagger.groups.user}")
 public class UserController {
 
+    private final Logger log = LogManager.getLogger(UserController.class);
+
     private final UserService userService;
 
     private final AppRegexConfig appRegexConfig;
@@ -35,7 +39,12 @@ public class UserController {
     @Operation(description = "${api.description.user.registerUser}")
     @PostMapping("${api.endpoints.user.registerUser}")
     public void registerNewUser(@Valid @RequestBody NewRegistrationDto registrationDto) {
-        userService.registerNewUser(registrationDto);
+        try {
+            userService.registerNewUser(registrationDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk
@@ -53,16 +62,35 @@ public class UserController {
     @SwaggerBadRequest
     @SwaggerAlreadyExist
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = LoginResponseDto.class, description = "Updates the username in jwt"))})
     @Operation(description = "${api.description.user.completeRegistration}")
     @PutMapping("${api.endpoints.user.completeRegistration}")
-    public void completeRegistration(@Valid @RequestBody CompleteRegistrationDto registrationDto) {
+    public ResponseEntity<LoginResponseDto> completeRegistration(@Valid @RequestBody CompleteRegistrationDto registrationDto) {
         try {
-            userService.completeRegistration(registrationDto);
+            return ResponseEntity.ok(userService.completeRegistration(registrationDto));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Exception occurred while completing user profile", e);
             throw e;
         }
     }
+
+//    @SwaggerCreated
+//    @SwaggerBadRequest
+//    @SwaggerAlreadyExist
+//    @ResponseStatus(HttpStatus.CREATED)
+//    @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
+//            schema = @Schema(implementation = LoginResponseDto.class, description = "Updates the username in jwt"))})
+//    @Operation(description = "${api.description.user.completeRegistration}")
+//    @PutMapping("${api.endpoints.user.completeRegistration}")
+//    public ResponseEntity<LoginResponseDto> completePaymentInfo(@Valid @RequestBody CreditCardDto creditCardDto) {
+//        try {
+//            return ResponseEntity.ok(userService.completePaymentInfo(creditCardDto));
+//        } catch (Exception e) {
+//            log.error("Exception occurred while completing payment info", e);
+//            throw e;
+//        }
+//    }
 
     @SwaggerOk
     @SwaggerNotFound
@@ -96,7 +124,12 @@ public class UserController {
     @Operation(description = "${api.description.user.acceptInvite}")
     @PutMapping("${api.endpoints.user.acceptInvite}")
     public void acceptInvite(@Valid @RequestBody AcceptInviteDto acceptInviteDto) {
-        userService.acceptInvite(acceptInviteDto);
+        try {
+            userService.acceptInvite(acceptInviteDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk

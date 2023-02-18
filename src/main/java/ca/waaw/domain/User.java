@@ -34,6 +34,9 @@ public class User extends AbstractEntity {
     @Column(nullable = false)
     private String email;
 
+    @Column(name = "email_to_update")
+    private String emailToUpdate;
+
     @Column(name = "country")
     private String country;
 
@@ -42,6 +45,9 @@ public class User extends AbstractEntity {
 
     @Column
     private String mobile;
+
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @Column(name = "password_hash")
     private String passwordHash;
@@ -76,10 +82,10 @@ public class User extends AbstractEntity {
     private AccountStatus accountStatus;
 
     @Column(name = "email_notification_on")
-    private boolean isEmailNotifications;
+    private boolean isEmailNotifications = true;
 
     @Column(name = "sms_notification_on")
-    private boolean isSmsNotifications;
+    private boolean isSmsNotifications = true;
 
     @Column(name = "last_login")
     private Instant lastLogin;

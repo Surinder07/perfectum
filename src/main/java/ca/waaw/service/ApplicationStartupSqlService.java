@@ -116,10 +116,10 @@ public class ApplicationStartupSqlService {
             String locationRoleId = createNewLocationRole(organizationId, locationId, manager.getId(), false);
             // Create new Employees
             User employee1 = saveNewUser("First", "Employee", "employee1", "employee1@waaw.ca",
-                    "EMPL123$", CommonUtils.getNextCustomId(manager.getWaawId(), appCustomIdConfig.getLength()),
+                    "Empl123$", CommonUtils.getNextCustomId(manager.getWaawId(), appCustomIdConfig.getLength()),
                     Authority.EMPLOYEE, organizationId, locationId, locationRoleId);
             User employee2 = saveNewUser("Second", "Employee", "employee2", "employee2@waaw.ca",
-                    "EMPL123$", CommonUtils.getNextCustomId(employee1.getWaawId(), appCustomIdConfig.getLength()),
+                    "Empl123$", CommonUtils.getNextCustomId(employee1.getWaawId(), appCustomIdConfig.getLength()),
                     Authority.EMPLOYEE, organizationId, locationId, locationRoleId);
             // Create Employee Preferences
             createEmployeePreferences(manager.getId());
@@ -142,7 +142,7 @@ public class ApplicationStartupSqlService {
     }
 
     private User saveNewUser(String fName, String lName, String username, String email, String password, String customId,
-                               Authority role, String organizationId, String locationId, String locationRoleId) {
+                             Authority role, String organizationId, String locationId, String locationRoleId) {
         User user = new User();
         user.setFirstName(fName);
         user.setLastName(lName);

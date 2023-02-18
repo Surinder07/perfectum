@@ -20,10 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -53,6 +50,20 @@ public class CommonUtils {
         if (locale == null) locale = Locale.ENGLISH;
         ResourceBundle bundle = ResourceBundle.getBundle("i18n/messages", locale);
         return bundle.getString(property);
+    }
+
+    /**
+     * Will fetch the property from {@code messages.properties} resource bundle
+     *
+     * @param property property key
+     * @param locale   language needed for property
+     * @return Value Map for the property key
+     */
+    public static Map<String, String> getPropertyMapFromMessagesResourceBundle(String property, Locale locale) {
+        String propertyValue = getPropertyFromMessagesResourceBundle(property, locale);
+        return Arrays.stream(propertyValue.split(","))
+                .map(s -> s.split("="))
+                .collect(Collectors.toMap(s -> s[0], s -> s[1]));
     }
 
     /**

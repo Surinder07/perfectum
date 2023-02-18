@@ -2,9 +2,10 @@ package ca.waaw.web.rest;
 
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.locationandroledtos.LocationDto;
-import ca.waaw.dto.locationandroledtos.LocationRoleDetailedDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleDto;
 import ca.waaw.dto.locationandroledtos.UpdateLocationRoleDto;
+import ca.waaw.enumration.Timezones;
+import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.service.LocationAndRoleService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,12 +14,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.actuate.trace.http.HttpTrace;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Arrays;
 
 @SuppressWarnings("unused")
 @RestController
@@ -34,8 +36,19 @@ public class LocationAndRoleController {
     @GetMapping("${api.endpoints.location-and-role.getLocation}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
             implementation = LocationDto.class))}, description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> getLocation(@PathVariable int pageNo, @PathVariable int pageSize) {
-        return ResponseEntity.ok(locationAndRoleService.getLocation(pageNo, pageSize));
+    public ResponseEntity<PaginationDto> getLocation(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                     @RequestParam(required = false) String searchKey,
+                                                     @RequestParam(required = false) Boolean active,
+                                                     @RequestParam(required = false) String timezone) {
+        if (StringUtils.isEmpty(searchKey)) searchKey = null;
+        if (StringUtils.isEmpty(timezone)) timezone = null;
+        else {
+            String finalTimezone = timezone;
+            if (Arrays.stream(Timezones.values()).noneMatch(t -> t.value.equals(finalTimezone))) {
+                throw new BadRequestException("Invalid timezone", "timezone");
+            }
+        }
+        return ResponseEntity.ok(locationAndRoleService.getLocation(pageNo, pageSize, searchKey, active, timezone));
     }
 
     @SwaggerCreated
@@ -81,7 +94,12 @@ public class LocationAndRoleController {
     @Operation(description = "${api.description.location-and-role.addLocationRole}")
     @PostMapping("${api.endpoints.location-and-role.addLocationRole}")
     public void addNewLocationRole(@Valid @RequestBody LocationRoleDto locationRoleDto) {
-        locationAndRoleService.addNewLocationRole(locationRoleDto);
+        try {
+            locationAndRoleService.addNewLocationRole(locationRoleDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk
@@ -101,8 +119,26 @@ public class LocationAndRoleController {
     @GetMapping("${api.endpoints.location-and-role.getLocationRole}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(
             implementation = PaginationDto.class))}, description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> getLocationRole(@PathVariable int pageNo, @PathVariable int pageSize) {
-        return ResponseEntity.ok(locationAndRoleService.getLocationRoles(pageNo, pageSize));
+    public ResponseEntity<PaginationDto> getLocationRole(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                         @RequestParam(required = false) String searchKey,
+                                                         @RequestParam(required = false) Boolean active,
+                                                         @RequestParam(required = false) String locationId,
+                                                         @RequestParam(required = false) Boolean admin,
+                                                         @RequestParam(required = false) String startDate,
+                                                         @RequestParam(required = false) String endDate) {
+        if (StringUtils.isEmpty(startDate) || StringUtils.isEmpty(endDate)) {
+            startDate = null;
+            endDate = null;
+        }
+        if (StringUtils.isEmpty(searchKey)) searchKey = null;
+        if (StringUtils.isEmpty(locationId)) locationId = null;
+        try {
+            return ResponseEntity.ok(locationAndRoleService.getLocationRoles(pageNo, pageSize, searchKey, active, locationId,
+                    admin, startDate, endDate));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerNotFound

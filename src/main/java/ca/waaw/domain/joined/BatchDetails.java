@@ -18,7 +18,7 @@ import java.time.Instant;
         "WHERE (?1 IS NULL OR (b.name LIKE CONCAT('%', ?1, '%') OR b.waawId LIKE CONCAT('%', ?1, '%'))) " +
         "AND (?2 IS NULL OR b.organizationId = ?2) AND (?3 IS NULL OR b.locationId = ?3) AND ((?4 IS NULL OR ?5 IS NULL) " +
         "OR (b.startDate BETWEEN ?4 AND ?5 OR b.endDate BETWEEN ?4 AND ?5)) AND (?6 IS NULL OR b.status = ?6) " +
-        "AND b.deleteFlag = FALSE")
+        "AND b.deleteFlag = FALSE ORDER BY b.createdDate DESC")
 public class BatchDetails extends AbstractEntity {
 
     @Column(name = "name")

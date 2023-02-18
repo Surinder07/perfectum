@@ -1,23 +1,29 @@
 package ca.waaw.service;
 
-import ca.waaw.config.applicationconfig.AppRegexConfig;
-import ca.waaw.domain.joined.UserReports;
-import ca.waaw.dto.EmailReportDto;
+import ca.waaw.domain.*;
+import ca.waaw.domain.joined.EmployeePreferencesWithUser;
+import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.GenerateReportDto;
+import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.RequestStatus;
+import ca.waaw.enumration.RequestType;
 import ca.waaw.enumration.UserReport;
 import ca.waaw.filehandler.utils.PojoToFileUtils;
 import ca.waaw.mapper.ReportsMapper;
-import ca.waaw.repository.UserReportsRepository;
-import ca.waaw.web.rest.errors.exceptions.BadRequestException;
+import ca.waaw.repository.*;
+import ca.waaw.repository.joined.EmployeePreferencesWithUserRepository;
+import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
+import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
-import java.util.regex.Pattern;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -25,34 +31,71 @@ public class ReportsInternalService {
 
     private final Logger log = LogManager.getLogger(ReportsInternalService.class);
 
-    private final UserReportsRepository reportsRepository;
+    private final EmployeePreferencesWithUserRepository employeePreferencesWithUserRepository;
 
-    private final AppRegexConfig appRegexConfig;
+    private final LocationRepository locationRepository;
 
-    public ByteArrayResource getReport(EmailReportDto reportDto, String fileName) {
-        return PojoToFileUtils.convertObjectToListOfWritableObject(getReportData(reportDto), fileName,
-                reportDto.getPreferredFormat());
+    private final LocationRoleRepository locationRoleRepository;
+
+    private final TimesheetRepository timesheetRepository;
+
+    private final RequestsRepository requestsRepository;
+
+    private final ShiftsRepository shiftsRepository;
+
+    private final OrganizationHolidayRepository organizationHolidayRepository;
+
+    public ByteArrayResource getReport(GenerateReportDto reportDto, String fileName, UserOrganization loggedUser) {
+        return PojoToFileUtils.convertObjectToListOfWritableObject(getReportData(reportDto, loggedUser), fileName,
+                "xls");
     }
 
-    public void emailReport(EmailReportDto reportDto, String fileName) {
-        if (reportDto.getEmail() == null || !Pattern.matches(appRegexConfig.getEmail(), reportDto.getEmail())) {
-            throw new BadRequestException("Please provide a valid email id", "email");
+    public List<Object[]> getReportData(GenerateReportDto reportDto, UserOrganization loggedUser) {
+        String locationId = StringUtils.isNotEmpty(loggedUser.getLocationId()) ? loggedUser.getLocationId() : reportDto.getLocationId();
+
+        List<EmployeePreferencesWithUser> employees = employeePreferencesWithUserRepository.findAllByLocationIdAndIsExpiredAndDeleteFlag(locationId, false, false);
+        List<LocationRole> roles = locationRoleRepository.findAllByDeleteFlagAndIdIn(false,
+                        employees.stream().map(EmployeePreferencesWithUser::getLocationRoleId).collect(Collectors.toList()))
+                .stream().filter(role -> {
+                    if (loggedUser.getAuthority().equals(Authority.ADMIN)) return true;
+                    else return !role.isAdminRights();
+                }).collect(Collectors.toList());
+        if (!loggedUser.getAuthority().equals(Authority.ADMIN)) {
+            employees = employees.stream().filter(emp -> roles.stream().map(LocationRole::getId)
+                            .collect(Collectors.toList()).contains(emp.getLocationRoleId()))
+                    .collect(Collectors.toList());
         }
+        Location location = locationRepository.findOneByIdAndDeleteFlag(locationId, false)
+                .orElseThrow(() -> new EntityNotFoundException("location"));
+        Instant[] dateRange = DateAndTimeUtils.getStartAndEndTimeForInstant(reportDto.getStartDate(), reportDto.getEndDate(), location.getTimezone());
+        List<Timesheet> timesheet = timesheetRepository.findAllByLocationIdAndStartBetweenAndDeleteFlag(locationId, dateRange[0],
+                dateRange[1], false);
+        List<Requests> requests = requestsRepository.findAllByLocationIdAndStartBetweenAndDeleteFlag(locationId, dateRange[0],
+                        dateRange[1], false).stream()
+                .filter(req -> req.getType().equals(RequestType.TIME_OFF))
+                .filter(req -> req.getStatus().equals(RequestStatus.ACCEPTED))
+                .collect(Collectors.toList());
+        List<Shifts> shifts = shiftsRepository.findAllByLocationIdAndStartBetweenAndDeleteFlag(locationId, dateRange[0],
+                dateRange[1], false);
+        Set<OrganizationHolidays> holidays = new HashSet<>(organizationHolidayRepository.getAllForLocationByYear(locationId,
+                Integer.parseInt(reportDto.getStartDate().split("-")[0])));
+        holidays.addAll(new HashSet<>(organizationHolidayRepository.getAllForLocationByYear(locationId,
+                Integer.parseInt(reportDto.getEndDate().split("-")[0]))));
+        if (reportDto.getReportType().equals(UserReport.ATTENDANCE.toString())) {
+            return ReportsMapper.getAttendanceReport(employees, timesheet, shifts, roles, location);
+        } else if (reportDto.getReportType().equals(UserReport.PAYROLL.toString())) {
+            return ReportsMapper.getPayrollReport(employees, timesheet, requests, shifts, roles, location, holidays, reportDto);
+        } else if (reportDto.getReportType().equals(UserReport.HOLIDAYS.toString())) {
+            return ReportsMapper.getHolidayReport(location, holidays, reportDto);
+        }
+        return null;
     }
 
-    private List<Object[]> getReportData(EmailReportDto reportDto) {
-        List<UserReports> reportData = new ArrayList<>(); // TODO fetch from repository;
-        if (reportDto.getReportType().equalsIgnoreCase(UserReport.ATTENDANCE.toString()))
-            return ReportsMapper.getAttendanceReport(reportData);
-        else if (reportDto.getReportType().equalsIgnoreCase(UserReport.PAYROLL.toString()))
-            return ReportsMapper.getPayrollReport(reportData);
-        else throw new BadRequestException("Invalid Report Type");
-    }
-
-    public String getFileName(EmailReportDto reportDto) {
+    public String getFileName(GenerateReportDto reportDto, String extension) {
         StringJoiner joiner = new StringJoiner("_");
-        joiner.add(reportDto.getReportType()).add("report").add(reportDto.getStartDate()).add("-").add(reportDto.getEndDate());
-        return joiner.toString();
+        joiner.add(reportDto.getReportType()).add("report").add(reportDto.getStartDate())
+                .add(reportDto.getEndDate()).add(UUID.randomUUID().toString().split("-")[0]);
+        return joiner + "." + extension;
     }
 
 }

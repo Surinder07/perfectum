@@ -21,6 +21,18 @@ databaseChangeLog:
                   name: user_id
                   type: VARCHAR(100)
               - column:
+                  name: organization_id
+                  type: VARCHAR(100)
+              - column:
+                  name: location_id
+                  type: VARCHAR(100)
+              - column:
+                  name: location_role_id
+                  type: VARCHAR(100)
+              - column:
+                  name: shift_id
+                  type: VARCHAR(100)
+              - column:
                   name: start
                   type: TIMESTAMP
                   constraints:
@@ -62,3 +74,27 @@ databaseChangeLog:
             constraintName: fk_timesheet_user_id
             referencedColumnNames: uuid
             referencedTableName: user
+        - addForeignKeyConstraint:
+            baseTableName: time_sheets
+            baseColumnNames: organization_id
+            constraintName: fk_timesheet_organization_id
+            referencedColumnNames: uuid
+            referencedTableName: organization
+        - addForeignKeyConstraint:
+            baseTableName: time_sheets
+            baseColumnNames: location_id
+            constraintName: fk_timesheet_location_id
+            referencedColumnNames: uuid
+            referencedTableName: location
+        - addForeignKeyConstraint:
+            baseTableName: time_sheets
+            baseColumnNames: location_role_id
+            constraintName: fk_timesheet_location_role_id
+            referencedColumnNames: uuid
+            referencedTableName: location_role
+        - addForeignKeyConstraint:
+            baseTableName: time_sheets
+            baseColumnNames: shift_id
+            constraintName: fk_timesheet_shift_id
+            referencedColumnNames: uuid
+            referencedTableName: shifts

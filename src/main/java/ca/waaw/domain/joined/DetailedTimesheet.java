@@ -1,6 +1,9 @@
 package ca.waaw.domain.joined;
 
 import ca.waaw.domain.AbstractEntity;
+import ca.waaw.domain.Location;
+import ca.waaw.domain.LocationRole;
+import ca.waaw.domain.User;
 import ca.waaw.enumration.TimeSheetType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,11 +33,32 @@ public class DetailedTimesheet extends AbstractEntity {
 
     private Instant end;
 
+    @Column(name = "user_id")
+    private String userId;
+
+    @Column(name = "organization_id")
+    private String organizationId;
+
     @OneToOne
     @NotFound(action = NotFoundAction.EXCEPTION)
     @JoinColumn(name = "user_id", referencedColumnName = "uuid", insertable = false, updatable = false)
-    private UserOrganization userDetails;
+    private User userDetails;
 
+    @OneToOne
+    @NotFound(action = NotFoundAction.EXCEPTION)
+    @JoinColumn(name = "location_id", referencedColumnName = "uuid", insertable = false, updatable = false)
+    private Location location;
+
+    @Column(name = "location_id")
+    private String locationId;
+
+    @OneToOne
+    @NotFound(action = NotFoundAction.EXCEPTION)
+    @JoinColumn(name = "location_role_id", referencedColumnName = "uuid", insertable = false, updatable = false)
+    private LocationRole locationRole;
+
+    @Column
+    @Enumerated(EnumType.STRING)
     private TimeSheetType type;
 
 }

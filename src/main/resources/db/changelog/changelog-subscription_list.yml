@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-subscription_list
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: subscription_list
+      changes:
+        - createTable:
+            tableName: subscription_list
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: email
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: ux_subscription_list_email
+              - column:
+                  name: subscription_active
+                  type: BOOLEAN
+                  defaultValue: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+              - column:
+                  name: last_modified_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+        - createIndex:
+            indexName: idx_subscription_list_email
+            tableName: subscription_list
+            unique: true
+            column:
+              name: email
+              type: VARCHAR(100)

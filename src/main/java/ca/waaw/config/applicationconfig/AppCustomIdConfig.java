@@ -19,4 +19,10 @@ public class AppCustomIdConfig {
 
     private String rolePrefix;
 
+    private String requestPrefix;
+
+    private String shiftPrefix;
+
+    private String reportPrefix;
+
 }

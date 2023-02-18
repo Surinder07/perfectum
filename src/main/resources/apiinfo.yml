@@ -23,6 +23,7 @@ api:
       updateUser: /v1/user/update
     dashboard:
       getData: /v1/dashboard/getData
+      getShiftData: /v1/dashboard/getData/shift/{pageNo}/{pageSize}
     organization:
       updateOrganizationPreferences: /v1/organization/update
       getHolidays: /v1/organization/holiday/getAll
@@ -60,37 +61,46 @@ api:
       createShift: /v1/shifts/create
       updateShift: /v1/shifts/update
       deleteShift: /v1/shifts/delete
+      deleteBatch: /v1/shifts/batch/delete
       assignShift: /v1/shifts/assign
       releaseShift: /v1/shifts/release
+      releaseBatch: /v1/shifts/batch/release
       getAllShifts: /v1/shifts/getAll/{pageNo}/{pageSize}
       getAllShiftsUser: /v1/shifts/user/getAll/{pageNo}/{pageSize}
     requests:
-      newRequest:
-      updateRequest:
-      getAll:
+      newRequest: /v1/requests/new
+      updateRequest: /v1/requests/update
+      getAll: /v1/requests/getAll/{pageNo}/{pageSize}
+      getByUser: /v1/requests/getByUser/{pageNo}/{pageSize}
     timesheet:
       startTimer: /v1/timesheet/timer/start
       stopTimer: /v1/timesheet/timer/stop
       getTimer: /v1/timesheet/timer/get
-      getAll: /v1/timesheet/get
+      getAll: /v1/timesheet/getAll/{pageNo}/{pageSize}
       add: /v1/timesheet/add
       edit: /v1/timesheet/edit
       delete: /v1/timesheet/delete
     reports:
+      generate: /v1/reports/generate
+      get: /v1/reports/get/{pageNo}/{pageSize}
       download: /v1/reports/download
-      email: /v1/reports/email
     resources:
       downloadSample: /v1/unAuth/resource/downloadFile
     super-user:
       addCode: /v1/promoCode/add
       deleteCode: /v1/promoCode/delete
-      getAllCodes: /v1/promoCode/get
+      getAllCodes: /v1/promoCode/get/{pageNo}/{pageSize}
     dropdown:
       getTimezones: /v1/unAuth/dropdown/timezones
       getEnums: /v1/unAuth/dropdown/enums
       getLocations: /v1/dropdown/locations
       getRoles: /v1/dropdown/roles
       getUsers: /v1/dropdown/users
+    calender:
+      getTimesheet: /v1/calender/timesheets/get
+      getDayEvents: /v1/calender/events/get
+    open-apis:
+      subscribe: /v1/unAuth/open/subscribe
   description:
     authentication: |
       Authenticate login and password to get a jwt token.
@@ -177,6 +187,11 @@ api:
         Pass date only if a single date data is needed and pass endDate too if data between two days is needed.
         **Date format is ${api.date-format}**
       getAllShiftsUser:
+    requests:
+      newRequest: Add a new request (for manager or employee only)
+      updateRequest: Respond to a request
+      getAll: get All requests pagination API
+      getByUser: getRequests for given userId or for ogged in user if userId is null
     timesheet:
       startTimer: Start timesheet recording for logged-in user.
       stopTimer: Stop timesheet recording for logged-in user.
@@ -186,8 +201,9 @@ api:
       edit: Edit timesheet manually (For admins).
       delete: Delete timesheet manually (For admins).
     reports:
-      download: Download a report for specific dates
-      email: Generate a report for specific dates and email it to required email id
+      generate: Generate reports
+      get: Get all reports
+      download: Download a report by its id
     resources:
       downloadSample: |
         Download sample files required in the application.
@@ -204,6 +220,12 @@ api:
       getLocations: Get all locations under logged-in user for dropdown
       getRoles: Get all roles under logged-in user for a particular location for dropdown
       getUsers: Get all users under logged-in user for dropdown
+    calender:
+      getHolidays: Get all holidays for a given year
+      getTimesheets: Get all worked time for a month
+      getTodaysEvents: Get all events for a given day
+    open-apis:
+      subscribe: Add an email to subscribe list
   swagger:
     groups:
       auth: 01. Auth
@@ -214,12 +236,14 @@ api:
       notification: 06. Notifications
       location-and-role: 07. Location and Location Role
       shift-management: 08. Shift Management
-      request: 09. Request Management
+      requests: 09. Request Management
       timesheet: 10. Timesheet Management
       reports: 11. Reports
       resources: 12. Resources
       super-user: 13. Super User
       dropdown: 14. Dropdown
+      calender: 15. Calender
+      open-apis: 16. General Open Api's
     error-description:
       trial-over: Payment Required. If role is ADMIN redirect to payment page with error message or else just show the error.
       authentication: Authentication Failed.

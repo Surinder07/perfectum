@@ -1,8 +1,10 @@
 package ca.waaw.domain.joined;
 
+import ca.waaw.enumration.Currency;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.time.Instant;
@@ -18,6 +20,24 @@ public class EmployeePreferencesWithUser {
     @Id
     @Column(name = "uuid", insertable = false, updatable = false)
     private String userId;
+
+    @Column(name = "first_name", insertable = false, updatable = false)
+    private String firstName;
+
+    @Column(name = "last_name", insertable = false, updatable = false)
+    private String lastName;
+
+    @Column(insertable = false, updatable = false)
+    private String email;
+
+    @Column(name = "employee_id", insertable = false, updatable = false)
+    private String employeeId;
+
+    @Column(name = "waaw_custom_id", insertable = false, updatable = false)
+    private String waawId;
+
+    @Column(name = "is_full_time", insertable = false, updatable = false)
+    private boolean isFullTime;
 
     @Column(table = "employee_preferences", name = "uuid")
     private String id;
@@ -64,6 +84,13 @@ public class EmployeePreferencesWithUser {
     @Column(table = "employee_preferences", name = "sunday_end_time")
     private String sundayEndTime;
 
+    @Column(table = "employee_preferences", name = "wages_per_hour")
+    private float wagesPerHour;
+
+    @Column(table = "employee_preferences", name = "wages_currency")
+    @Enumerated(EnumType.STRING)
+    private Currency wagesCurrency;
+
     @Column(table = "employee_preferences", name = "is_expired")
     private boolean isExpired;
 
@@ -84,5 +111,9 @@ public class EmployeePreferencesWithUser {
 
     @Column(name = "del_flg", updatable = false, insertable = false)
     private boolean deleteFlag;
+
+    public String getFullName() {
+        return firstName + (StringUtils.isNotEmpty(lastName) ? " " + lastName : "");
+    }
 
 }

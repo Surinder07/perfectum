@@ -28,7 +28,7 @@ public class LocationAndRoleMapper {
      * @param source Location detail with all users
      * @return Dto to be sent for API
      */
-    public static LocationDetailedDto entityToDto(LocationUsers source) {
+    public static LocationDetailedDto entityToDto(LocationUsers source, String timezone) {
         LocationDetailedDto target = new LocationDetailedDto();
         target.setId(source.getId());
         target.setWaawId(source.getWaawId());

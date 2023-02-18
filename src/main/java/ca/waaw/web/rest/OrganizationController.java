@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +31,8 @@ public class OrganizationController {
 
     private final OrganizationService organizationService;
 
+    private final Logger log = LogManager.getLogger(OrganizationController.class);
+
     @SwaggerOk
     @SwaggerUnauthorized
     @SwaggerAuthenticated
@@ -45,9 +49,13 @@ public class OrganizationController {
     @GetMapping("${api.endpoints.organization.getHolidays}")
     @ApiResponse(responseCode = "200", description = "${api.swagger.schema-description.getAllHolidays}", content =
             {@Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = HolidayDto.class)))})
-    public ResponseEntity<List<?>> getAllHolidays(@RequestParam(required = false) Integer month) {
-        if (month != null && (month > 12 || month < 1)) month = null;
-        return ResponseEntity.ok(organizationService.getAllHolidays(month));
+    public ResponseEntity<List<HolidayDto>> getAllHolidays(@RequestParam(required = false) Integer year) {
+        try {
+            return ResponseEntity.ok(organizationService.getAllHolidays(year));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerNotFound
@@ -57,8 +65,13 @@ public class OrganizationController {
     @SwaggerRespondWithMessage
     @Operation(description = "${api.description.organization.addHolidaysExcel}")
     @PostMapping("${api.endpoints.organization.addHolidaysExcel}")
-    public ResponseEntity<ApiResponseMessageDto> uploadHolidaysByExcel(@RequestPart MultipartFile file, @RequestPart(required = false) String locationId) {
-        return ResponseEntity.ok(organizationService.uploadHolidaysByExcel(file, locationId));
+    public ResponseEntity<ApiResponseMessageDto> uploadHolidaysByExcel(@RequestPart MultipartFile file) {
+        try {
+            return ResponseEntity.ok(organizationService.uploadHolidaysByExcel(file));
+        } catch (Exception e) {
+            log.error("Exception while uploading holidays", e);
+            throw e;
+        }
     }
 
     @SwaggerCreated

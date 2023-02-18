@@ -3,27 +3,28 @@ package ca.waaw.web.rest.service;
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.domain.*;
 import ca.waaw.domain.joined.UserOrganization;
-import ca.waaw.dto.ApiResponseMessageDto;
-import ca.waaw.dto.EmployeePreferencesDto;
-import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.ShiftSchedulingPreferences;
+import ca.waaw.dto.*;
 import ca.waaw.dto.emailmessagedtos.InviteUserMailDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UpdateUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
 import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.UserToken;
+import ca.waaw.enumration.NotificationType;
+import ca.waaw.enumration.UserTokenType;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.*;
+import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.errors.exceptions.application.MissingRequiredFieldsException;
 import ca.waaw.web.rest.utils.ApiResponseMessageKeys;
 import ca.waaw.web.rest.utils.CommonUtils;
+import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import ca.waaw.web.rest.utils.ShiftSchedulingUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -67,6 +69,10 @@ public class MemberService {
     private final EmployeePreferencesRepository employeePreferencesRepository;
 
     private final FileHandler fileHandler;
+
+    private final ShiftsRepository shiftsRepository;
+
+    private final NotificationInternalService notificationInternalService;
 
     /**
      * Sends an invitation to user email
@@ -101,13 +107,14 @@ public class MemberService {
                                 return null;
                             }
                             if (user.getAccountStatus().equals(AccountStatus.INVITED)) {
-                                userTokenRepository.findOneByUserIdAndTokenType(userId, UserToken.INVITE)
+                                userTokenRepository.findOneByUserIdAndTokenTypeOrderByCreatedDateDesc(userId, UserTokenType.INVITE)
+                                        .stream().findFirst()
                                         .map(token -> {
                                             token.setExpired(true);
                                             return userTokenRepository.save(token);
                                         })
                                         .map(token -> {
-                                            UserTokens newToken = new UserTokens(UserToken.INVITE);
+                                            UserTokens newToken = new UserTokens(UserTokenType.INVITE);
                                             newToken.setUserId(token.getUserId());
                                             newToken.setCreatedBy(loggedUser.getId());
                                             return newToken;
@@ -151,7 +158,7 @@ public class MemberService {
         UserOrganization admin = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .orElseThrow(UnauthorizedException::new);
-        String role = SecurityUtils.isCurrentUserInRole(Authority.ADMIN) ? "ADMIN" : "MANAGER";
+        String role = admin.getAuthority().toString();
 
         Set<String> missingFields = new HashSet<>();
         /*
@@ -182,7 +189,7 @@ public class MemberService {
                 if (locationRole == null)
                     throw new EntityNotFoundException("locationRole", inviteUserDto.getLocationRoleId());
                 inviteUserDto.setLocationId(location.getId());
-                inviteUserDto.setLocationRoleId(locationRole.getLocationId());
+                inviteUserDto.setLocationRoleId(locationRole.getId());
                 inviteUserDto.setAuthority(locationRole.isAdminRights() ? Authority.MANAGER : Authority.EMPLOYEE);
             }
         });
@@ -195,7 +202,17 @@ public class MemberService {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            // TODO send notification
+            NotificationInfoDto notificationInfo = NotificationInfoDto.builder()
+                    .receiverUuid(admin.getId())
+                    .receiverName(admin.getFullName())
+                    .receiverMail(admin.getEmail())
+                    .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
+                    .language(admin.getLangKey() == null ? null : admin.getLangKey())
+                    .type(NotificationType.EMPLOYEE)
+                    .build();
+            String[] now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
+                    admin.getOrganization().getTimezone() : admin.getLocation().getTimezone()).toString().split("T");
+            notificationInternalService.sendNotification("notification.upload.users", notificationInfo, now[0], now[1].substring(0, 5));
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
                 .uploadNewEmployees, new Locale(admin.getLangKey())));
@@ -209,10 +226,12 @@ public class MemberService {
                                      String type, String status) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("firstName", "lastName").ascending());
-
+        AtomicReference<String> timezone = new AtomicReference<>(null);
         Page<UserOrganization> userPage = SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(admin -> {
+                    timezone.set(admin.getAuthority().equals(Authority.ADMIN) ? admin.getOrganization().getTimezone() :
+                            admin.getLocation().getTimezone());
                     Boolean isFullTime = null;
                     AccountStatus accountStatus = null;
                     if (type != null) {
@@ -223,10 +242,10 @@ public class MemberService {
                     }
                     String finalLocationId = admin.getAuthority().equals(Authority.MANAGER) ? admin.getLocationId() : locationId;
                     return userOrganizationRepository.searchAndFilterUsers(searchKey, admin.getOrganizationId(), finalLocationId,
-                            roleId, isFullTime, accountStatus, admin.getId(), pageable);
+                            roleId, isFullTime, accountStatus, admin.getAuthority().equals(Authority.MANAGER), pageable);
                 })
                 .orElseThrow(UnauthorizedException::new);
-        return CommonUtils.getPaginationResponse(userPage, UserMapper::entityToUserDetailsForListing);
+        return CommonUtils.getPaginationResponse(userPage, UserMapper::entityToUserDetailsForListing, timezone.get());
     }
 
     /**
@@ -237,18 +256,18 @@ public class MemberService {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
-                        .flatMap(admin -> Optional.of(userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
-                                .flatMap(user -> {
+                        .map(admin -> userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
+                                .map(user -> {
                                     if ((!user.getOrganizationId().equals(admin.getOrganizationId()) ||
                                             (admin.getAuthority().equals(Authority.MANAGER) &&
                                                     !admin.getLocationId().equals(user.getLocationId())))) {
-                                        return Optional.empty();
+                                        return null;
                                     }
                                     return employeePreferencesRepository.findOneByUserIdAndIsExpired(user.getId(), false)
-                                            .map(preference -> UserMapper.entityToUserDetailsForAdmin(user, preference));
+                                            .map(preference -> UserMapper.entityToUserDetailsForAdmin(user, preference))
+                                            .orElse(UserMapper.entityToUserDetailsForAdmin(user, null));
                                 })
                                 .orElseThrow(() -> new EntityNotFoundException("user")))
-                        )
                 )
                 .orElseThrow(() -> new EntityNotFoundException("user"));
     }
@@ -302,18 +321,20 @@ public class MemberService {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(admin -> userRepository.findOneByIdAndDeleteFlag(memberDto.getId(), false)
+                .map(admin -> userOrganizationRepository.findOneByIdAndDeleteFlag(memberDto.getId(), false)
                         .map(user -> {
+                            validateDependenciesIfLocationOrRoleUpdate(memberDto, user);
                             if (!user.getOrganizationId().equals(admin.getOrganizationId()) ||
                                     (admin.getAuthority().equals(Authority.MANAGER) &&
                                             !user.getLocationId().equals(admin.getLocationId()))) {
                                 return null;
                             }
-                            if (admin.getAuthority().equals(Authority.MANAGER)) memberDto.setLocationId(null);
+                            if (admin.getAuthority().equals(Authority.MANAGER))
+                                memberDto.setLocationId(user.getLocationId());
                             if (memberDto.getLocationId() != null && !user.getLocationId().equals(memberDto.getLocationId())) {
                                 locationRepository.findOneByIdAndDeleteFlag(memberDto.getLocationId(), false)
                                         .ifPresent(location -> {
-                                            if (!location.getOrganizationId().equals(admin.getLocationId())) {
+                                            if (!location.getOrganizationId().equals(admin.getOrganizationId())) {
                                                 throw new EntityNotFoundException("location");
                                             }
                                         });
@@ -326,14 +347,15 @@ public class MemberService {
                                                             !admin.getLocationId().equals(role.getLocationId()))
                                             ) {
                                                 throw new EntityNotFoundException("role");
-                                            }
+                                            } else
+                                                user.setAuthority(role.isAdminRights() ? Authority.MANAGER : Authority.EMPLOYEE);
                                         });
                             }
                             UserMapper.updateUserDtoToEntity(memberDto, user);
                             user.setLastModifiedBy(admin.getId());
                             return user;
                         })
-                        .map(userRepository::save)
+                        .map(userOrganizationRepository::save)
                 )
                 .orElseThrow(() -> new EntityNotFoundException("user"));
         // TODO Send notification to employee
@@ -342,9 +364,10 @@ public class MemberService {
     /**
      * @param id id for which user is to be deleted
      */
+    @Transactional(rollbackFor = Exception.class)
     public void deleteMember(String id) {
         SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .flatMap(admin -> userRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(user -> {
                             if (!user.getOrganizationId().equals(admin.getOrganizationId()) ||
@@ -352,8 +375,17 @@ public class MemberService {
                                             !admin.getLocationId().equals(user.getLocationId()))) {
                                 return null;
                             }
+                            Instant now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.MANAGER) ?
+                                    admin.getLocation().getTimezone() : admin.getOrganization().getTimezone());
+                            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), now, false).size();
+                            if (shifts > 0) throw new EntityNotDeletableException("user", "assigned shifts");
                             user.setDeleteFlag(true);
                             user.setLastModifiedBy(admin.getId());
+                            userTokenRepository.findOneByUserIdAndTokenTypeAndIsExpired(user.getId(), UserTokenType.INVITE, false)
+                                    .map(token -> {
+                                        token.setExpired(true);
+                                        return userTokenRepository.save(token);
+                                    });
                             return user;
                         })
                 )
@@ -366,7 +398,7 @@ public class MemberService {
      */
     public void toggleActiveMember(String id) {
         SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .flatMap(admin -> userRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(user -> {
                             if (!user.getOrganizationId().equals(admin.getOrganizationId()) ||
@@ -374,6 +406,10 @@ public class MemberService {
                                             !admin.getLocationId().equals(user.getLocationId()))) {
                                 return null;
                             }
+                            Instant now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.MANAGER) ?
+                                    admin.getLocation().getTimezone() : admin.getOrganization().getTimezone());
+                            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), now, false).size();
+                            if (shifts > 0) throw new EntityNotDeletableException("user", "assigned shifts");
                             user.setAccountStatus(user.getAccountStatus().equals(AccountStatus.DISABLED) ?
                                     AccountStatus.PAID_AND_ACTIVE : AccountStatus.DISABLED);
                             user.setLastModifiedBy(admin.getId());
@@ -401,22 +437,19 @@ public class MemberService {
         List<InviteUserMailDto> mailDtoList = inviteUserDtoList.stream()
                 .filter(user -> !emailAlreadyExist.contains(user.getEmail()))
                 .map(UserMapper::inviteUserDtoToEntity)
-                .peek(System.out::println)
                 .map(user -> {
                     user.setCreatedBy(admin.getId());
                     user.setOrganizationId(admin.getOrganization().getId());
-                    if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER)) {
+                    if (admin.getAuthority().equals(Authority.MANAGER)) {
                         user.setLocationId(admin.getLocationId());
                     }
-                    UserTokens token = new UserTokens(UserToken.INVITE);
+                    UserTokens token = new UserTokens(UserTokenType.INVITE);
                     token.setUserId(user.getId());
                     token.setCreatedBy(admin.getId());
                     tokenList.add(token);
                     InviteUserMailDto mailDto = new InviteUserMailDto();
                     mailDto.setUser(user);
                     mailDto.setInviteUrl(appUrlConfig.getInviteUserUrl(token.getToken()));
-                    System.out.println(token);
-                    System.out.println(user);
                     return mailDto;
                 })
                 .collect(Collectors.toList());
@@ -430,6 +463,16 @@ public class MemberService {
             userMailService.sendInvitationEmail(mailDtoList, organizationName);
             log.info("Invitation successfully sent to the user(s)");
         });
+    }
+
+    private void validateDependenciesIfLocationOrRoleUpdate(UpdateUserDto memberDto, UserOrganization user) {
+        if (!(memberDto.getRoleId().equals(user.getLocationRoleId()) &&
+                memberDto.getLocationId().equals(user.getLocationId()))) {
+            Instant now = DateAndTimeUtils.getCurrentDateTime(user.getAuthority().equals(Authority.MANAGER) ?
+                    user.getLocation().getTimezone() : user.getOrganization().getTimezone());
+            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), now, false).size();
+            if (shifts > 0) throw new BadRequestException("Please remove all dependencies before updating location or role for user.");
+        }
     }
 
 }

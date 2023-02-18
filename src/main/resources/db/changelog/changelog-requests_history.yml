@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-requests_history
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: requests_history
+      changes:
+        - createTable:
+            tableName: requests_history
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: request_id
+                  type: VARCHAR(100)
+              - column:
+                  name: description
+                  type: VARCHAR(1000)
+              - column:
+                  name: comment_type
+                  type: VARCHAR(20)
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: commenter_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: commenter_id
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+        - addForeignKeyConstraint:
+            baseTableName: requests_history
+            baseColumnNames: request_id
+            constraintName: fk_requests_history_request_id
+            referencedColumnNames: uuid
+            referencedTableName: requests

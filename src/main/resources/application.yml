@@ -104,6 +104,8 @@ application:
   urls:
     activate-account: /account/verify-email?key=
     invite-user: /account/accept-invite?key=
+    resetPassword: /account/reset-password-finish?key=
+    login: /login
   validity:
     activation-link: 1
     password-reset: 1
@@ -114,7 +116,7 @@ application:
     linkedin-url: https://www.linkedin.com/company/waaw
     admin-email: akhil@pragra.io
     sender-email: akhil@pragra.io
-    sender-name: Pragra
+    sender-name: WaaW
   super-user:
     first-name: Super
     last-name: User
@@ -142,6 +144,9 @@ application:
     organization-prefix: O
     location-prefix: L
     role-prefix: R
+    request-prefix: Q
+    shift-prefix: S
+    report-prefix: P
 
 ######################################
 ###### Files related properties ######
@@ -151,8 +156,8 @@ files:
     excel: xls,xlsx
     csv: csv
   required-fields:
-    holidays: name, year, month, date
-    invite-users: email, location_role, first_name, is_full_time
+    holidays: name, year, month, date, holiday_type
+    invite-users: email, location, location_role, first_name, last_name, is_full_time
   pojo-templates:
     holidays:
       name: name
@@ -164,19 +169,7 @@ files:
       email: email
       location: locationId
       location_role: locationRoleId
-      role: role
       first_name: firstName
       last_name: lastName
       employee_id: employeeId
       is_full_time: isFullTime
-#######################################
-####### Azure Config ##############
-#######################################
-azure:
-   end-point: https://<resource-name>.communication.azure.com/
-   key-credential: <access-key-credential>
-   from-mobile: 99364775858
-blob:
-   account-name: [storage-account-name]
-   account-key: [storage-account-access-key]
-   endpoint: [storage-blob-service-endpoint]

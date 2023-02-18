@@ -1,19 +1,24 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.Location;
 import ca.waaw.domain.OrganizationHolidays;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.ApiResponseMessageDto;
-import ca.waaw.dto.holiday.HolidayAdminDto;
+import ca.waaw.dto.NotificationInfoDto;
 import ca.waaw.dto.holiday.HolidayDto;
 import ca.waaw.dto.userdtos.OrganizationPreferences;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.NotificationType;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
 import ca.waaw.mapper.OrganizationHolidayMapper;
 import ca.waaw.mapper.UserMapper;
-import ca.waaw.repository.*;
+import ca.waaw.repository.LocationRepository;
+import ca.waaw.repository.OrganizationHolidayRepository;
+import ca.waaw.repository.OrganizationRepository;
+import ca.waaw.repository.UserRepository;
+import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
+import ca.waaw.service.NotificationInternalService;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.errors.exceptions.FileNotReadableException;
@@ -35,7 +40,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -58,6 +66,8 @@ public class OrganizationService {
 
     private final FileHandler fileHandler;
 
+    private final NotificationInternalService notificationInternalService;
+
     /**
      * Updates the preferences of logged-in admins organization
      *
@@ -75,26 +85,17 @@ public class OrganizationService {
     }
 
     /**
-     * @param file       excel or csv file containing holidays
-     * @param locationId if holidays are for a particular location, id is required
+     * @param file excel or csv file containing holidays
      */
     @Transactional(rollbackFor = Exception.class)
-    public ApiResponseMessageDto uploadHolidaysByExcel(MultipartFile file, String locationId) {
+    public ApiResponseMessageDto uploadHolidaysByExcel(MultipartFile file) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         AtomicReference<String> timezone = new AtomicReference<>();
         UserOrganization admin = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .map(user -> {
-                            if (StringUtils.isNotEmpty(locationId)) {
-                                locationRepository.findOneByIdAndDeleteFlag(locationId, false)
-                                        .map(location -> {
-                                            if (!location.getOrganizationId().equals(user.getLocationId())) {
-                                                throw new UnauthorizedException();
-                                            }
-                                            timezone.set(location.getTimezone());
-                                            return location;
-                                        })
-                                        .orElseThrow(() -> new EntityNotFoundException("location"));
+                            if (user.getAuthority().equals(Authority.MANAGER)) {
+                                timezone.set(user.getLocation().getTimezone());
                             } else timezone.set(user.getOrganization().getTimezone());
                             return user;
                         })
@@ -112,14 +113,13 @@ public class OrganizationService {
         Set<String> missingFields = new HashSet<>();
         MutableBoolean pastDates = new MutableBoolean(false);
         MutableBoolean nextYearDates = new MutableBoolean(false);
-        List<OrganizationHolidays> holidays = fileHandler.readExcelOrCsv(fileInputStream, fileName,
+        Set<OrganizationHolidays> holidays = fileHandler.readExcelOrCsv(fileInputStream, fileName,
                         OrganizationHolidays.class, missingFields, PojoToMap.HOLIDAY)
                 .parallelStream().peek(holiday -> {
                     holiday.setOrganizationId(admin.getOrganizationId());
                     holiday.setCreatedBy(admin.getId());
-                    if (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) || StringUtils.isNotEmpty(locationId)) {
-                        holiday.setLocationId(SecurityUtils.isCurrentUserInRole(Authority.MANAGER) ?
-                                admin.getLocationId() : locationId);
+                    if (admin.getAuthority().equals(Authority.MANAGER)) {
+                        holiday.setLocationId(admin.getLocationId());
                     }
                 }).filter(holiday -> {
                     boolean isPastDate = isPastDate(holiday.getYear(), holiday.getMonth(), holiday.getDate(), timezone.get());
@@ -128,13 +128,27 @@ public class OrganizationService {
                     if (isNextYearDate) nextYearDates.setTrue();
                     return !isNextYearDate && !isPastDate;
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
         if (missingFields.size() > 0) {
             throw new MissingRequiredFieldsException("excel/csv", missingFields.toArray(missingFields.toArray(new String[0])));
         }
         CompletableFuture.runAsync(() -> {
             holidayRepository.saveAll(holidays);
-            // TODO Send notification pastDate & nextYearDate
+            NotificationInfoDto notificationInfo = NotificationInfoDto.builder()
+                    .receiverUuid(admin.getId())
+                    .receiverName(admin.getFullName())
+                    .receiverMail(admin.getEmail())
+                    .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
+                    .language(admin.getLangKey() == null ? null : admin.getLangKey())
+                    .type(NotificationType.CALENDAR)
+                    .build();
+            String[] now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
+                    admin.getOrganization().getTimezone() : admin.getLocation().getTimezone()).toString().split("T");
+            notificationInternalService.sendNotification("notification.upload.holidays", notificationInfo, now[0], now[1].substring(0, 5));
+            if (pastDates.isTrue())
+                notificationInternalService.sendNotification("notification.holiday.past", notificationInfo, now[0], now[1].substring(0, 5));
+            if (nextYearDates.isTrue())
+                notificationInternalService.sendNotification("notification.holiday.nextYear", notificationInfo, now[0], now[1].substring(0, 5));
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
                 .fileUploadProcessing, new Locale(admin.getLangKey())));
@@ -250,20 +264,22 @@ public class OrganizationService {
 
     }
 
-    public List<?> getAllHolidays(Integer month) {
+    public List<HolidayDto> getAllHolidays(Integer year) {
         UserOrganization userDetails = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .orElseThrow(AuthenticationException::new);
-        String timezone = SecurityUtils.isCurrentUserInRole(Authority.ADMIN) ? userDetails.getOrganization().getTimezone()
-                : userDetails.getLocation().getTimezone();
-        int currentYear = DateAndTimeUtils.getCurrentDate("year", timezone);
-        List<OrganizationHolidays> holidays;
-        if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN)) {
-            holidays = holidayRepository.getAllForOrganizationAndMonthIfNeeded(userDetails.getOrganizationId(), month, currentYear);
-        } else {
-            holidays = holidayRepository.getAllForLocationAndMonthIfNeeded(userDetails.getLocationId(), month, currentYear);
+        Set<OrganizationHolidays> holidays = null;
+        if (StringUtils.isNotEmpty(userDetails.getLocationId())) {
+            holidays = new HashSet<>(holidayRepository.getAllForLocationByYear(userDetails.getLocationId(), year));
         }
-        return populateHolidaysBasedOnRole(holidays, SecurityUtils.isCurrentUserInRole(Authority.ADMIN));
+        if ((holidays != null && holidays.size() < 1) || userDetails.getAuthority().equals(Authority.ADMIN)) {
+            holidays = new HashSet<>(holidayRepository.getAllForOrganizationByYear(userDetails.getOrganizationId(), year));
+        }
+        assert holidays != null;
+        return holidays.stream()
+                .filter(holiday -> holiday.getType() != null)
+                .map(OrganizationHolidayMapper::entityToDto)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -306,43 +322,6 @@ public class OrganizationService {
                 (year - DateAndTimeUtils.getCurrentDate("year", timezone)) > 1 ||
                         // Check that year is not a future year unless that month is december
                         (DateAndTimeUtils.getCurrentDate("year", timezone) < year && month != 12);
-    }
-
-    /**
-     * @param holidays list of holidays to be returned to frontend
-     * @param isAdmin  if logged-in user is global admin
-     * @return list of holidayDto if user is not global admin and list of holidayDto mapped with locations if user is global admin
-     */
-    private List<?> populateHolidaysBasedOnRole(List<OrganizationHolidays> holidays, boolean isAdmin) {
-        List<HolidayDto> holidaysResponse = holidays.stream().map(OrganizationHolidayMapper::entityToDto)
-                .collect(Collectors.toList());
-        if (isAdmin) {
-            List<String> locationIds = holidaysResponse.stream()
-                    .map(HolidayDto::getLocationId)
-                    .filter(Objects::nonNull)
-                    .distinct().collect(Collectors.toList());
-            Map<String, String> locationNameMap = locationRepository.findAllByIdIn(locationIds)
-                    .stream().collect(Collectors.toMap(Location::getId, Location::getName));
-            List<HolidayAdminDto> adminResponse = new ArrayList<>();
-            locationIds.forEach(locationId -> {
-                HolidayAdminDto adminDto = new HolidayAdminDto();
-                adminDto.setLocationId(locationId);
-                adminDto.setLocationName(locationNameMap.get(locationId));
-                adminDto.setHolidays(holidaysResponse.stream()
-                        .filter(holiday -> holiday.getLocationId().equals(locationId))
-                        .collect(Collectors.toList())
-                );
-                adminResponse.add(adminDto);
-            });
-            HolidayAdminDto adminDto = new HolidayAdminDto();
-            adminDto.setHolidays(holidaysResponse.stream()
-                    .filter(holiday -> StringUtils.isEmpty(holiday.getLocationId()))
-                    .collect(Collectors.toList())
-            );
-            if (adminDto.getHolidays().size() > 0) adminResponse.add(adminDto);
-            return adminResponse;
-        }
-        return holidaysResponse;
     }
 
 }

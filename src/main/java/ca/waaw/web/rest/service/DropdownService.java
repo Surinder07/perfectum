@@ -1,10 +1,12 @@
 package ca.waaw.web.rest.service;
 
+import ca.waaw.domain.Location;
+import ca.waaw.domain.LocationRole;
 import ca.waaw.enumration.Currency;
 import ca.waaw.enumration.*;
 import ca.waaw.repository.LocationRepository;
 import ca.waaw.repository.LocationRoleRepository;
-import ca.waaw.repository.UserOrganizationRepository;
+import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
@@ -50,7 +52,6 @@ public class DropdownService {
         populateListToEnumMap(enumMap, PayrollGenerationType.class);
         populateListToEnumMap(enumMap, Currency.class);
         populateListToEnumMap(enumMap, DaysOfWeek.class);
-        populateListToEnumMap(enumMap, TimeOffType.class);
         populateListToEnumMap(enumMap, TimeSheetType.class);
         return enumMap;
     }
@@ -60,6 +61,7 @@ public class DropdownService {
                         .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
                                 .map(admin -> locationRepository.findAllByOrganizationIdAndDeleteFlag(admin.getOrganizationId(), false)
                                                 .stream()
+                                                .filter(Location::isActive)
                                                 .map(location -> {
                                                     Map<String, String> response = new HashMap<>();
                                                     response.put("id", location.getId());
@@ -74,54 +76,64 @@ public class DropdownService {
     public List<Map<String, String>> getAllLocationRoles(String locationId) {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .flatMap(admin -> locationRepository.findOneByIdAndDeleteFlag(locationId, false)
-                        .map(location -> {
-                            if (admin.getAuthority().equals(Authority.ADMIN) &&
-                                    !location.getOrganizationId().equals(admin.getOrganizationId())) {
-                                return null;
-                            }
-                            return locationRoleRepository.findAllByLocationIdAndDeleteFlag(admin.getAuthority().equals(Authority.ADMIN) ?
-                                    locationId : admin.getLocationId(), false)
-                                    .stream()
-                                    .filter(locationRole -> {
-                                        if (admin.getAuthority().equals(Authority.MANAGER)) {
-                                            return !locationRole.isAdminRights();
-                                        } return true;
-                                    })
-                                    .map(locationRole -> {
-                                        Map<String, String> response = new HashMap<>();
-                                        response.put("id", locationRole.getId());
-                                        response.put("name", locationRole.getName());
-                                        return response;
-                                    })
-                                    .collect(Collectors.toList());
+                .flatMap(admin -> {
+                    String locId = admin.getAuthority().equals(Authority.MANAGER) ? admin.getLocationId() : locationId;
+                    return locationRepository.findOneByIdAndDeleteFlag(locId, false)
+                                    .map(location -> {
+                                        if (admin.getAuthority().equals(Authority.ADMIN) &&
+                                                !location.getOrganizationId().equals(admin.getOrganizationId())) {
+                                            return null;
+                                        }
+                                        return locationRoleRepository.findAllByLocationIdAndDeleteFlag(locId, false)
+                                                .stream()
+                                                .filter(locationRole -> {
+                                                    if (admin.getAuthority().equals(Authority.MANAGER)) {
+                                                        return !locationRole.isAdminRights();
+                                                    } return true;
+                                                })
+                                                .filter(LocationRole::isActive)
+                                                .map(locationRole -> {
+                                                    Map<String, String> response = new HashMap<>();
+                                                    response.put("id", locationRole.getId());
+                                                    response.put("name", locationRole.getName());
+                                                    return response;
+                                                })
+                                                .collect(Collectors.toList());
+                                    });
                         })
-                )
                 .orElseThrow(() -> new EntityNotFoundException("location"));
     }
 
     public List<Map<String, String>> getAllUsers() {
-        return SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(admin -> userOrganizationRepository.findAllByOrganizationIdAndDeleteFlag(admin.getOrganizationId(), false)
-                        .stream()
-                        .filter(user -> {
-                            if (admin.getAuthority().equals(Authority.ADMIN)) {
-                                return !user.getId().equals(admin.getId());
-                            } else {
-                                return user.getLocationId().equals(admin.getLocationId()) &&
-                                        !user.getLocationRole().isAdminRights();
-                            }
-                        })
-                        .map(user -> {
-                            Map<String, String> response = new HashMap<>();
-                            response.put("id", user.getId());
-                            response.put("name", user.getFullName());
-                            return response;
-                        })
-                        .collect(Collectors.toList())
-                )
-                .orElseThrow(() -> new EntityNotFoundException("locations"));
+        try {
+            return SecurityUtils.getCurrentUserLogin()
+                    .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                    .map(admin -> userOrganizationRepository.findAllByOrganizationIdAndDeleteFlag(admin.getOrganizationId(), false)
+                            .stream()
+                            .filter(user -> {
+                                if (admin.getAuthority().equals(Authority.ADMIN)) {
+                                    return !user.getId().equals(admin.getId());
+                                } else {
+                                    return user.getLocation() != null &&
+                                            user.getLocationId().equals(admin.getLocationId()) &&
+                                            !user.getLocationRole().isAdminRights();
+                                }
+                            })
+                            .filter(user -> !user.getAccountStatus().equals(AccountStatus.DISABLED) &&
+                                    !user.getAccountStatus().equals(AccountStatus.INVITED))
+                            .map(user -> {
+                                Map<String, String> response = new HashMap<>();
+                                response.put("id", user.getId());
+                                response.put("name", user.getFullName());
+                                return response;
+                            })
+                            .collect(Collectors.toList())
+                    )
+                    .orElseThrow(() -> new EntityNotFoundException("locations"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private static void populateListToEnumMap(Map<String, List<String>> map, Class<? extends Enum<?>> enumClass) {

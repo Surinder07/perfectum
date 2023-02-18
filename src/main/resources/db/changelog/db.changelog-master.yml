@@ -5,6 +5,8 @@ databaseChangeLog:
       value: Akhil Singh Chauhan
   # Files to be included
   - include:
+      file: db/changelog/changelog-subscription_list.yml
+  - include:
       file: db/changelog/changelog-organization.yml
   - include:
       file: db/changelog/changelog-location.yml
@@ -30,3 +32,9 @@ databaseChangeLog:
       file: db/changelog/changelog-user_tokens.yml
   - include:
       file: db/changelog/changelog-time_sheets.yml
+  - include:
+      file: db/changelog/changelog-reports.yml
+  - include:
+      file: db/changelog/changelog-requests.yml
+  - include:
+      file: db/changelog/changelog-requests_history.yml

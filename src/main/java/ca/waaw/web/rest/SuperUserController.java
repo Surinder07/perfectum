@@ -35,7 +35,12 @@ public class SuperUserController {
     @Operation(description = "${api.description.super-user.addCode}")
     @PostMapping("${api.endpoints.super-user.addCode}")
     public void addNewCode(@Valid @RequestBody PromotionCodeDto promotionCodeDto) {
-        superUserService.addNewCode(promotionCodeDto);
+        try {
+            superUserService.addNewCode(promotionCodeDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk
@@ -55,7 +60,7 @@ public class SuperUserController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = PromotionCodeDto.class)))},
             description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> getAllCodes(@RequestPart int pageNo, @RequestPart int pageSize,
+    public ResponseEntity<PaginationDto> getAllCodes(@PathVariable int pageNo, @PathVariable int pageSize,
                                                      @Parameter(description = "${api.swagger.param-description.getPromoCodeIncludeDeleted}")
                                                      @RequestParam(required = false) boolean includeDeleted,
                                                      @Parameter(description = "${api.swagger.param-description.getPromoCodeIncludeExpired}")

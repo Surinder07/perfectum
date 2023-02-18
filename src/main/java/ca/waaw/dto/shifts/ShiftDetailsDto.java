@@ -14,6 +14,10 @@ public class ShiftDetailsDto {
 
     private String id;
 
+    private String name;
+
+    private String waawId;
+
     private String employeeId;
 
     private String employeeName;

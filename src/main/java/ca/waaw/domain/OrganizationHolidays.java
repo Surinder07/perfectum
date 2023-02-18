@@ -10,7 +10,7 @@ import javax.persistence.*;
 @Data
 @Entity
 @ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @Table(name = "organization_holidays")
 @NamedQueries({
         @NamedQuery(name = "OrganizationHolidays.getAllForLocationAndMonthIfNeeded",

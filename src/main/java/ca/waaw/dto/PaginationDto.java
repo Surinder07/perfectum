@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -13,10 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 public class PaginationDto {
 
-    private int totalPages;
+    private int totalPages = 0;
 
-    private int totalEntries;
+    private int totalEntries = 0;
 
-    private List<?> data;
+    private List<?> data = new ArrayList<>();
 
 }

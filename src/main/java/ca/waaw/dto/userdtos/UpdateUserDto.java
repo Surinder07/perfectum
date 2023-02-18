@@ -6,13 +6,21 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateUserDto {
 
+    @NotEmpty
     private String id;
+
+    @NotEmpty
+    private String firstName;
+
+    @NotEmpty
+    private String lastName;
 
     private String countryCode;
 
@@ -22,10 +30,14 @@ public class UpdateUserDto {
 
     private String country;
 
+    @NotEmpty
     private String locationId;
 
+    @NotEmpty
     private String roleId;
 
-    private Boolean isFullTime;
+    private boolean isFullTime;
+
+    private String employeeId;
 
 }

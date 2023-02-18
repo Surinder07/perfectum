@@ -1,25 +1,29 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppCustomIdConfig;
-import ca.waaw.domain.Location;
 import ca.waaw.domain.LocationRole;
 import ca.waaw.domain.joined.LocationUsers;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.locationandroledtos.LocationDto;
 import ca.waaw.dto.locationandroledtos.LocationRoleDto;
 import ca.waaw.dto.locationandroledtos.UpdateLocationRoleDto;
+import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
 import ca.waaw.mapper.LocationAndRoleMapper;
 import ca.waaw.repository.LocationRepository;
 import ca.waaw.repository.LocationRoleRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.repository.joined.LocationUsersRepository;
+import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
+import ca.waaw.web.rest.errors.exceptions.EntityNotDeletableException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.utils.CommonUtils;
+import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
@@ -29,8 +33,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @AllArgsConstructor
@@ -46,6 +50,8 @@ public class LocationAndRoleService {
 
     private final UserRepository userRepository;
 
+    private final UserOrganizationRepository userOrganizationRepository;
+
     private final AppCustomIdConfig appCustomIdConfig;
 
     /**
@@ -53,14 +59,18 @@ public class LocationAndRoleService {
      *
      * @return All locations under logged-in admin organization
      */
-    public PaginationDto getLocation(int pageNo, int pageSize) {
+    public PaginationDto getLocation(int pageNo, int pageSize, String searchKey, Boolean active, String timezone) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN);
         Pageable getSortedByName = PageRequest.of(pageNo, pageSize, Sort.by("name").ascending());
+        AtomicReference<String> userTimezone = new AtomicReference<>(null);
         Page<LocationUsers> locationPage = SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(user -> locationUsersRepository.findAllByOrganizationIdAndDeleteFlag(user.getOrganizationId(), false, getSortedByName))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> {
+                    userTimezone.set(user.getOrganization().getTimezone());
+                    return locationUsersRepository.searchAndFilterLocation(searchKey, active, timezone, user.getOrganizationId(), getSortedByName);
+                })
                 .orElseThrow(AuthenticationException::new);
-        return CommonUtils.getPaginationResponse(locationPage, LocationAndRoleMapper::entityToDto);
+        return CommonUtils.getPaginationResponse(locationPage, LocationAndRoleMapper::entityToDto, userTimezone.get());
     }
 
     /**
@@ -106,22 +116,16 @@ public class LocationAndRoleService {
                 .map(admin -> locationRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(location -> {
                             if (location.getOrganizationId().equals(admin.getOrganizationId())) {
+                                int roles = (int) locationRoleRepository.findAllByLocationIdAndDeleteFlag(location.getId(), false)
+                                        .stream().filter(LocationRole::isActive)
+                                        .count();
+                                if (roles > 0) throw new EntityNotDeletableException("location", "roles and employees");
                                 location.setDeleteFlag(true);
                                 return location;
                             }
                             return null;
                         })
                         .map(locationRepository::save)
-                        .map(Location::getId)
-                        .map(locationId -> {
-                            List<LocationRole> roles = locationRoleRepository.findAllByLocationIdAndDeleteFlag(locationId, true)
-                                    .stream().peek(role -> role.setDeleteFlag(true)).collect(Collectors.toList());
-                            locationRoleRepository.saveAll(roles);
-                            return locationId;
-                        })
-                        .map(locationId -> userRepository.findAllByLocationIdAndDeleteFlag(locationId, false)
-                                .stream().peek(user -> user.setDeleteFlag(true)).collect(Collectors.toList())
-                        ).map(userRepository::saveAll)
                         .orElseThrow(() -> new EntityNotFoundException("location"))
                 );
         log.info("Successfully deleted the location and suspended all users for the location: {}", id);
@@ -140,6 +144,10 @@ public class LocationAndRoleService {
                 .map(admin -> locationRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(location -> {
                             if (location.getOrganizationId().equals(admin.getOrganizationId())) {
+                                int roles = (int)locationRoleRepository.findAllByLocationIdAndDeleteFlag(location.getId(), false)
+                                        .stream().filter(LocationRole::isActive)
+                                        .count();
+                                if (roles > 0) throw new EntityNotDeletableException("location", "roles and employees");
                                 log.info("Updating location({}) from {} to {}", location.getName(), location.isActive(), !location.isActive());
                                 location.setActive(!location.isActive());
                                 return location;
@@ -158,16 +166,26 @@ public class LocationAndRoleService {
      *
      * @return All location roles under logged-in admin organization
      */
-    public PaginationDto getLocationRoles(int pageNo, int pageSize) {
+    public PaginationDto getLocationRoles(int pageNo, int pageSize, String searchKey, Boolean active, String locationId,
+                                          Boolean admin, String startDate, String endDate) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         Pageable getSortedByName = PageRequest.of(pageNo, pageSize, Sort.by("name").ascending());
+        AtomicReference<Boolean> isAdmin = new AtomicReference<>(admin);
         Page<LocationRole> locationPage = SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> {
-                    if (user.getAuthority().equals(Authority.ADMIN))
-                        return locationRoleRepository.findAllByOrganizationIdAndDeleteFlag(user.getOrganizationId(), false, getSortedByName);
-                    else
-                        return locationRoleRepository.findAllByLocationIdAndDeleteFlagAndAdminRights(user.getLocationId(), false, false, getSortedByName);
+                    String finalLocationId = locationId;
+                    String timezone = user.getAuthority().equals(Authority.ADMIN) ? user.getOrganization().getTimezone() :
+                            user.getLocation().getTimezone();
+                    Instant[] dateRange = StringUtils.isNotEmpty(startDate) ?
+                            DateAndTimeUtils.getStartAndEndTimeForInstant(startDate, endDate, timezone) :
+                            new Instant[]{null, null};
+                    if (user.getAuthority().equals(Authority.MANAGER)) {
+                        finalLocationId = user.getLocationId();
+                        isAdmin.set(false);
+                    }
+                    return locationRoleRepository.searchAndFilterRole(searchKey, user.getOrganizationId(), finalLocationId,
+                            dateRange[0], dateRange[1], isAdmin.get(), active, getSortedByName);
                 })
                 .orElseThrow(AuthenticationException::new);
         return CommonUtils.getPaginationResponse(locationPage, LocationAndRoleMapper::entityToDto);
@@ -240,17 +258,21 @@ public class LocationAndRoleService {
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(admin -> locationRoleRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(locationRole -> {
-                            if (locationRole.getOrganizationId().equals(admin.getOrganizationId())) {
-                                locationRole.setDeleteFlag(true);
-                                return locationRole;
+                            if (!locationRole.getOrganizationId().equals(admin.getOrganizationId()) ||
+                                    admin.getAuthority().equals(Authority.MANAGER) &&
+                                            !locationRole.getLocationId().equals(admin.getLocationId()) &&
+                                            locationRole.isAdminRights()) {
+                                return null;
                             }
-                            return null;
+                            int employees = (int) userRepository.findAllByLocationRoleIdAndDeleteFlag(locationRole.getId(), false)
+                                    .stream().filter(emp -> emp.getAccountStatus().equals(AccountStatus.PAID_AND_ACTIVE) ||
+                                            emp.getAccountStatus().equals(AccountStatus.INVITED))
+                                    .count();
+                            if (employees > 0) throw new EntityNotDeletableException("role", "employees");
+                            locationRole.setDeleteFlag(true);
+                            return locationRole;
                         })
                         .map(locationRoleRepository::save)
-                        .map(LocationRole::getId)
-                        .map(locationRoleId -> userRepository.findAllByLocationRoleIdAndDeleteFlag(locationRoleId, false)
-                                .stream().peek(user -> user.setDeleteFlag(true)).collect(Collectors.toList())
-                        ).map(userRepository::saveAll)
                 );
         log.info("Successfully deleted the location role and suspended all users for the location: {}", id);
     }
@@ -262,17 +284,25 @@ public class LocationAndRoleService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void toggleActiveLocationRole(String id) {
-        CommonUtils.checkRoleAuthorization(Authority.ADMIN);
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(admin -> locationRoleRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(locationRole -> {
-                            if (locationRole.getOrganizationId().equals(admin.getOrganizationId())) {
-                                log.info("Updating locationRole({}) from {} to {}", locationRole.getName(), locationRole.isActive(), !locationRole.isActive());
-                                locationRole.setActive(!locationRole.isActive());
-                                return locationRole;
+                            if (!locationRole.getOrganizationId().equals(admin.getOrganizationId()) ||
+                                    admin.getAuthority().equals(Authority.MANAGER) &&
+                                            !locationRole.getLocationId().equals(admin.getLocationId()) &&
+                                            locationRole.isAdminRights()) {
+                                return null;
                             }
-                            return null;
+                            int employees = (int) userRepository.findAllByLocationRoleIdAndDeleteFlag(locationRole.getId(), false)
+                                    .stream().filter(emp -> emp.getAccountStatus().equals(AccountStatus.PAID_AND_ACTIVE) ||
+                                            emp.getAccountStatus().equals(AccountStatus.INVITED))
+                                    .count();
+                            if (employees > 0) throw new EntityNotDeletableException("role", "employees");
+                            log.info("Updating locationRole({}) from {} to {}", locationRole.getName(), locationRole.isActive(), !locationRole.isActive());
+                            locationRole.setActive(!locationRole.isActive());
+                            return locationRole;
                         })
                         .map(locationRoleRepository::save)
                         .map(locationRole -> CommonUtils.logMessageAndReturnObject(locationRole, "info", LocationAndRoleService.class,

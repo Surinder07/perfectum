@@ -3,6 +3,7 @@ package ca.waaw.service;
 import ca.waaw.domain.Notification;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.NotificationInfoDto;
 import ca.waaw.dto.emailmessagedtos.InviteAcceptedMailDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.NotificationType;
@@ -11,6 +12,9 @@ import ca.waaw.repository.NotificationRepository;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -21,6 +25,18 @@ public class NotificationInternalService {
     private final NotificationRepository notificationRepository;
 
     private final WebSocketService webSocketService;
+
+    public void sendNotification(String propertyKey, NotificationInfoDto notificationInfo, String... messageArguments) {
+        Map<String, String> properties = CommonUtils.getPropertyMapFromMessagesResourceBundle(propertyKey,
+                new Locale(notificationInfo.getLanguage()));
+        String message = String.format(properties.get("notification"), messageArguments);
+        Notification notification = new Notification();
+        notification.setTitle(properties.get("title"));
+        notification.setDescription(message);
+        notification.setType(notificationInfo.getType());
+        notification.setUserId(notificationInfo.getReceiverUuid());
+        notificationRepository.save(notification);
+    }
 
     /**
      * Will send an email notification to admin if email notifications are will on and send an application notification
@@ -44,14 +60,15 @@ public class NotificationInternalService {
         // Internal Notification
         Notification notification = new Notification();
         notification.setUserId(admin.getId());
-        notification.setType(NotificationType.USER);
+        notification.setType(NotificationType.EMPLOYEE);
         notification.setTitle(CommonUtils.getPropertyFromMessagesResourceBundle("notification.invite.accepted.title", null));
         String description = String.format(CommonUtils.getPropertyFromMessagesResourceBundle("notification.invite.accepted.content", null),
-                CommonUtils.combineFirstAndLastName(user.getFirstName(), user.getLastName()), user.getEmail(),
+                user.getFullName(), user.getEmail(),
                 user.getOrganization().getName(), message.getRole(), message.getLocation());
         notification.setDescription(description);
         notificationRepository.save(notification);
-        webSocketService.notifyUser(NotificationMapper.entityToDto(notification), admin.getUsername());
+        //todo change to admins timezone
+        webSocketService.notifyUser(NotificationMapper.entityToDto(notification, user.getLocation().getTimezone()), admin.getUsername());
     }
 
     /**

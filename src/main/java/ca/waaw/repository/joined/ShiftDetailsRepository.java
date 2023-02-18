@@ -1,6 +1,7 @@
 package ca.waaw.repository.joined;
 
 import ca.waaw.domain.joined.ShiftDetails;
+import ca.waaw.enumration.ShiftStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,7 +16,7 @@ public interface ShiftDetailsRepository extends JpaRepository<ShiftDetails, Stri
     List<ShiftDetails> searchAndFilterShifts(String searchKey, String locationId, String locationRoleId, String status,
                                              String userId, boolean isAdmin, List<String> batchIds);
 
-    Page<ShiftDetails> searchAndFilterShiftsDate(String searchKey, String locationId, String locationRoleId, String status,
+    Page<ShiftDetails> searchAndFilterShiftsDate(String searchKey, String locationId, String locationRoleId, ShiftStatus status,
                                                  String userId, boolean isAdmin, Instant start, Instant end, Pageable pageable);
 
 }

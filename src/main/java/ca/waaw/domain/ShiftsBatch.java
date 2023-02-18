@@ -43,7 +43,7 @@ public class ShiftsBatch extends AbstractEntity {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private ShiftBatchStatus status = ShiftBatchStatus.CREATING;
+    private ShiftBatchStatus status;
 
     @Column(name = "is_released")
     private boolean isReleased;

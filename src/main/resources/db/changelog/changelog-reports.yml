@@ -1,0 +1,83 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-reports
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: reports
+      changes:
+        - createTable:
+            tableName: reports
+            columns:
+              - column:
+                  name: uuid
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: waaw_id
+                  type: VARCHAR(25)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: ux_waaw_report_id
+              - column:
+                  name: organization_id
+                  type: VARCHAR(100)
+              - column:
+                  name: location_id
+                  type: VARCHAR(100)
+              - column:
+                  name: type
+                  type: VARCHAR(20)
+              - column:
+                  name: file_name
+                  type: VARCHAR(500)
+              - column:
+                  name: from_date
+                  type: VARCHAR(20)
+              - column:
+                  name: to_date
+                  type: VARCHAR(20)
+              - column:
+                  name: show_to_manager
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: del_flg
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_date
+                  type: TIMESTAMP
+                  defaultValueDate: now()
+        - createIndex:
+            indexName: idx_waaw_report_id
+            tableName: reports
+            unique: true
+            column:
+              name: waaw_id
+              type: VARCHAR(25)
+        - addForeignKeyConstraint:
+            baseTableName: reports
+            baseColumnNames: organization_id
+            constraintName: fk_reports_organization_id
+            referencedColumnNames: uuid
+            referencedTableName: organization
+        - addForeignKeyConstraint:
+            baseTableName: reports
+            baseColumnNames: location_id
+            constraintName: fk_reports_location_id
+            referencedColumnNames: uuid
+            referencedTableName: location

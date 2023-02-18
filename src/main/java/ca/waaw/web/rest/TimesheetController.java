@@ -1,24 +1,25 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.dto.DateTimeDto;
-import ca.waaw.dto.TimesheetDetailDto;
+import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.TimesheetDto;
-import ca.waaw.dto.timeoff.TimeOffInfoDto;
+import ca.waaw.dto.timesheet.ActiveTimesheetDto;
+import ca.waaw.dto.timesheet.TimesheetDetailsDto;
+import ca.waaw.enumration.TimeSheetType;
 import ca.waaw.web.rest.service.TimesheetService;
+import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 
 @SuppressWarnings("unused")
 @RestController
@@ -53,8 +54,9 @@ public class TimesheetController {
     @SwaggerAuthenticated
     @Operation(description = "${api.description.timesheet.getTimer}")
     @GetMapping("${api.endpoints.timesheet.getTimer}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", schema = @Schema(implementation = DateTimeDto.class))})
-    public ResponseEntity<DateTimeDto> getActiveTimesheet() {
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = ActiveTimesheetDto.class))})
+    public ResponseEntity<ActiveTimesheetDto> getActiveTimesheet() {
         return ResponseEntity.ok(timesheetService.getActiveTimesheet());
     }
 
@@ -62,10 +64,27 @@ public class TimesheetController {
     @SwaggerAuthenticated
     @Operation(description = "${api.description.timesheet.getAll}")
     @GetMapping("${api.endpoints.timesheet.getAll}")
-    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = TimeOffInfoDto.class)))})
-    public ResponseEntity<List<TimesheetDetailDto>> getAllTimeSheets(@RequestParam String startDate, @RequestParam String endDate) {
-        return ResponseEntity.ok(timesheetService.getAllTimeSheet(startDate, endDate));
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = TimesheetDetailsDto.class))}, description = "${api.swagger.schema-description.pagination}")
+    public ResponseEntity<PaginationDto> getAllTimeSheets(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                          @RequestParam(required = false) String startDate,
+                                                          @RequestParam(required = false) String endDate,
+                                                          @RequestParam(required = false) String type,
+                                                          @RequestParam(required = false) String userId) {
+        if (StringUtils.isEmpty(startDate) || StringUtils.isEmpty(endDate)) {
+            startDate = null;
+            endDate = null;
+        }
+        if (StringUtils.isEmpty(type)) type = null;
+        else {
+            CommonUtils.validateStringInEnum(TimeSheetType.class, type, "type");
+        }
+        try {
+            return ResponseEntity.ok(timesheetService.getAllTimeSheet(pageNo, pageSize, startDate, endDate, type, userId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerCreated

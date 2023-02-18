@@ -6,6 +6,7 @@ import ca.waaw.domain.ShiftsBatch;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.BatchDetails;
 import ca.waaw.domain.joined.ShiftDetails;
+import ca.waaw.domain.joined.ShiftDetailsWithBatch;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.OvertimeDto;
 import ca.waaw.dto.locationandroledtos.LocationAndRoleDto;
@@ -14,6 +15,7 @@ import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.shifts.ShiftDetailsDto;
 import ca.waaw.dto.userdtos.UserInfoForDropDown;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.ShiftBatchStatus;
 import ca.waaw.enumration.ShiftStatus;
 import ca.waaw.enumration.ShiftType;
 import ca.waaw.web.rest.utils.CommonUtils;
@@ -21,6 +23,7 @@ import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,7 +32,8 @@ public class ShiftsMapper {
 
 
     public static Shifts shiftDtoToEntity(NewShiftDto source, String userId, String locationId, String locationRoleId,
-                                          String loggedInUser, String organizationId, String timezone, String batchId) {
+                                          String loggedInUser, String organizationId, String timezone, String batchId,
+                                          String customId) {
         Shifts target = new Shifts();
         target.setBatchId(batchId);
         target.setUserId(userId);
@@ -42,6 +46,7 @@ public class ShiftsMapper {
         target.setOrganizationId(organizationId);
         target.setShiftStatus(getNewShiftStatus(userId, source.isInstantRelease()));
         target.setShiftType(ShiftType.SINGLE);
+        target.setWaawId(customId);
         return target;
     }
 
@@ -53,7 +58,7 @@ public class ShiftsMapper {
     public static ShiftsBatch dtoToEntityBatch(NewShiftDto source, String timezone) {
         ShiftsBatch target = new ShiftsBatch();
         target.setName(source.getShiftName());
-        if (source.isInstantRelease()) target.setReleased(true);
+        target.setStatus(ShiftBatchStatus.CREATING);
         if (source.getUserIds() != null && source.getUserIds().size() > 0) {
             target.setMappedUsersAndRoles(source.getUserIds().stream()
                     .map(userId -> {
@@ -88,14 +93,35 @@ public class ShiftsMapper {
     public static BatchDetailsDto entitiesToListingDto(BatchDetails batchSource, Map<String, List<ShiftDetails>> shiftsSource, String timezone) {
         BatchDetailsDto target = new BatchDetailsDto();
         BeanUtils.copyProperties(batchSource, target);
-        target.setStartDate(batchSource.getStartDate().toString().split("T")[0]);
-        target.setEndDate(batchSource.getEndDate().toString().split("T")[0]);
-        target.setCreationDate(batchSource.getCreatedDate().toString().split("T")[0]);
-        target.setStatus(batchSource.getStatus().toString());
-        List<ShiftDetailsDto> shifts = shiftsSource.get(batchSource.getId())
+        target.setStartDate(DateAndTimeUtils.getDateTimeObject(batchSource.getStartDate(), timezone).getDate());
+        target.setEndDate(DateAndTimeUtils.getDateTimeObject(batchSource.getEndDate(), timezone).getDate());
+        target.setCreationDate(DateAndTimeUtils.getDateTimeObject(batchSource.getCreatedDate(), timezone).getDate());
+        target.setStatus(batchSource.getStatus() == null ? "-" : batchSource.getStatus().toString());
+        List<ShiftDetailsDto> shifts = shiftsSource.get(batchSource.getId()) == null ?
+                new ArrayList<>() : shiftsSource.get(batchSource.getId())
                 .stream().map(shift -> entityToShiftDto(shift, timezone)).collect(Collectors.toList());
         target.setShifts(shifts);
         return target;
+    }
+
+    /**
+     * @param source   Shift details entity
+     * @param timezone timezone in which dates are required
+     * @return dto
+     */
+    public static ShiftDetailsDto entityToShiftDto(ShiftDetailsWithBatch source, String timezone) {
+        ShiftDetailsDto targetShift = new ShiftDetailsDto();
+        targetShift.setId(source.getId());
+        targetShift.setShiftType(source.getShiftType());
+        targetShift.setEmployeeName(source.getUser().getFullName());
+        targetShift.setEmployeeEmail(source.getUser().getEmail());
+        targetShift.setShiftStatus(source.getShiftStatus());
+        targetShift.setStart(DateAndTimeUtils.getDateTimeObject(source.getStart(), timezone));
+        targetShift.setEnd(DateAndTimeUtils.getDateTimeObject(source.getEnd(), timezone));
+        targetShift.setNotes(source.getNotes());
+        targetShift.setWaawId(source.getWaawId());
+        targetShift.setName(source.getBatch().getName());
+        return targetShift;
     }
 
     /**
@@ -110,7 +136,7 @@ public class ShiftsMapper {
         targetShift.setEmployeeName(source.getUser() == null ? "N/A" : CommonUtils
                 .combineFirstAndLastName(source.getUser().getFirstName(), source.getUser().getLastName()));
         targetShift.setEmployeeEmail(source.getUser() == null ? "N/A" : source.getUser().getEmail());
-        targetShift.setLocationName(source.getLocation().getName());
+        targetShift.setLocationName(source.getLocation() == null ? "N/A" : source.getLocation().getName());
         targetShift.setLocationRoleName(source.getLocationRole() == null ? "N/A" : source.getLocationRole().getName());
         targetShift.setShiftType(source.getShiftType());
         targetShift.setShiftStatus(source.getShiftStatus());

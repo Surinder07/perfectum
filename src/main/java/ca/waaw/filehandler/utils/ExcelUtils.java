@@ -87,6 +87,8 @@ public class ExcelUtils {
                 }
                 return dataType.cast(cell.getRichStringCellValue().getString());
             case NUMERIC:
+                if (dataType.isAssignableFrom(String.class))
+                    return dataType.cast(String.valueOf(cell.getNumericCellValue()));
                 if (DateUtil.isCellDateFormatted(cell)) {
                     return dataType.cast(cell.getDateCellValue().toInstant());
                 } else {

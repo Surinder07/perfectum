@@ -1,6 +1,6 @@
 package ca.waaw.domain;
 
-import ca.waaw.enumration.UserToken;
+import ca.waaw.enumration.UserTokenType;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,7 +33,7 @@ public class UserTokens implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "token_type")
-    private UserToken tokenType;
+    private UserTokenType tokenType;
 
     @Column(name = "is_expired")
     private boolean isExpired;
@@ -44,7 +44,7 @@ public class UserTokens implements Serializable {
     @Column(name = "created_date")
     private Instant createdDate;
 
-    public UserTokens(UserToken type) {
+    public UserTokens(UserTokenType type) {
         this.createdDate = Instant.now();
         this.tokenType = type;
         this.token = CommonUtils.Random.generateRandomKey();

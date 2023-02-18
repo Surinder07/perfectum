@@ -2,7 +2,9 @@ package ca.waaw.web.rest;
 
 import ca.waaw.dto.NotificationDto;
 import ca.waaw.dto.PaginationDto;
+import ca.waaw.enumration.NotificationType;
 import ca.waaw.web.rest.service.NotificationService;
+import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerAuthenticated;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerNotFound;
@@ -14,6 +16,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,8 +38,21 @@ public class NotificationController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
             schema = @Schema(implementation = NotificationDto.class)))},
             description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> getAllNotifications(@PathVariable int pageNo, @PathVariable int pageSize) {
-        return ResponseEntity.ok(notificationService.getAllNotifications(pageNo, pageSize));
+    public ResponseEntity<PaginationDto> getAllNotifications(@PathVariable int pageNo, @PathVariable int pageSize,
+                                                             @RequestParam(required = false) String startDate,
+                                                             @RequestParam(required = false) String endDate,
+                                                             @RequestParam(required = false) String type,
+                                                             @RequestParam(required = false) String status) {
+        if (StringUtils.isEmpty(startDate) || StringUtils.isEmpty(endDate)) {
+            startDate = null;
+            endDate = null;
+        }
+        if(StringUtils.isEmpty(type)) type = null;
+        else CommonUtils.validateStringInEnum(NotificationType.class, type, "type");
+        if(StringUtils.isEmpty(status)) status = null;
+        Boolean isRead = status == null ? null : status.equalsIgnoreCase("read");
+        return ResponseEntity.ok(notificationService.getAllNotifications(pageNo, pageSize, startDate, endDate,
+                type, isRead));
     }
 
     @SwaggerOk

@@ -1,5 +1,5 @@
 package ca.waaw.enumration;
 
 public enum NotificationType {
-    USER, TIMESHEET, TIMEOFF, OVERTIME
+    EMPLOYEE, SHIFT, REQUEST, LOCATION, ROLE, PAYMENT, REPORT, CALENDAR, ACCOUNT
 }

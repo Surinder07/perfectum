@@ -41,7 +41,12 @@ public class MemberController {
     @Operation(description = "${api.description.member.sendInvite}")
     @PostMapping("${api.endpoints.member.sendInvite}")
     public void sendInvite(@Valid @RequestBody InviteUserDto inviteUserDto) {
-        memberService.inviteNewUsers(inviteUserDto);
+        try {
+            memberService.inviteNewUsers(inviteUserDto);
+        } catch(Exception e){
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk
@@ -102,7 +107,12 @@ public class MemberController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = UserDetailsForAdminDto.class))})
     public ResponseEntity<UserDetailsForAdminDto> getMemberById(@RequestParam String userId) {
-        return ResponseEntity.ok(memberService.getMemberById(userId));
+        try {
+            return ResponseEntity.ok(memberService.getMemberById(userId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerCreated
@@ -113,7 +123,12 @@ public class MemberController {
     @Operation(description = "${api.description.member.addEmployeePreferences}")
     @PostMapping("${api.endpoints.member.addEmployeePreferences}")
     public void addEmployeePreferences(@Valid @RequestBody EmployeePreferencesDto employeePreferencesDto) {
-        memberService.addEmployeePreferences(employeePreferencesDto);
+        try {
+            memberService.addEmployeePreferences(employeePreferencesDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk
@@ -124,7 +139,12 @@ public class MemberController {
     @Operation(description = "${api.description.member.updateMember}")
     @PutMapping("${api.endpoints.member.updateMember}")
     public void updateMemberDetails(@Valid @RequestBody UpdateUserDto memberDto) {
-        memberService.updateMember(memberDto);
+        try {
+            memberService.updateMember(memberDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk

@@ -20,16 +20,14 @@ databaseChangeLog:
               - column:
                   name: username
                   type: VARCHAR(100)
-                  constraints:
-                    unique: true
-                    uniqueConstraintName: ux_username
               - column:
                   name: email
                   type: VARCHAR(100)
                   constraints:
                     nullable: false
-                    unique: true
-                    uniqueConstraintName: ux_user_email
+              - column:
+                  name: email_to_update
+                  type: VARCHAR(100)
               - column:
                   name: password_hash
                   type: VARCHAR(60)
@@ -124,20 +122,6 @@ databaseChangeLog:
                   name: last_modified_date
                   type: TIMESTAMP
                   defaultValueDate: now()
-        - createIndex:
-            indexName: idx_user_email
-            tableName: user
-            unique: true
-            column:
-              name: email
-              type: VARCHAR(100)
-        - createIndex:
-            indexName: idx_waaw_user_id
-            tableName: user
-            unique: true
-            column:
-              name: waaw_custom_id
-              type: VARCHAR(25)
         - addForeignKeyConstraint:
             baseTableName: user
             baseColumnNames: organization_id

@@ -2,21 +2,15 @@ package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.domain.*;
-import ca.waaw.domain.joined.BatchDetails;
-import ca.waaw.domain.joined.EmployeePreferencesWithUser;
-import ca.waaw.domain.joined.ShiftDetails;
-import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.domain.joined.*;
 import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.ShiftSchedulingPreferences;
 import ca.waaw.dto.shifts.NewShiftDto;
-import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.ShiftBatchStatus;
-import ca.waaw.enumration.ShiftStatus;
+import ca.waaw.enumration.*;
 import ca.waaw.mapper.ShiftsMapper;
 import ca.waaw.repository.*;
-import ca.waaw.repository.joined.BatchDetailsRepository;
-import ca.waaw.repository.joined.ShiftDetailsRepository;
+import ca.waaw.repository.joined.*;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.CachingService;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
@@ -40,11 +34,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,13 +47,13 @@ public class ShiftSchedulingService {
 
     private final ShiftsRepository shiftsRepository;
 
-    private final DetailedShiftRepository detailedShiftRepository;
-
     private final ShiftsBatchRepository shiftsBatchRepository;
 
     private final ShiftBatchMappedUserAndRoleRepository shiftBatchMappedUserAndRoleRepository;
 
     private final ShiftDetailsRepository shiftDetailsRepository;
+
+    private final ShiftDetailsWithBatchRepository shiftDetailsWithBatchRepository;
 
     private final BatchDetailsRepository batchDetailsRepository;
 
@@ -76,6 +68,8 @@ public class ShiftSchedulingService {
     private final OrganizationHolidayRepository holidayRepository;
 
     private final EmployeePreferencesWithUserRepository employeePreferencesWithUserRepository;
+
+    private final RequestsRepository requestsRepository;
 
     private final CachingService cachingService;
 
@@ -125,29 +119,44 @@ public class ShiftSchedulingService {
         CompletableFuture.runAsync(() -> {
             try {
                 createShifts(newShiftDto, batch, timezone);
-                batch.setStatus(batch.isReleased() ? ShiftBatchStatus.RELEASED : ShiftBatchStatus.CREATED);
             } catch (Exception e) {
                 log.error("Exception while creating shifts", e);
                 batch.setStatus(ShiftBatchStatus.FAILED);
+                shiftsBatchRepository.save(batch);
             }
-            shiftsBatchRepository.save(batch);
         });
         return new ApiResponseMessageDto("Shifts creation in progress. You will be notified once they are finished");
     }
 
     private void createShifts(NewShiftDto shiftDto, ShiftsBatch batch, String timezone) {
         List<Notification> notifications = new ArrayList<>();
+        AtomicReference<String> currentCustomId = new AtomicReference<>(shiftsRepository.getLastUsedCustomId()
+                .orElse(appCustomIdConfig.getShiftPrefix() + "0000000000"));
+        boolean batchFail = false;
         if (shiftDto.getType().equals("SINGLE")) {
             if (shiftDto.getUserIds() != null && shiftDto.getUserIds().size() > 0) {
                 List<ShiftSchedulingPreferences> shiftSchedulingPreferences = getAllPreferencesForALocationOrUser(null,
                         null, shiftDto.getUserIds());
+                List<User> users = userRepository.findAllByIdInAndDeleteFlag(shiftDto.getUserIds(), false);
                 List<Shifts> shifts = shiftDto.getUserIds().stream()
                         .map(userId -> {
+                            String customId = CommonUtils.getNextCustomId(currentCustomId.get(), appCustomIdConfig.getLength());
                             Shifts shift = ShiftsMapper.shiftDtoToEntity(shiftDto, userId, null, null,
-                                    batch.getCreatedBy(), batch.getOrganizationId(), timezone, batch.getId());
-                            if (isShiftOverlapping(shift, userId)) {
+                                    batch.getCreatedBy(), batch.getOrganizationId(), timezone, batch.getId(), customId);
+                            currentCustomId.set(customId);
+                            User user = users.stream().filter(user1 -> user1.getId().equals(userId))
+                                    .findFirst().orElse(null);
+                            assert user != null;
+                            shift.setLocationId(user.getLocationId());
+                            shift.setLocationRoleId(user.getLocationRoleId());
+                            int sameDayTimeOff = (int) requestsRepository.getOverlappingForDates(shift.getStart(), shift.getEnd(), false)
+                                    .stream().filter(request -> request.getUserId().equals(shift.getUserId()))
+                                    .filter(requests -> requests.getType().equals(RequestType.TIME_OFF))
+                                    .filter(requests -> requests.getStatus().equals(RequestStatus.ACCEPTED))
+                                    .count();
+                            if (sameDayTimeOff > 0) {
                                 shift.setShiftStatus(ShiftStatus.FAILED);
-                                shift.setNotes("An existing shift overlaps with this shift.");
+                                shift.setNotes("A time off request is already approved for this time.");
                             }
                             List<String> conflicts = validateShift(shift, Objects.requireNonNull(shiftSchedulingPreferences
                                     .stream().filter(pref -> pref.getUserId().equals(userId)).findFirst().orElse(null)));
@@ -155,20 +164,31 @@ public class ShiftSchedulingService {
                         })
                         .collect(Collectors.toList());
                 shiftsRepository.saveAll(shifts);
+                batchFail = shifts.stream().allMatch(shift -> shift.getShiftStatus().equals(ShiftStatus.FAILED));
             } else if (shiftDto.getLocationRoleIds() != null && shiftDto.getLocationRoleIds().size() > 0) {
                 List<Shifts> shifts = shiftDto.getLocationRoleIds().stream()
-                        .map(roleId -> ShiftsMapper.shiftDtoToEntity(shiftDto, null, shiftDto.getLocationId(), roleId,
-                                batch.getCreatedBy(), batch.getOrganizationId(), timezone, batch.getId()))
+                        .map(roleId -> {
+                            String customId = CommonUtils.getNextCustomId(currentCustomId.get(), appCustomIdConfig.getLength());
+                            currentCustomId.set(customId);
+                            return ShiftsMapper.shiftDtoToEntity(shiftDto, null, shiftDto.getLocationId(), roleId,
+                                    batch.getCreatedBy(), batch.getOrganizationId(), timezone, batch.getId(), customId);
+                        })
                         .collect(Collectors.toList());
                 shiftsRepository.saveAll(shifts);
             } else {
+                String customId = CommonUtils.getNextCustomId(currentCustomId.get(), appCustomIdConfig.getLength());
+                currentCustomId.set(customId);
                 Shifts shift = ShiftsMapper.shiftDtoToEntity(shiftDto, null, shiftDto.getLocationId(), null,
-                        batch.getCreatedBy(), batch.getOrganizationId(), timezone, batch.getId());
+                        batch.getCreatedBy(), batch.getOrganizationId(), timezone, batch.getId(), customId);
                 shiftsRepository.save(shift);
             }
+            if (batchFail) batch.setStatus(ShiftBatchStatus.FAILED);
         } else {
-            createShiftsForBatch(shiftDto, batch, timezone);
+            createShiftsForBatch(shiftDto, batch, timezone, currentCustomId);
         }
+        if (!batch.getStatus().equals(ShiftBatchStatus.FAILED))
+            batch.setStatus(shiftDto.isInstantRelease() ? ShiftBatchStatus.RELEASED : ShiftBatchStatus.CREATED);
+        shiftsBatchRepository.save(batch);
         // TODO Send Notification to employee if shift is released.
         // TODO Send Notification to admin if conflicting shifts are there.
     }
@@ -182,13 +202,26 @@ public class ShiftSchedulingService {
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
                         .map(shift -> {
-                            if (shift.getStart().isBefore(Instant.now())) {
+                            if (shift.getStart().isBefore(DateAndTimeUtils.getCurrentDateTime(
+                                    user.getAuthority().equals(Authority.ADMIN) ? user.getOrganization().getTimezone() : user.getLocation().getTimezone()
+                            ))) {
                                 throw new PastValueNotDeletableException("Shift");
                             }
                             if (!shift.getOrganizationId().equals(user.getOrganizationId()) ||
                                     (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) &&
                                             !shift.getLocationId().equals(user.getLocationId()))) {
-                                throw new UnauthorizedException();
+                                return null;
+                            }
+                            if (user.getAuthority().equals(Authority.MANAGER)) {
+                                return locationRoleRepository.findOneByIdAndDeleteFlag(shift.getLocationRoleId(), false)
+                                        .map(role -> {
+                                            if (role.isAdminRights()) return null;
+                                            else {
+                                                shift.setDeleteFlag(true);
+                                                shift.setLastModifiedBy(user.getId());
+                                                return shiftsRepository.save(shift);
+                                            }
+                                        });
                             }
                             shift.setDeleteFlag(true);
                             shift.setLastModifiedBy(user.getId());
@@ -201,28 +234,131 @@ public class ShiftSchedulingService {
     }
 
     /**
+     * @param id for batch to be deleted
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteBatch(String id) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> shiftsBatchRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(batch -> {
+                            if (batch.getStartDate().isBefore(DateAndTimeUtils.getCurrentDateTime(
+                                    user.getAuthority().equals(Authority.ADMIN) ? user.getOrganization().getTimezone() :
+                                            user.getLocation().getTimezone()
+                            ))) {
+                                throw new PastValueNotDeletableException("Shift");
+                            }
+                            if (!batch.getOrganizationId().equals(user.getOrganizationId()) ||
+                                    (user.getAuthority().equals(Authority.MANAGER) &&
+                                            !batch.getLocationId().equals(user.getLocationId()))) {
+                                return null;
+                            }
+                            batch.setDeleteFlag(true);
+                            batch.setLastModifiedBy(user.getId());
+                            return shiftsBatchRepository.save(batch);
+                        })
+                        .map(batch -> {
+                            List<Shifts> shiftsToDelete = shiftsRepository.findAllByBatchIdAndDeleteFlag(batch.getId(), false)
+                                    .stream().peek(shift -> {
+                                        shift.setDeleteFlag(true);
+                                        shift.setLastModifiedBy(user.getId());
+                                    }).collect(Collectors.toList());
+                            shiftsRepository.saveAll(shiftsToDelete);
+                            return batch;
+                        })
+                        .map(batch -> CommonUtils.logMessageAndReturnObject(batch, "info", ShiftSchedulingService.class,
+                                "Batch deleted: {}", id))
+                        .orElseThrow(() -> new EntityNotFoundException("batch"))
+                );
+
+    }
+
+    /**
      * @param id for shift to be released
      */
+    @Transactional(rollbackFor = Exception.class)
     public void releaseShift(String id) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> shiftsRepository.findOneByIdAndDeleteFlag(id, false)
-                                .map(shift -> {
-                                    if (shift.getStart().isBefore(Instant.now())) {
-                                        throw new PastValueNotDeletableException("Shift");
-                                    }
-                                    if (!shift.getOrganizationId().equals(user.getOrganizationId()) ||
-                                            (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) &&
-                                                    !shift.getLocationId().equals(user.getLocationId()))) {
-                                        throw new UnauthorizedException();
-                                    }
-//                            shift.setShiftStatus(ShiftStatus.SCHEDULED);
-                                    shift.setLastModifiedBy(user.getId());
-                                    return shiftsRepository.save(shift);
-                                }).map(shift -> CommonUtils.logMessageAndReturnObject(shift, "info", ShiftSchedulingService.class,
-                                        "Shift released: {}", id))
-                                .orElseThrow(() -> new EntityNotFoundException("shift"))
+                        .map(shift -> {
+                            if (shift.getStart().isBefore(DateAndTimeUtils.getCurrentDateTime(
+                                    user.getAuthority().equals(Authority.ADMIN) ? user.getOrganization().getTimezone() : user.getLocation().getTimezone()
+                            ))) {
+                                throw new PastValueNotDeletableException("Shift");
+                            }
+                            if (!shift.getOrganizationId().equals(user.getOrganizationId()) ||
+                                    (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) &&
+                                            !shift.getLocationId().equals(user.getLocationId()))) {
+                                return null;
+                            }
+                            shift.setShiftStatus(ShiftStatus.RELEASED);
+                            shift.setLastModifiedBy(user.getId());
+                            return shiftsRepository.save(shift);
+                        }).map(shift -> {
+                            long unReleasedShiftInBatch = shiftsRepository
+                                    .findAllByBatchIdAndDeleteFlag(shift.getBatchId(), false)
+                                    .stream()
+                                    .filter(shift1 -> !shift1.getShiftStatus().equals(ShiftStatus.RELEASED))
+                                    .count();
+                            if (unReleasedShiftInBatch == 0) {
+                                shiftsBatchRepository.findOneByIdAndDeleteFlag(shift.getBatchId(), false)
+                                        .map(batch -> {
+                                            batch.setReleased(true);
+                                            batch.setStatus(ShiftBatchStatus.RELEASED);
+                                            batch.setLastModifiedBy(shift.getLastModifiedBy());
+                                            return batch;
+                                        })
+                                        .map(shiftsBatchRepository::save);
+                            }
+                            return shift;
+                        })
+                        .map(shift -> CommonUtils.logMessageAndReturnObject(shift, "info", ShiftSchedulingService.class,
+                                "Shift released: {}", id))
+                        .orElseThrow(() -> new EntityNotFoundException("shift"))
+                );
+        // TODO send notification to employee.
+    }
+
+    /**
+     * @param id id for batch to be released
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void releaseBatch(String id) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> shiftsBatchRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(batch -> {
+                            if (batch.getStartDate().isBefore(DateAndTimeUtils.getCurrentDateTime(
+                                    user.getAuthority().equals(Authority.ADMIN) ? user.getOrganization().getTimezone() : user.getLocation().getTimezone()
+                            ))) {
+                                throw new PastValueNotDeletableException("Shift");
+                            }
+                            if (!batch.getOrganizationId().equals(user.getOrganizationId()) ||
+                                    (SecurityUtils.isCurrentUserInRole(Authority.MANAGER) &&
+                                            !batch.getLocationId().equals(user.getLocationId()))) {
+                                return null;
+                            }
+                            batch.setReleased(true);
+                            batch.setStatus(ShiftBatchStatus.RELEASED);
+                            batch.setLastModifiedBy(user.getId());
+                            return shiftsBatchRepository.save(batch);
+                        })
+                        .map(batch -> {
+                            List<Shifts> shiftsToRelease = shiftsRepository.findAllByBatchIdAndDeleteFlag(batch.getId(), false)
+                                    .stream().peek(shift -> {
+                                        shift.setShiftStatus(ShiftStatus.RELEASED);
+                                        shift.setLastModifiedBy(user.getId());
+                                    }).collect(Collectors.toList());
+                            shiftsRepository.saveAll(shiftsToRelease);
+                            return batch;
+                        })
+                        .map(batch -> CommonUtils.logMessageAndReturnObject(batch, "info", ShiftSchedulingService.class,
+                                "Batch released: {}", id))
+                        .orElseThrow(() -> new EntityNotFoundException("batch"))
                 );
         // TODO send notification to employee.
     }
@@ -273,29 +409,30 @@ public class ShiftSchedulingService {
         assert admin != null;
         String timezone = SecurityUtils.isCurrentUserInRole(Authority.ADMIN) ?
                 admin.getOrganization().getTimezone() : admin.getLocation().getTimezone();
-        Instant[] startEnd = StringUtils.isEmpty(startDate) && StringUtils.isNotEmpty(endDate) ?
+        Instant[] startEnd = StringUtils.isNotEmpty(startDate) && StringUtils.isNotEmpty(endDate) ?
                 DateAndTimeUtils.getStartAndEndTimeForInstant(startDate, endDate, timezone) : new Instant[]{null, null};
         Pageable getSortedByCreatedDate = PageRequest.of(pageNo, pageSize, Sort.by("createdDate").descending());
-        //TODO get Status for batch and shift from string
         Page<BatchDetails> batchPage = admin.getAuthority().equals(Authority.ADMIN) ?
                 batchDetailsRepository.searchAndFilterShifts(searchKey, admin.getOrganizationId(), null, startEnd[0], startEnd[1],
-                        null, getSortedByCreatedDate) : batchDetailsRepository.searchAndFilterShifts(searchKey,
-                null, admin.getLocationId(), startEnd[0], startEnd[1], null, getSortedByCreatedDate);
+                        batchStatus, getSortedByCreatedDate) : batchDetailsRepository.searchAndFilterShifts(searchKey,
+                null, admin.getLocationId(), startEnd[0], startEnd[1], batchStatus, getSortedByCreatedDate);
         List<String> batchIds = batchPage.getContent().stream().map(BatchDetails::getId).collect(Collectors.toList());
-        Map<String, List<ShiftDetails>> shifts = shiftDetailsRepository.searchAndFilterShifts(searchKey, locationId, roleId, null,
-                        null, SecurityUtils.isCurrentUserInRole(Authority.ADMIN), batchIds)
-                .stream().collect(Collectors.groupingBy(ShiftDetails::getBatchId));
+        Map<String, List<ShiftDetails>> shifts = shiftDetailsRepository.searchAndFilterShifts(searchKey, locationId, roleId, shiftStatus,
+                        null, admin.getAuthority().equals(Authority.ADMIN), batchIds)
+                .stream().sorted(Comparator.comparing(ShiftDetails::getStart))
+                .collect(Collectors.groupingBy(ShiftDetails::getBatchId));
         return CommonUtils.getPaginationResponse(batchPage, ShiftsMapper::entitiesToListingDto, shifts, timezone);
     }
 
-    public PaginationDto getAllShiftsUser(int pageNo, int pageSize, String userId, String startDate, String endDate, String shiftStatus) {
+    public PaginationDto getAllShiftsUser(int pageNo, int pageSize, String userId, String startDate, String endDate,
+                                          String shiftStatus, String searchKey) {
         UserOrganization admin = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .orElse(null);
         assert admin != null;
         String timezone = SecurityUtils.isCurrentUserInRole(Authority.ADMIN) ?
                 admin.getOrganization().getTimezone() : admin.getLocation().getTimezone();
-        Instant[] startEnd = StringUtils.isEmpty(startDate) && StringUtils.isNotEmpty(endDate) ?
+        Instant[] startEnd = StringUtils.isNotEmpty(startDate) ?
                 DateAndTimeUtils.getStartAndEndTimeForInstant(startDate, endDate, timezone) : new Instant[]{null, null};
         Pageable getSortedByCreatedDate = PageRequest.of(pageNo, pageSize, Sort.by("createdDate").descending());
         if (StringUtils.isNotEmpty(userId)) {
@@ -311,9 +448,10 @@ public class ShiftSchedulingService {
                     .orElseThrow(() -> new EntityNotFoundException("user"));
         } else if (!admin.getAuthority().equals(Authority.ADMIN)) {
             userId = admin.getId();
+            shiftStatus = "RELEASED";
         }
-        Page<ShiftDetails> shiftsPage = shiftDetailsRepository.searchAndFilterShiftsDate(null, null,
-                null, null, userId, true, startEnd[0], startEnd[1], getSortedByCreatedDate);
+        Page<ShiftDetailsWithBatch> shiftsPage = shiftDetailsWithBatchRepository.searchAndFilterShiftsDate(searchKey,
+                shiftStatus, userId, startEnd[0], startEnd[1], getSortedByCreatedDate);
         return CommonUtils.getPaginationResponse(shiftsPage, ShiftsMapper::entityToShiftDto, timezone);
     }
 
@@ -322,7 +460,8 @@ public class ShiftSchedulingService {
      * @param batch       batch details
      */
     @Transactional(rollbackFor = Exception.class)
-    private void createShiftsForBatch(NewShiftDto newShiftDto, ShiftsBatch batch, String timezone) {
+    private void createShiftsForBatch(NewShiftDto newShiftDto, ShiftsBatch batch, String timezone,
+                                      AtomicReference<String> currentCustomId) {
         log.info("Starting shift creation asynchronously");
         // Fetch all preferences for given location
         List<ShiftSchedulingPreferences> preferences = getAllPreferencesForALocationOrUser(newShiftDto.getLocationId(),
@@ -332,18 +471,32 @@ public class ShiftSchedulingService {
                 batch.getStartDate().minus(7, ChronoUnit.DAYS), batch.getEndDate().plus(7, ChronoUnit.DAYS));
         // Fetch all holidays for given location in given range
         // TODO validate and accommodate for next year holidays if needed
-        List<OrganizationHolidays> holidays = holidayRepository.getAllForLocationAndMonthIfNeeded(batch.getLocationId(),
-                null, DateAndTimeUtils.getCurrentDate("year", timezone));
+        List<OrganizationHolidays> holidays = holidayRepository.getAllForLocationByYear(batch.getLocationId(),
+                DateAndTimeUtils.getCurrentDate("year", timezone));
         // TODO Fetch all timeOffs for given location in given range
+        List<Requests> timeOff = requestsRepository.getOverlappingForDates(batch.getStartDate(), batch.getEndDate(), false)
+                .stream().filter(requests -> requests.getType().equals(RequestType.TIME_OFF))
+                .filter(requests -> requests.getStatus().equals(RequestStatus.ACCEPTED))
+                .collect(Collectors.toList());
         // Fetch all employee preference
         List<EmployeePreferencesWithUser> employeePreferenceWithUsers = getEmployeesAndPreference(newShiftDto.getLocationId(),
                 newShiftDto.getLocationRoleIds(), newShiftDto.getUserIds(), batch.getOrganizationId());
         // Validate and create shifts for the batch
         List<String> employeeWithoutPreferences = new ArrayList<>();
         List<Shifts> newShifts = ShiftSchedulingUtils.validateAndCreateShiftsForBatch(batch, existingShifts,
-                holidays, preferences, employeePreferenceWithUsers, timezone, employeeWithoutPreferences);
+                holidays, preferences, employeePreferenceWithUsers, timezone, employeeWithoutPreferences, timeOff);
+        newShifts.forEach(shift -> {
+            String customId = CommonUtils.getNextCustomId(currentCustomId.get(), appCustomIdConfig.getLength());
+            shift.setWaawId(customId);
+            currentCustomId.set(customId);
+        });
+        boolean batchFail = newShifts.stream().allMatch(shift -> shift.getShiftStatus().equals(ShiftStatus.FAILED));
         if (newShifts.size() > 0) {
             shiftsRepository.saveAll(newShifts);
+            if (batchFail) {
+                batch.setStatus(ShiftBatchStatus.FAILED);
+                shiftsBatchRepository.save(batch);
+            }
             // TODO use employeeWithoutPreferences to send notification to admin
             // TODO send notification to admin for gaps if any
         } else {
@@ -379,8 +532,8 @@ public class ShiftSchedulingService {
         Instant[] dateRangeForConsecutiveCheck = DateAndTimeUtils.getStartAndEndTimeForInstant(shift.getStart()
                         .minus(shiftSchedulingPreferences.getMaxConsecutiveWorkDays(), ChronoUnit.DAYS),
                 shiftSchedulingPreferences.getMaxConsecutiveWorkDays() * 2);
-        List<Shifts> shiftsToCheck = shiftsRepository.findAllByUserIdAndStartBetween(shift.getUserId(),
-                dateRangeForConsecutiveCheck[0], dateRangeForConsecutiveCheck[1]);
+        List<Shifts> shiftsToCheck = shiftsRepository.findAllByUserIdAndStartBetweenAndDeleteFlag(shift.getUserId(),
+                dateRangeForConsecutiveCheck[0], dateRangeForConsecutiveCheck[1], false);
         return ShiftSchedulingUtils.validateShift(shift, shiftSchedulingPreferences, shiftsToCheck);
     }
 
@@ -409,55 +562,16 @@ public class ShiftSchedulingService {
     }
 
     /**
-     * @param batch batch object
-     * @return shifts associated with the batch
-     */
-    private List<Shifts> getShiftsFromBatch(ShiftsBatch batch) {
-        List<Shifts> shifts;
-//        if (batch.getUsers() != null && batch.getUsers().size() > 0) {
-//            shifts = shiftsRepository.findAllByUserIdInAndStartBetween(batch.getUsers(), batch.getStartDate(), batch.getEndDate());
-//        } else if (StringUtils.isNotEmpty(batch.getLocationRoleId())) {
-//            shifts = shiftsRepository.findAllByLocationRoleIdAndStartBetween(batch.getLocationRoleId(), batch.getStartDate(),
-//                    batch.getEndDate());
-//        } else {
-//            shifts = shiftsRepository.findAllByLocationIdAndStartBetween(batch.getLocationId(), batch.getStartDate(),
-//                    batch.getEndDate());
-//        }
-//        return shifts.stream().filter(shift -> shift.getShiftType().equals(ShiftType.RECURRING)).collect(Collectors.toList());
-        return null;
-    }
-
-    /**
-     * @param batch batch object
-     * @return shifts associated with the batch
-     */
-    private List<ShiftDetails> getDetailedShiftsFromBatch(ShiftsBatch batch) {
-        List<ShiftDetails> shifts;
-//        if (batch.getUsers() != null && batch.getUsers().size() > 0) {
-//            shifts = detailedShiftRepository.findAllByUser_idInAndDeleteFlagAndStartBetween(batch.getUsers(),
-//                    false, batch.getStartDate(), batch.getEndDate());
-//        } else if (StringUtils.isNotEmpty(batch.getLocationRoleId())) {
-//            shifts = detailedShiftRepository.findAllByLocationRole_idAndDeleteFlagAndStartBetween(batch.getLocationRoleId(),
-//                    false, batch.getStartDate(), batch.getEndDate());
-//        } else {
-//            shifts = detailedShiftRepository.findAllByLocation_idAndDeleteFlagAndStartBetween(batch.getLocationId(),
-//                    false, batch.getStartDate(), batch.getEndDate());
-//        }
-//        return shifts.stream().filter(shift -> shift.getShiftType().equals(ShiftType.RECURRING)).collect(Collectors.toList());
-        return null;
-    }
-
-    /**
      * @param shift  shift details to be checked
      * @param userId user for whom overlapping is to be checked
      * @return true is there is shift overlapping
      */
     private boolean isShiftOverlapping(Shifts shift, String userId) {
-        return !shiftsRepository.findAllByUserIdAndStartBetween(userId, shift.getStart(), shift.getEnd())
+        return !shiftsRepository.findAllByUserIdAndStartBetweenAndDeleteFlag(userId, shift.getStart(), shift.getEnd(), false)
                 .isEmpty();
     }
 
-    private String getNewBatchId(Organization organization) {
+    public String getNewBatchId(Organization organization) {
         int orgPrefix = cachingService.getOrganizationPrefix(organization.getId(), organization.getName());
         String lastName = shiftsBatchRepository.getLastUsedId(organization.getId())
                 .orElse("xxx0000000000");

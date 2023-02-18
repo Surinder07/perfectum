@@ -1,5 +1,5 @@
 package ca.waaw.enumration;
 
 public enum UserReport {
-    PAYROLL, ATTENDANCE
+    PAYROLL, ATTENDANCE, HOLIDAYS
 }

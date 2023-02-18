@@ -1,43 +1,58 @@
 package ca.waaw.storage;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.stereotype.Service;
-
+import ca.waaw.config.applicationconfig.AppAzureConfig;
+import ca.waaw.enumration.FileType;
 import com.azure.core.util.BinaryData;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobContainerClientBuilder;
 import com.azure.storage.blob.specialized.BlockBlobClient;
+import lombok.AllArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Service
+@AllArgsConstructor
 public class AzureStorage {
-	private static final Logger lOGGER = LogManager.getLogger(AzureStorage.class);
-	public static final String storageConnectionString = "DefaultEndpointsProtocol=http;"
-			+ "AccountName=your_storage_account"
-			+ "AccountKey=your_storage_account_key";
-	
-	//URL Smaple -> https://myaccount.blob.core.windows.net/myblob 
-	public String uploadBlobIntoContainer (String containerName, String blobNameWithFileExtension, byte[] data) {
-		BlobContainerClient blobContainerClient = new BlobContainerClientBuilder()
-			    .endpoint("<your-storage-account-url>")
-			    .sasToken("<your-sasToken>")
-			    .containerName(containerName)
-			    .buildClient();
-		BlockBlobClient blockBlobClient =  blobContainerClient.getBlobClient(blobNameWithFileExtension).getBlockBlobClient();
-	    blockBlobClient.upload(BinaryData.fromBytes(data));
-	    lOGGER.info("File: " + blockBlobClient.getBlobName() + " has been uploaded");
-		return "https://myaccount.blob.core.windows.net/" + blockBlobClient.getBlobName();
-	}
-	
-	public byte[] retriveBlobIntoContainer (String containerName, String blobNameWithFileExtension) {
-		BlobContainerClient blobContainerClient = new BlobContainerClientBuilder()
-			    .endpoint("<your-storage-account-url>")
-			    .sasToken("<your-sasToken>")
-			    .containerName(containerName)
-			    .buildClient();
-		BlockBlobClient blockBlobClient =  blobContainerClient.getBlobClient(blobNameWithFileExtension).getBlockBlobClient();
-		lOGGER.info("File: " + blockBlobClient.getBlobName() + " has been downloaded");
-		return blockBlobClient.downloadContent().toBytes();
-	}
+
+    private static final Logger log = LogManager.getLogger(AzureStorage.class);
+
+    public final AppAzureConfig config;
+
+    public String uploadFile(MultipartFile file, FileType fileType) throws IOException {
+        String fileName = file.getOriginalFilename();
+        try {
+            return uploadFile(fileName, file.getBytes(), fileType);
+        } catch (Exception e) {
+            log.error("Exception while reading multipart file", e);
+            throw e;
+        }
+    }
+
+    public String uploadFile(String fileName, byte[] data, FileType fileType) {
+        BlobContainerClient blobContainerClient = new BlobContainerClientBuilder()
+                .endpoint(config.getBlob().getContainerUrl(fileType))
+                .sasToken(config.getBlob().getContainerKey(fileType))
+                .containerName(config.getBlob().getContainerName(fileType))
+                .buildClient();
+        BlockBlobClient blockBlobClient = blobContainerClient.getBlobClient(fileName).getBlockBlobClient();
+        blockBlobClient.upload(BinaryData.fromBytes(data));
+        log.info("File: " + blockBlobClient.getBlobName() + " has been uploaded");
+        return blockBlobClient.getBlobName();
+    }
+
+    public byte[] retrieveFileData(String fileNameWithExtension, FileType type) {
+        BlobContainerClient blobContainerClient = new BlobContainerClientBuilder()
+                .endpoint(config.getBlob().getContainerUrl(type))
+                .sasToken(config.getBlob().getContainerKey(type))
+                .containerName(config.getBlob().getContainerName(type))
+                .buildClient();
+        BlockBlobClient blockBlobClient = blobContainerClient.getBlobClient(fileNameWithExtension).getBlockBlobClient();
+        log.info("File: " + blockBlobClient.getBlobName() + " has been downloaded");
+        return blockBlobClient.downloadContent().toBytes();
+    }
 
 }

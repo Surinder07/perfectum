@@ -1,10 +1,14 @@
 package ca.waaw.web.rest.utils;
 
 import ca.waaw.dto.DateTimeDto;
+import ca.waaw.enumration.DaysOfWeek;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Date;
 
 public class DateAndTimeUtils {
 
@@ -20,7 +24,7 @@ public class DateAndTimeUtils {
     }
 
     /**
-     * @param date     Date in format yyyy/MM/dd
+     * @param date     Date in format yyyy-MM-dd
      * @param time     Time in format HH:mm
      * @param timezone timezone to which we will change time to
      * @return Instant object for the date in given timezone
@@ -30,6 +34,17 @@ public class DateAndTimeUtils {
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(String.format("%s %s", date, time), formatter);
         return dateTime.atZone(ZoneId.of(timezone)).toInstant();
+    }
+
+    /**
+     * @param date     date to be converted to required format
+     * @param timezone timezone for which date is required
+     * @return date in format dd month name, yyyy as a String
+     */
+    public static String getDateWithFullMonth(Instant date, String timezone) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MMMM/yyyy");
+        String[] requiredDate = formatter.format(date.atZone(ZoneId.of(timezone))).split("/");
+        return requiredDate[0] + " " + requiredDate[1] + ", " + requiredDate[2];
     }
 
     /**
@@ -80,6 +95,19 @@ public class DateAndTimeUtils {
         return (differenceInSeconds / 3600);
     }
 
+    public static long getSameDayTimeDifference(String time1, String time2) {
+        Instant day1 = Instant.now().atZone(ZoneOffset.UTC)
+                .withHour(Integer.parseInt(time1.split(":")[0]))
+                .withMinute(Integer.parseInt(time1.split(":")[1]))
+                .withSecond(0).withNano(0).toInstant();
+        Instant day2 = Instant.now().atZone(ZoneOffset.UTC)
+                .withHour(Integer.parseInt(time2.split(":")[0]))
+                .withMinute(Integer.parseInt(time2.split(":")[1]))
+                .withSecond(0).withNano(0).toInstant();
+        float differenceInSeconds = day2.getEpochSecond() - day1.getEpochSecond();
+        return (long) (differenceInSeconds / 60);
+    }
+
     /**
      * Example: For Instant 2022-09-21T14:53:55 it will return [2022-09-21T00:00:00, 2022-09-21T23:59:59]
      *
@@ -95,7 +123,7 @@ public class DateAndTimeUtils {
     }
 
     /**
-     * @param date     date in string format(yyyy/MM/dd)
+     * @param date     date in string format(yyyy-MM-dd)
      * @param timezone timezone required
      * @return start and end time
      */
@@ -109,8 +137,8 @@ public class DateAndTimeUtils {
     }
 
     /**
-     * @param startDate start date in string format(yyyy/MM/dd)
-     * @param endDate   end date in string format(yyyy/MM/dd)
+     * @param startDate start date in string format(yyyy-MM-dd)
+     * @param endDate   end date in string format(yyyy-MM-dd)
      * @param timezone  timezone required
      * @return start and end time
      */
@@ -162,7 +190,7 @@ public class DateAndTimeUtils {
     }
 
     /**
-     * @param date      date to be converted (Format: yyyy/MM/dd)
+     * @param date      date to be converted (Format: yyyy-MM-dd)
      * @param timeOfDay start/end time at which Instant is required
      * @return Instant for given date and time
      * @throws Exception if type is invalid
@@ -177,6 +205,101 @@ public class DateAndTimeUtils {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(String.format("%s %s", date, time), formatter);
         return dateTime.atZone(ZoneId.of(timezone)).toInstant();
+    }
+
+    /**
+     * @param timezone timezone for which dates are required
+     * @param start    start of the week
+     * @return start and end for the current week
+     */
+    public static Instant[] getCurrentWeekStartEnd(String timezone, DaysOfWeek start) {
+        ZonedDateTime now = LocalDateTime.now().atZone(ZoneId.of(timezone));
+        Instant weekStart = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.valueOf(start.toString())))
+                .withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
+        Instant weekEnd = weekStart.plus(7, ChronoUnit.DAYS).minus(1, ChronoUnit.SECONDS);
+        return new Instant[]{weekStart, weekEnd};
+    }
+
+    /**
+     * @param timezone timezone for which dates are required
+     * @return start and end for the today
+     */
+    public static Instant[] getTodayInstantRange(String timezone) {
+        ZonedDateTime now = LocalDateTime.now().atZone(ZoneId.of(timezone));
+        Instant dayStart = now.withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
+        Instant dayEnd = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999).toInstant();
+        return new Instant[]{dayStart, dayEnd};
+    }
+
+    /**
+     * @param year     year
+     * @param month    month
+     * @param date     date
+     * @param timezone timezone
+     * @return Instant object with above details
+     */
+    public static Instant toDate(int year, int month, int date, String timezone) {
+        return Date.from(LocalDateTime.of(year, month, date, 0, 0, 0, 0)
+                .atZone(ZoneId.of(timezone)).toInstant()).toInstant();
+    }
+
+    /**
+     * @param year     year
+     * @param month    month
+     * @param timezone timezone
+     * @return Instant range for the given month
+     */
+    public static Instant[] getMonthStartEnd(int year, int month, String timezone) {
+        Instant dateStart = Date.from(LocalDateTime.of(year, month, 1, 0, 0, 0, 0)
+                .atZone(ZoneId.of(timezone)).toInstant()).toInstant();
+
+        Instant dateEnd = Date.from(LocalDateTime.of(year, month, 1, 0, 0, 0, 0)
+                .atZone(ZoneId.of(timezone)).plusMonths(1).minus(1, ChronoUnit.MILLIS).toInstant()).toInstant();
+        return new Instant[]{dateStart, dateEnd};
+    }
+
+    /**
+     * @param date     Instant object
+     * @param timezone timezone
+     * @return date in format (January 13)
+     */
+    public static String getFullMonthDate(Instant date, String timezone) {
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("MMMM dd")
+                .withZone(ZoneId.of(timezone));
+        return LocalDateTime
+                .ofInstant(date, ZoneId.of(timezone))
+                .format(formatter);
+    }
+
+    /**
+     * @param start start Instant
+     * @param end   end Instant
+     * @return time difference between instants in format hh:mm:ss
+     */
+    public static String getTimeBetweenInstants(Instant start, Instant end) {
+        int hour = (int) Math.abs(ChronoUnit.HOURS.between(start, end));
+        int minute = (int) Math.abs(ChronoUnit.MINUTES.between(start, end));
+        int second = (int) Math.abs(ChronoUnit.SECONDS.between(start, end));
+        return String.format("%s:%s:%s", StringUtils.leftPad(String.valueOf(hour), 2, "0"),
+                StringUtils.leftPad(String.valueOf(minute % 60), 2, "0"),
+                StringUtils.leftPad(String.valueOf(second % 60), 2, "0"));
+    }
+
+    public static String getInstantAsStringInGivenTimezone(Instant date, String timezone) {
+        DateTimeDto dto = getDateTimeObject(date, timezone);
+        return String.format("%sT%s:00", dto.getDate(), dto.getTime());
+    }
+
+    public static String getDateTimeAsString(Instant date, String timezone) {
+        Instant[] todayRange = getTodayInstantRange(timezone);
+        Instant[] yesterdayRange = new Instant[]{todayRange[0].minus(1, ChronoUnit.DAYS),
+                todayRange[1].minus(1, ChronoUnit.DAYS)};
+        DateTimeDto dateTime = getDateTimeObject(date, timezone);
+        String newDate = null;
+        if (!date.isBefore(todayRange[0]) && date.isBefore(todayRange[1])) newDate = "today";
+        if (!date.isBefore(yesterdayRange[0]) && date.isBefore(yesterdayRange[1])) newDate = "yesterday";
+        return newDate == null ? dateTime.getDate() : newDate + " " + dateTime.getTime();
     }
 
 }

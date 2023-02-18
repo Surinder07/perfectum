@@ -26,5 +26,7 @@ public final class ErrorMessageKeys {
     public static final String fileNotReadableMessage = "error.fileNotReadableMessage";
     public static final String forDevelopmentOnlyMessage = "error.forDevelopmentOnlyMessage";
     public static final String activeTimesheetPresentMessage = "error.activeTimesheetPresentMessage";
+    public static final String entityNotDeletableMessage = "error.entityNotDeletableMessage";
+    public static final String alreadySubscribedMessage = "error.alreadySubscribedMessage";
 
 }

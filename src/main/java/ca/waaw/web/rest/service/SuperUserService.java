@@ -32,6 +32,7 @@ public class SuperUserService {
     public void addNewCode(PromotionCodeDto promotionCodeDto) {
         CommonUtils.checkRoleAuthorization(Authority.SUPER_USER);
         promotionCodeRepository.findOneByCodeAndDeleteFlag(promotionCodeDto.getCode(), false)
+                .filter(promotionCode -> promotionCode.getExpiryDate().isAfter(Instant.now()))
                 .ifPresent(code -> {
                     log.debug("Promo code {} already exists", code);
                     throw new EntityAlreadyExistsException("promo code", "value", code.getCode());
@@ -39,7 +40,8 @@ public class SuperUserService {
         PromotionCode promotionCode = new PromotionCode();
         promotionCode.setType(PromoCodeType.valueOf(promotionCodeDto.getType()));
         promotionCode.setCode(promotionCodeDto.getCode());
-        promotionCode.setExpiryDate(Instant.now().plus(promotionCodeDto.getExpireAfterDays(), ChronoUnit.DAYS));
+        promotionCode.setExpiryDate(promotionCodeDto.getExpireAfterDays() == null ? null :
+                Instant.now().plus(promotionCodeDto.getExpireAfterDays(), ChronoUnit.DAYS));
         promotionCode.setPromotionValue(promotionCodeDto.getPromotionValue());
         promotionCodeRepository.save(promotionCode);
         log.info("New promo code created: {}", promotionCode);

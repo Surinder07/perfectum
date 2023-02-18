@@ -14,12 +14,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Optional;
 
 @EnableCaching
+@EnableScheduling
 @SpringBootApplication
 @OpenAPIDefinition(info = @Info(title = "${swagger.title}", version = "${swagger.version}", description = "${swagger.description}"))
 @SecurityScheme(name = "jwt", scheme = "bearer", type = SecuritySchemeType.HTTP, in = SecuritySchemeIn.HEADER)
@@ -31,8 +33,7 @@ public class WaawApplication implements CommandLineRunner {
 
     private final ApplicationStartupSqlService applicationStartupSqlService;
 
-    public WaawApplication(Environment env,
-                           ApplicationStartupSqlService applicationStartupSqlService) {
+    public WaawApplication(Environment env, ApplicationStartupSqlService applicationStartupSqlService) {
         this.env = env;
         this.applicationStartupSqlService = applicationStartupSqlService;
     }

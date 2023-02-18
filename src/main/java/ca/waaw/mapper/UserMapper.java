@@ -7,8 +7,11 @@ import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.*;
+import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+
+import java.util.UUID;
 
 public class UserMapper {
 
@@ -24,6 +27,7 @@ public class UserMapper {
         target.setOrganizationTimezone(source.getOrganization().getTimezone());
         target.setRole(source.getAuthority().toString());
         target.setStatus(source.getAccountStatus().toString());
+        target.setStartOfWeek(source.getOrganization().getFirstDayOfWeek().toString());
         if (source.getAuthority().equals(Authority.ADMIN)) {
             OrganizationPreferences preferences = new OrganizationPreferences();
             preferences.setDaysBeforeShiftsAssigned(source.getOrganization().getDaysBeforeShiftsAssigned());
@@ -54,6 +58,7 @@ public class UserMapper {
     public static User registerDtoToUserEntity(NewRegistrationDto source) {
         User target = new User();
         BeanUtils.copyProperties(source, target);
+        target.setUsername((source.getEmail()));
         target.setCreatedBy(target.getId());
         target.setLastModifiedBy(target.getId());
         target.setAccountStatus(AccountStatus.EMAIL_PENDING);
@@ -69,11 +74,12 @@ public class UserMapper {
     public static void completeRegistrationToEntity(CompleteRegistrationDto source, User userTarget) {
         userTarget.setFirstName(source.getFirstName());
         userTarget.setLastName(source.getLastName());
-        userTarget.setUsername(source.getUsername());
+        if (StringUtils.isNotEmpty(source.getUsername())) userTarget.setUsername(source.getUsername());
         userTarget.setLangKey(source.getLangKey());
         userTarget.setCountryCode(source.getCountryCode());
         userTarget.setMobile(String.valueOf(source.getMobile()));
-        userTarget.setAccountStatus(AccountStatus.PAYMENT_INFO_PENDING);
+        // TODO Change status when payment part is added
+        userTarget.setAccountStatus(AccountStatus.PAID_AND_ACTIVE);
     }
 
     /**
@@ -82,15 +88,18 @@ public class UserMapper {
      * @param source {@link UpdateUserDto} containing details to update about user
      * @param target {@link User} entity fetched from database to be updated
      */
-    public static void updateUserDtoToEntity(UpdateUserDto source, User target) {
+    public static void updateUserDtoToEntity(UpdateUserDto source, UserOrganization target) {
         if (source.getMobile() != null) {
             target.setMobile(String.valueOf(source.getMobile()));
             target.setCountry(source.getCountry());
             target.setCountryCode(source.getCountryCode());
         }
-        if (StringUtils.isNotEmpty(source.getLocationId())) target.setLocationId(source.getLocationId());
-        if (StringUtils.isNotEmpty(source.getRoleId())) target.setLocationRoleId(source.getRoleId());
-        if (source.getIsFullTime() != null) target.setFullTime(source.getIsFullTime());
+        target.setFirstName(source.getFirstName());
+        target.setLastName(source.getLastName());
+        target.setLocationId(source.getLocationId());
+        target.setLocationRoleId(source.getRoleId());
+        target.setFullTime(source.isFullTime());
+        target.setEmployeeId(source.getEmployeeId());
     }
 
     /**
@@ -100,12 +109,13 @@ public class UserMapper {
     public static User inviteUserDtoToEntity(InviteUserDto source) {
         User target = new User();
         target.setEmail(source.getEmail().toLowerCase());
+        target.setUsername(target.getEmail());
         target.setFirstName(source.getFirstName());
         target.setLastName(source.getLastName());
         target.setEmployeeId(source.getEmployeeId());
         target.setLocationId(source.getLocationId());
         target.setLocationRoleId(source.getLocationRoleId());
-        target.setFullTime(source.isFullTime());
+        target.setFullTime(source.getIsFullTime());
         target.setAuthority(source.getAuthority());
         target.setAccountStatus(AccountStatus.INVITED);
         return target;
@@ -115,14 +125,13 @@ public class UserMapper {
      * @param source details for user to be mapped
      * @return User details for Admin
      */
-    public static UserListingDto entityToUserDetailsForListing(UserOrganization source) {
+    public static UserListingDto entityToUserDetailsForListing(UserOrganization source, String timezone) {
         UserListingDto target = new UserListingDto();
         BeanUtils.copyProperties(source, target);
         target.setFullName(source.getFullName());
         target.setLocation(source.getLocation() == null ? "-" : source.getLocation().getName());
         target.setRole(source.getLocationRole() == null ? "-" : source.getLocationRole().getName());
-        target.setLastLogin(source.getLastLogin() != null ?
-                source.getLastLogin().toString().split("\\.")[0].replace("T", " ").replace("Z", "") : "-");
+        target.setLastLogin(source.getLastLogin() == null ? "-" : DateAndTimeUtils.getDateTimeObject(source.getLastLogin(), timezone).toString());
         target.setFullTime(source.isFullTime());
         target.setStatus(source.getAccountStatus());
         return target;
@@ -139,7 +148,7 @@ public class UserMapper {
         target.setLocationName(userSource.getLocation().getName());
         target.setLocationRoleName(userSource.getLocationRole().getName());
         target.setFullTime(userSource.isFullTime());
-        target.setEmployeePreferences(employeePreferenceToDto(preferencesSource));
+        target.setEmployeePreferences(preferencesSource == null ? new EmployeePreferencesDto() : employeePreferenceToDto(preferencesSource));
         return target;
     }
 
@@ -174,6 +183,7 @@ public class UserMapper {
     public static EmployeePreferencesDto employeePreferenceToDto(EmployeePreferences source) {
         EmployeePreferencesDto target = new EmployeePreferencesDto();
         BeanUtils.copyProperties(source, target);
+        target.setWagesCurrency(source.getWagesCurrency() == null ? null : source.getWagesCurrency().toString());
         target.setActive(!source.isExpired());
         return target;
     }
@@ -185,6 +195,7 @@ public class UserMapper {
     public static EmployeePreferences employeePreferencesToEntity(EmployeePreferencesDto source) {
         EmployeePreferences target = new EmployeePreferences();
         BeanUtils.copyProperties(source, target);
+        target.setId(UUID.randomUUID().toString());
         if (StringUtils.isNotEmpty(source.getWagesCurrency()))
             target.setWagesCurrency(Currency.valueOf(source.getWagesCurrency()));
         target.setExpired(false);
