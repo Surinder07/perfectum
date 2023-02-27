@@ -34,5 +34,9 @@ public interface RequestsRepository extends JpaRepository<Requests, String> {
     @Query(value = "SELECT t FROM Requests t WHERE (?1 BETWEEN t.start AND t.end) OR (?2 BETWEEN t.start AND t.end) " +
             "OR (t.start BETWEEN ?1 AND ?2) OR (t.end BETWEEN ?1 AND ?2) AND t.deleteFlag = FALSE")
     List<Requests> getOverlappingForDates(Instant start, Instant end, boolean deleteFlag);
+    
+    List<Requests> findAllByTypeAndDeleteFlag(RequestType type, boolean deleteFlag);
+    
+    List<Requests> findAllByDeleteFlagAndStatusIn(boolean delFlg, List<RequestStatus> status);
 
 }

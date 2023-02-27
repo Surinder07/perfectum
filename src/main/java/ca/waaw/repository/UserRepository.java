@@ -37,6 +37,8 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<User> findAllByLocationIdInAndAuthorityAndDeleteFlag(Set<String> locationId, Authority authority, boolean deleteFlag);
 
     List<User> findAllByOrganizationIdInAndAuthorityAndDeleteFlag(Set<String> organizationIds, Authority authority, boolean deleteFlag);
+    
+    List<User> findAllByOrganizationIdInAndAuthorityInAndDeleteFlag(Set<String> organizationIds, Set<Authority> authorities, boolean deleteFlag);
 
     Optional<List<User>> findAllByAccountStatusAndCreatedDateBefore(AccountStatus status, Instant date);
 
@@ -49,5 +51,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<User> findAllByIdInAndDeleteFlag(List<String> ids, boolean deleteFlag);
 
     List<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag);
+    
+    List<User> findAllByOrganizationIdAndAuthorityInAndDeleteFlag(String organizationId, List<Authority> authorities, boolean deleteFlag);
 
 }
