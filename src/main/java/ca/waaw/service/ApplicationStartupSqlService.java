@@ -6,6 +6,8 @@ import ca.waaw.config.applicationconfig.AppSuperUserConfig;
 import ca.waaw.domain.*;
 import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.Currency;
+import ca.waaw.enumration.PromoCodeType;
 import ca.waaw.repository.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
@@ -20,6 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 /**
  * This service is used in {@link WaawApplication} for the initialization of needed entities or triggers
@@ -40,6 +45,8 @@ public class ApplicationStartupSqlService {
     private final LocationRoleRepository locationRoleRepository;
 
     private final EmployeePreferencesRepository preferencesRepository;
+
+    private final PromotionCodeRepository promotionCodeRepository;
 
     private final AppSuperUserConfig appSuperUserConfig;
 
@@ -75,7 +82,22 @@ public class ApplicationStartupSqlService {
                             createDemoUsersAndLocations(superUser.getWaawId());
                         }
                 );
+    }
 
+    public void checkExistenceAndGeneratePromoCodes() {
+        log.info("Generating promo codes for 1 day, 10 days, 20 days and 30 days.");
+        if (promotionCodeRepository.findAll().size() == 0) {
+            List<PromotionCode> codes = List.of(
+                    PromotionCode.builder().code("WAAW01").promotionValue(1).type(PromoCodeType.TRIAL).build(),
+                    PromotionCode.builder().code("WAAW10").promotionValue(10).type(PromoCodeType.TRIAL).build(),
+                    PromotionCode.builder().code("WAAW20").promotionValue(20).type(PromoCodeType.TRIAL).build(),
+                    PromotionCode.builder().code("WAAW30").promotionValue(30).type(PromoCodeType.TRIAL).build()
+            );
+            promotionCodeRepository.saveAll(codes);
+            log.info("Generating promo codes for 1 day, 10 days, 20 days and 30 days successful.");
+        } else {
+            log.info("Skipped generating promo codes as some already exists.");
+        }
     }
 
     /**
@@ -135,6 +157,8 @@ public class ApplicationStartupSqlService {
         organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
         organization.setName(name == null ? appSuperUserConfig.getOrganization() : name);
         organization.setTimezone(appSuperUserConfig.getTimezone());
+        organization.setTrialEndDate(Instant.now().plus(30, ChronoUnit.DAYS));
+        organization.setNextPaymentOn(Instant.now().plus(30, ChronoUnit.DAYS));
         organization.setCreatedBy("SYSTEM");
         organizationRepository.save(organization);
         log.info("Created a new organization: {}", organization);
@@ -150,9 +174,10 @@ public class ApplicationStartupSqlService {
         user.setUsername(username);
         user.setWaawId(customId);
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setAccountStatus(AccountStatus.PAID_AND_ACTIVE);
+        user.setAccountStatus(role.equals(Authority.ADMIN) ? AccountStatus.PROFILE_PENDING : AccountStatus.DISABLED);
         user.setCreatedBy("SYSTEM");
         user.setAuthority(role);
+        user.setFullTime(true);
         user.setOrganizationId(organizationId);
         user.setLocationId(locationId);
         user.setLocationRoleId(locationRoleId);
@@ -168,6 +193,7 @@ public class ApplicationStartupSqlService {
         location.setTimezone(appSuperUserConfig.getTimezone());
         location.setCreatedBy(admin);
         location.setWaawId("L0000000001");
+        location.setActive(false);
         locationRepository.save(location);
         log.info("New Location created: {}", location);
         return location.getId();
@@ -181,6 +207,7 @@ public class ApplicationStartupSqlService {
         role.setWaawId(adminRights ? "R0000000001" : "R0000000002");
         role.setCreatedBy(admin);
         role.setAdminRights(adminRights);
+        role.setActive(false);
         locationRoleRepository.save(role);
         log.info("New location role saved: {}", role);
         return role.getId();
@@ -191,12 +218,16 @@ public class ApplicationStartupSqlService {
         preferences.setUserId(userId);
         preferences.setMondayStartTime("09:00");
         preferences.setTuesdayStartTime("10:00");
+        preferences.setWednesdayStartTime("10:00");
         preferences.setThursdayStartTime("09:00");
         preferences.setFridayStartTime("10:00");
         preferences.setMondayEndTime("17:00");
         preferences.setTuesdayEndTime("17:00");
+        preferences.setWednesdayEndTime("18:00");
         preferences.setThursdayEndTime("17:00");
         preferences.setFridayEndTime("17:00");
+        preferences.setWagesPerHour(20F);
+        preferences.setWagesCurrency(Currency.CAD);
         preferences.setCreatedBy("SYSTEM");
         preferencesRepository.save(preferences);
         log.info("Saved new preferences for user {} : {}", userId, preferences);

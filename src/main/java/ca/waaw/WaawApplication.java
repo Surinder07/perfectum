@@ -84,6 +84,7 @@ public class WaawApplication implements CommandLineRunner {
         if (Boolean.parseBoolean(env.getProperty("spring.liquibase.enabled"))) {
             applicationStartupSqlService.createSqlTriggers();
             applicationStartupSqlService.checkExistenceAndGenerateSuperUser();
+            applicationStartupSqlService.checkExistenceAndGeneratePromoCodes();
         }
     }
 
