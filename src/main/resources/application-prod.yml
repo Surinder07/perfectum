@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://waaw-stage-db.mysql.database.azure.com:3306/waaw_prod?createDatabaseIfNotExist=true&useSSl=true
+    url: jdbc:mysql://waaw-sql.mysql.database.azure.com:3306/waaw_prod?createDatabaseIfNotExist=true&useSSl=true
     username: waaw
     password: W@@WGl0b@l
   mail:
