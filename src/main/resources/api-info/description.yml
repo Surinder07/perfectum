@@ -1,0 +1,149 @@
+##############################
+#### All API descriptions ####
+##############################
+api:
+  description:
+    authentication: |
+      Authenticate login and password to get a jwt token.
+      * After trial period is expired and no payment is done. Only Admin will be able to log-in to their account.
+        * Only getAccount API will be accesible to admin, that can be used to fetch details to initiate a payment.
+      * For any other role or other APIs for admin an error will be thrown.
+    user:
+      registerUser: |
+        Register a new user
+        ${regex.table}
+      verifyEmail: |
+        - Will activate account and return user details, if verification key is active.
+        - Take to complete profile page if response is success.
+        - ${api.profile-status-message}
+      completeRegistration: Complete the registration process by giving all profile info (For organization or contractor)
+      completePaymentInfo: Add payment info to complete profile
+      validatePromoCode: Validate if a promocode is valid and check the benifits of that promocode
+      checkInviteKey: |
+        Will return user details, if invite key is active.
+        Take to registration page to choose a password if response is success.
+      acceptInvite: Choose a password and complete profile registration through invite
+      resetPasswordInit: Initialize a password reset request and get email to reset password.
+      resetPasswordFinish: Finish password reset request with key received on email.
+      updatePassword: Update current password using the old password.
+      updateProfileImage: Update profile image for logged in user ***(Not operational right now)***.
+      getUserDetails: |
+        Get Logged in user's account details.
+        Profile Status can be:
+          - INVITED
+          - EMAIL_PENDING
+          - PROFILE_PENDING
+          - PAYMENT_INFO_PENDING
+          - TRIAL_PERIOD
+          - PAID_AND_ACTIVE
+          - PAYMENT_PENDING
+          - DISABLED
+      updateUser: Update logged in user details. For notification preference only.
+      updateEmailInit: Initialize process to update email and send the verification link to the new email
+      updateEmailFinish: Verify and finish updating the new email
+    dashboard:
+      getData: Get all data for dashboard.
+    organization:
+      updateOrganizationPreferences: Update organization preferences under logged-in admin
+      getHolidays: |
+        Get all Holidays for current year.
+        > If month is passed with a value within 1 to 12, holidays for that month will be returned only.
+      addHolidaysExcel: |
+        Upload excel with required data, to update all holidays at once.
+        * If location admin uploadstheir own holidays they will be preffered otherwise organization holidays will be considered.
+        * Use Form Data.
+        * Allowed file formats: ${files.formats-allowed.excel},${files.formats-allowed.csv}
+      addHoliday: Add a single holiday manually.
+      editHoliday: Edit a holiday.
+      deleteHoliday: Delete a holiday.
+      uploadLogo: Upload a logo image for organizattion
+    member:
+      sendInvite: Invite new users to join logged in admins organization.
+      resendInvite: Resend invites to exisitng users.
+      sendInviteByUpload: |
+        Upload excel or csv to add new members and send invite.
+        * Include location name and location role if you are global admin, include only location role if you are location admin.
+        * If no role is mentioned, user will be added as an employee; if no language is mentioned, default will be 'en'.
+        * Use Form Data.
+        * Allowed file formats: ${files.formats-allowed.excel}, ${files.formats-allowed.csv}
+      getAllMembers: |
+        Get all Employees and Admins under logged-in user.
+        ${profile-status-message}
+      getMemberById: Get details of a member by id
+      updateMember: Update an employee's details.
+      addEmployeePreferences: Update employee preferences
+    notification:
+      getAllNotification: Get all notifications, Page numbers start with 0.
+      markNotificationAsRead: Mark notification with given id as read.
+      markAllNotificationAsRead: Mark all notifications as read.
+      deleteNotification: Delete a notification.
+    location-and-role:
+      getLocation: Api to get information about location and roles under them.
+      addLocation: Adds a new location under logged in admins organization.
+      deleteLocation: Deletes the location with given Id and suspends the account of related users.
+      toggleActiveLocation: Toggle between active and disabled status
+      addLocationRole: Adds a new location role under logged in admins organization.
+      deleteLocationRole: Deletes the location role with given Id and suspends the account of related users.
+      getLocationRole: Api to get information about location roles.
+      getLocationRoleById: Get all role details by an ID
+      updateLocationRole: Update a location role under logged in admins organization.
+      toggleActiveLocationRole: Toggle between active and disabled status
+    shift-management:
+      createShift: Create a new shift (assigned or unassigned).
+      updateShift: Update any shift under your authorization.
+      deleteShift: Delete an existing shift.
+      assignShift: Assign an existing shift to an user.
+      releaseShift: Admin can release a new shift to employee.
+      editShift: Edit a shift timings or comments
+      getAllShifts: |
+        Get all shifts under your authorization.
+        Pass date only if a single date data is needed and pass endDate too if data between two days is needed.
+        **Date format is ${api.date-format}**
+      getAllShiftsUser:
+      releaseBatch: Release a full batch
+      getById: get a single shift details by id
+    requests:
+      newRequest: Add a new request (for manager or employee only)
+      updateRequest: Respond to a request
+      getAll: get All requests pagination API
+      getByUser: getRequests for given userId or for ogged in user if userId is null
+    timesheet:
+      startTimer: Start timesheet recording for logged-in user.
+      stopTimer: Stop timesheet recording for logged-in user.
+      getTimer: If an active timer is present for logeed-in user, its start time will be returned.
+      getById: Get single timesheet details by id
+      getAll: Get all timesheets for a given date range.
+      add: Add new timesheet manually (For admins).
+      edit: Edit timesheet manually (For admins).
+      delete: Delete timesheet manually (For admins).
+    reports:
+      generate: Generate reports
+      get: Get all reports
+      download: Download a report by its id
+    resources:
+      downloadSample: |
+        Download sample files required in the application.
+        Available resources - inviteUser, organization holidays
+      getImageLink: Get link for images for users or organization
+    super-user:
+      addCode: Add a new promocode.
+      deleteCode: Delete a promocode by id.
+      getAllCodes: Get all promocodes; active, expired or deleted.
+    dropdown:
+      getTimezones: Get a list of timezone to show for adding new location.
+      getEnums: |
+        * This Api is only available in non development environments.
+        * Developers can use the api to check possible values for different enums required for different APIs.
+      getLocations: Get all locations under logged-in user for dropdown
+      getRoles: Get all roles under logged-in user for a particular location for dropdown
+      getUsers: Get all users under logged-in user for dropdown
+    calender:
+      getHolidays: Get all holidays for a given year
+      getTimesheets: Get all worked time for a month
+      getTodaysEvents: Get all events for a given day
+    open-apis:
+      subscribe: Add an email to subscribe list
+    payment-apis:
+      createSetupIntent: Get the client secret to add new card for UI
+      addNewCard: Use the token from dtripe to add a new card under a customer
+      getAllCards: Get a list of all cards for logged in user

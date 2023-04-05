@@ -1,0 +1,20 @@
+api:
+  date-format: yyyy-MM-dd
+  time-format: 24 hours (HH:MM)
+regex:
+  explaination:
+    email: xx@xx.xx
+    username: <li>Username consists of alphanumeric characters (a-zA-Z0-9), lowercase or uppercase.</li><li>Username allowed of the dot (.), underscore (\_), and hyphen (-).</li><li>The dot (.), underscore (\_), or hyphen (-) must not be the first or last character.</li><li>The dot (.), underscore (\_), or hyphen (-) does not appear consecutively, e.g., java..regex</li><li>The number of characters must be between 5 and 20.</li>
+    password: <li>Minimum eight characters.</li><li>at least one uppercase letter.</li><li>one lowercase letter.</li><li>one number.</li><li>one special character.</li>
+  pattern:
+    # We have repeated these here to add escape characters, so they will show properly on swagger
+    email: <code>^[\w-\+]+(\.[\w]+)*@[\w-]+(\.[\w]+)*(\.[a-zA-Z]{2,})$</code>
+    username: <code><span>^[a-zA-Z0-9]</span>([._-]<span>(?![._-])</span>&#x7c;[a-zA-Z0-9]){3,18}[a-zA-Z0-9]$</code>
+    password: <code>^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$</code>
+  table: |
+    We are using below given patterns for our valiadtions
+    | Type            | Description                            | Regex                       |
+    |-----------------|----------------------------------------|-----------------------------|
+    | Email           | ${regex.explaination.email}            | ${regex.pattern.email}      |
+    | Username        | ${regex.explaination.username}         | ${regex.pattern.username}   |
+    | Password        | ${regex.explaination.password}         | ${regex.pattern.password}   |

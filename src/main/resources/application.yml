@@ -7,7 +7,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
   config:
-    import: classpath:apiinfo.yml
+    import: classpath:api-info/swagger.yml, classpath:api-info/regex.yml, classpath:api-info/endpoints.yml, classpath:api-info/description.yml
   jpa:
     hibernate:
       ddl-auto: none
@@ -52,30 +52,6 @@ server:
 logging:
   level:
     liquibase: info
-
-########################################
-#####    Swagger Configurations    #####
-########################################
-swagger:
-  title: WAAW APIs Collection
-  version: 1.0.0
-  description: |
-    ### WAAW Api reference for developers.
-    ##### Web-sockets are setup in the application, you can connect to websocket with the **jwt token** passed in headers as **access_token** and subscribe to the available services.
-
-    | Service               | Endpoint                                                                           |
-    | --------------------- | -----------------------------------------------------------------------------------|
-    | Connect to web-socket | **${application.urls.hosted-server}${application.websockets.connection-endpoint}** |
-    | Notification Service  | **/user${application.websockets.notification-url}**                                |
-
-    ##### Custom error codes to look for in each api call and take action accordingly.
-
-    | Error Code | Message                         | Action                             |
-    | ---------- | ------------------------------- | ---------------------------------- |
-    | WE001      | Profile completion is pending   | Take to the complete profile page  |
-    | WE002      | Payment Info is pending         | Take to the payment info page      |
-    | WE003      | Trial period is over            | Take to the payment page           |
-    | WE004      | Payment is pending              | Take to the payment page           |
 
 springdoc:
   packagesToScan: ca.waaw.web.rest

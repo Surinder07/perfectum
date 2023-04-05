@@ -27,7 +27,7 @@ public class WaawOpenController {
     @Operation(description = "${api.description.open-apis.subscribe}")
     @GetMapping("${api.endpoints.open-apis.subscribe}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json")})
-    public void getDayEvents(@RequestParam String email) {
+    public void subscribeToWaaw(@RequestParam String email) {
         waawOpenService.subscribeEmail(email);
     }
 

@@ -1,0 +1,91 @@
+########################################
+#####    Swagger Configurations    #####
+########################################
+swagger:
+  title: WAAW APIs Collection
+  version: 1.0.0
+  description: |
+    ### WAAW Api reference for developers.
+    ##### Web-sockets(STOMP Messaging) are setup in the application, you can connect to websocket with the **jwt token** passed in headers as **access_token** and subscribe to the available services.
+
+    | Service                     | Endpoint                                                                           |
+    | --------------------------- | -----------------------------------------------------------------------------------|
+    | Connect to web-socket       | **${application.urls.hosted-server}${application.websockets.connection-endpoint}** |
+    | Notification Service        | **/user${application.websockets.notification-url}**                                |
+    | Shift Service               | **/user${application.websockets.shift-url}**                                       |
+    | Timesheet Service           | **/user${application.websockets.timesheet-url}**                                   |
+    | User Invite Service         | **/user${application.websockets.user-invite-url}**                                 |
+    | Holiday Upload Service      | **/user${application.websockets.holiday-upload-url}**                              |
+    | User Details Update Service | **/user${application.websockets.update-user-detail-url}**                          |
+
+    ##### Custom error codes to look for in each api call and take action accordingly.
+
+    | Error Code | Message                         | Action                             |
+    | ---------- | ------------------------------- | ---------------------------------- |
+    | WE001      | Profile completion is pending   | Take to the complete profile page  |
+    | WE002      | Payment Info is pending         | Take to the payment info page      |
+    | WE003      | Payment is pending              | Take to the payment page           |
+
+##################################################
+#### All API information required for swagger ####
+##################################################
+api:
+  swagger:
+    groups:
+      auth: 01. Auth
+      user: 02. User Management
+      dashboard: 03. Dashboard
+      organization: 04. Organization Management
+      member: 05. Members Management
+      notification: 06. Notifications
+      location-and-role: 07. Location and Location Role
+      shift-management: 08. Shift Management
+      requests: 09. Request Management
+      timesheet: 10. Timesheet Management
+      reports: 11. Reports
+      resources: 12. Resources
+      super-user: 13. Super User
+      dropdown: 14. Dropdown
+      calender: 15. Calender
+      open-apis: 16. General Open APIs
+      payment-apis: 17. Payment APIs
+    error-description:
+      trial-over: Payment Required. If role is ADMIN redirect to payment page with error message or else just show the error.
+      authentication: Authentication Failed.
+      bad-request: Your request was not formed correctly.
+      unauthorized: You are not authorized to access this resource.
+      already-exist: The resoourse you are trying to create already exist.
+      not-found: The resource you are trying to fetch or change was not found.
+    schema-description:
+      pagination: |
+        Response will contain,
+        - Total number of pages(totalPages)
+        - Number of entries(totalEntries)
+        - List of response(data)
+      getAllShifts: |
+        ${api.swagger.schema-description.pagination}
+        Different responses will be
+        | Role                              | Response                                                                   |
+        |-----------------------------------|----------------------------------------------------------------------------|
+        | ADMIN (Global Admin)              | All shifts will be returned                                                |
+        | MANAGER (Location Admin)          | All shifts will be returned                                                |
+        | EMPLOYEE (Employee)               | Only shifts assigned to the employee and unassigned shift will be returned |
+      getAllHolidays: |
+        * For employees or manager, it will show all holidays assigned to their location and all unassigned ones (as they will be common for all locations)
+        * For admin, it will show:
+          * Groups with all locations and list of their holidays
+          * **Null** location and a list of unassigned(common) holidays.
+      response-message: Show the message to user.
+    param-description:
+      getLocationRole: Required for ADMIN(Global admin) and MANAGER(Location admin) only.
+      getUsersSearchKey: Pass the search key to search user by name or id.
+      getUsersLocation: Pass the locationId to search under particular location.
+      getUsersRole: Pass user role(ADMIN, MANAGER, EMPLOYEE) to show users with particular role.
+      getEmployeePreferences: Pass boolean value if whole list of history preferences is needed.
+      getPreferencesUserId: Not needed if logged-in user is an employee.
+      getPromoCodeIncludeDeleted: If true will include deleted codes also in response.
+      getPromoCodeIncludeExpired: If true will include expired codes also in response.
+      getShift-batchId: Provide to get shits for a particular batch (Not available for EMPLOYEES). <b>If batchId is provided other parameters will be ignored.</b>
+      getShift-endDate: If end date is passed, results between date and endDate will be returned, else results for just the date will be returned.
+      timeoff-showAll: If showAll is true, all pending, allowed and rejected requests will be shown, otherwile only pending requests will be shown (For admins only)
+      timeoff-date: Send start and end date to see requests for particular range, otherwise only future requests will be shown. **Date format is ${api.date-format}**
