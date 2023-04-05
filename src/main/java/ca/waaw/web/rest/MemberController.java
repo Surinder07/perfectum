@@ -85,7 +85,6 @@ public class MemberController {
                                                        @RequestParam(required = false) String roleId,
                                                        @RequestParam(required = false) String type,
                                                        @RequestParam(required = false) String status) {
-        // TODO Add sort
         if (StringUtils.isEmpty(searchKey)) searchKey = null;
         if (StringUtils.isEmpty(locationId)) locationId = null;
         if (StringUtils.isEmpty(roleId)) roleId = null;

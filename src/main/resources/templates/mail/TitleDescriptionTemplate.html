@@ -13,11 +13,13 @@
                     <div class="content-box">
                         <h1 th:text="${dto.title}"></h1>
                         <p>
+                            <span th:text="#{email.greeting(${dto.name})}"></span>
+                            <br/><br/>
                             <span th:text="${dto.message}"></span>
                         </p>
                         <div style="min-width: 150px; width: 30%; margin: auto;">
                             <a th:href="${dto.actionUrl}">
-                                <div class="button">Go to WaaW</div>
+                                <div class="button" th:text="${dto.buttonText}"></div>
                             </a>
                         </div>
                         <br/>

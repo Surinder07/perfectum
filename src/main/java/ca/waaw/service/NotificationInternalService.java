@@ -28,7 +28,7 @@ public class NotificationInternalService {
 
     public void sendNotification(String propertyKey, NotificationInfoDto notificationInfo, String... messageArguments) {
         Map<String, String> properties = CommonUtils.getPropertyMapFromMessagesResourceBundle(propertyKey,
-                new Locale(notificationInfo.getLanguage()));
+                notificationInfo.getLanguage());
         String message = String.format(properties.get("notification"), messageArguments);
         Notification notification = new Notification();
         notification.setTitle(properties.get("title"));
@@ -36,6 +36,8 @@ public class NotificationInternalService {
         notification.setType(notificationInfo.getType());
         notification.setUserId(notificationInfo.getReceiverUuid());
         notificationRepository.save(notification);
+        webSocketService.notifyUser(NotificationMapper.entityToDto(notification, "UTC"),
+                notificationInfo.getReceiverUsername());
     }
 
     /**

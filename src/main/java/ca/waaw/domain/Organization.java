@@ -27,8 +27,11 @@ public class Organization extends AbstractEntity {
     @Column(name = "payroll_generation_frequency")
     private PayrollGenerationType payrollGenerationFrequency = PayrollGenerationType.MONTHLY;
 
-    @Column(name = "trial_days")
-    private int trialDays;
+    @Column(name = "payment_pending")
+    private boolean paymentPending = false;
+
+    @Column(name = "trial_end_date")
+    private Instant trialEndDate;
 
     @Column(name = "is_timeclock_enabled")
     private boolean isTimeclockEnabledDefault;

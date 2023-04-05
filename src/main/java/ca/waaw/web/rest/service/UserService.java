@@ -415,4 +415,88 @@ public class UserService {
                 .orElseThrow(UnauthorizedException::new);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void updateEmailInit(String email) {
+        CommonUtils.validateRegexString(appRegexConfig.getEmail(), email, "email");
+        AtomicReference<String> verificationUrl = new AtomicReference<>(null);
+        User loggedUser = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(user -> {
+                    userRepository.findOneByEmailAndDeleteFlag(email.toLowerCase(), false)
+                            .ifPresent(checkUser -> {
+                                log.error("Email({}) already exits and cannot be added to user, {}", email, user.getEmail());
+                                throw new EntityAlreadyExistsException("user", "email", email);
+                            });
+                    user.setEmailToUpdate(email.toLowerCase());
+                    user.setLastModifiedBy(user.getId());
+                    return user;
+                })
+                .map(user -> {
+                    UserTokens token = new UserTokens(UserTokenType.UPDATE_EMAIL);
+                    token.setUserId(user.getId());
+                    token.setCreatedBy(user.getId());
+                    verificationUrl.set(appUrlConfig.getUpdateEmailUrl(token.getToken()));
+                    userTokenRepository.save(token);
+                    return user;
+                })
+                .map(userRepository::save)
+                .map(user -> CommonUtils.logMessageAndReturnObject(user, "info", UserService.class,
+                        "Initialized email update process for: {}", user))
+                .orElseThrow(AuthenticationException::new);
+        Map<String, String> message = CommonUtils.getPropertyMapFromMessagesResourceBundle("notification.email.update",
+                loggedUser.getLangKey());
+        MailDto mailDto = MailDto.builder()
+                .email(loggedUser.getEmailToUpdate())
+                .name(loggedUser.getFirstName())
+                .actionUrl(verificationUrl.get())
+                .langKey(loggedUser.getLangKey())
+                .buttonText("Verify Email")
+                .message(String.format(message.get("mailDescription"), loggedUser.getEmail(), loggedUser.getEmailToUpdate()))
+                .title(message.get("title"))
+                .build();
+        mailService.sendEmailFromTemplate(mailDto, "mail/TitleDescriptionTemplate", "notification.email.update.title");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateEmailFinish(String token) {
+        UserOrganization updateUser = userTokenRepository.findOneByTokenAndTokenTypeAndIsExpired(token, UserTokenType.UPDATE_EMAIL, false)
+                .map(userToken -> {
+                    if (userToken.getCreatedDate().isBefore(Instant.now().minus(appValidityTimeConfig.getEmailUpdate(),
+                            ChronoUnit.DAYS))) {
+                        userToken.setExpired(true);
+                        userTokenRepository.save(userToken);
+                        throw new ExpiredKeyException("email update");
+                    } else return userToken;
+                })
+                .flatMap(userToken -> userOrganizationRepository.findOneByIdAndDeleteFlag(userToken.getUserId(), false)
+                        .map(user -> {
+                            user.setEmail(user.getEmailToUpdate());
+                            user.setEmailToUpdate(null);
+                            user.setLastModifiedBy(user.getId());
+                            return user;
+                        })
+                        .map(userOrganizationRepository::save)
+                        .map(user -> {
+                            userToken.setExpired(true);
+                            userTokenRepository.save(userToken);
+                            return user;
+                        })
+                        .map(user -> {
+                            userToken.setExpired(true);
+                            userTokenRepository.save(userToken);
+                            return user;
+                        })
+                )
+                .orElseThrow(() -> new ExpiredKeyException("email update"));
+        UserDetailsDto response = Optional.of(updateUser)
+                .map(UserMapper::entityToDto)
+                .map(user -> {
+                    user.setImageUrl(user.getImageUrl() == null ? null : appUrlConfig.getImageUrl(user.getId(), "profile"));
+                    user.setOrganizationLogoUrl(user.getOrganizationLogoUrl() == null ? null : appUrlConfig.getImageUrl(user.getOrganizationId(), "organization"));
+                    return user;
+                })
+                .orElseThrow(AuthenticationException::new);
+        webSocketService.updateUserDetailsForUi(response.getUsername(), response);
+    }
+
 }

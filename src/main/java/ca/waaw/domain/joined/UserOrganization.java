@@ -58,6 +58,9 @@ public class UserOrganization extends AbstractEntity {
     @Column(nullable = false)
     private String email;
 
+    @Column(name = "email_to_update")
+    private String emailToUpdate;
+
     @Column(name = "country_code")
     private String countryCode;
 

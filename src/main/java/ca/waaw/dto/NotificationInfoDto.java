@@ -20,6 +20,9 @@ public class NotificationInfoDto {
 
     private String receiverMobile;
 
+    private String receiverUsername;
+
+    @Builder.Default
     private String language = "en";
 
     private NotificationType type;

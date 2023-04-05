@@ -19,4 +19,14 @@ public class WebSocketConfig {
 
     private String notificationUrl;
 
+    private String shiftUrl;
+
+    private String timesheetUrl;
+
+    private String userInviteUrl;
+
+    private String holidayUploadUrl;
+
+    private String updateUserDetailUrl;
+
 }

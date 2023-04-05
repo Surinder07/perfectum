@@ -83,6 +83,7 @@ public class MailService {
                 String subject = messageSource.getMessage(titleKey, args.length == 0 ? null : args, locale);
                 sendEmail(message.getEmail(), subject, content);
             } catch (Exception e) {
+                log.error("Exception while sending email to user '{}'", message.getEmail(), e);
                 e.printStackTrace();
             }
         });

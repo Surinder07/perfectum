@@ -23,6 +23,7 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,9 +47,9 @@ public class CommonUtils {
      * @param locale   language needed for property
      * @return Value for the property key
      */
-    public static String getPropertyFromMessagesResourceBundle(String property, Locale locale) {
-        if (locale == null) locale = Locale.ENGLISH;
-        ResourceBundle bundle = ResourceBundle.getBundle("i18n/messages", locale);
+    public static String getPropertyFromMessagesResourceBundle(String property, String locale) {
+        Locale finalLocale = locale == null ? Locale.ENGLISH : new Locale(locale);
+        ResourceBundle bundle = ResourceBundle.getBundle("i18n/messages", finalLocale);
         return bundle.getString(property);
     }
 
@@ -59,11 +60,23 @@ public class CommonUtils {
      * @param locale   language needed for property
      * @return Value Map for the property key
      */
-    public static Map<String, String> getPropertyMapFromMessagesResourceBundle(String property, Locale locale) {
+    public static Map<String, String> getPropertyMapFromMessagesResourceBundle(String property, String locale) {
         String propertyValue = getPropertyFromMessagesResourceBundle(property, locale);
         return Arrays.stream(propertyValue.split(","))
                 .map(s -> s.split("="))
                 .collect(Collectors.toMap(s -> s[0], s -> s[1]));
+    }
+
+    /**
+     * @param source String to change
+     * @return split string form underscore and capitalize first alphabet of each word
+     */
+    public static String capitalizeString(String source) {
+        StringJoiner joiner = new StringJoiner(" ");
+        Arrays.stream(source.toLowerCase().split("_"))
+                .map(StringUtils::capitalize)
+                .forEach(joiner::add);
+        return joiner.toString();
     }
 
     /**

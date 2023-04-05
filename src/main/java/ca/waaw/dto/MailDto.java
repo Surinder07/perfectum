@@ -15,9 +15,13 @@ public class MailDto {
 
     private String name;
 
-    private String langKey;
+    @Builder.Default
+    private String langKey = "en";
 
     private String actionUrl;
+
+    @Builder.Default
+    private String buttonText = "Go to WaaW";
 
     private String websiteUrl;
 

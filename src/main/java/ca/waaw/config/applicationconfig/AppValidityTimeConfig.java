@@ -12,5 +12,6 @@ public class AppValidityTimeConfig {
     private int activationLink;
     private int passwordReset;
     private int userInvite;
+    private int emailUpdate;
 
 }

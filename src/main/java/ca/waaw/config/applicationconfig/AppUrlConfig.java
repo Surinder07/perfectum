@@ -11,16 +11,24 @@ public class AppUrlConfig {
 
     private String hostedUi;
 
+    private String hostedServer;
+
     private String activateAccount;
 
     private String resetPassword;
 
     private String inviteUser;
 
+    private String updateEmail;
+
     private String login;
 
     public String getHostedUi() {
         return hostedUi;
+    }
+
+    public String getHostedServer() {
+        return hostedServer;
     }
 
     public String getActivateAccountUrl(String key) {
@@ -37,6 +45,14 @@ public class AppUrlConfig {
 
     public String getLoginUrl() {
         return String.format("%s%s", hostedUi, login);
+    }
+
+    public String getUpdateEmailUrl(String key) {
+        return String.format("%s%s%s", hostedUi, updateEmail, key);
+    }
+
+    public String getImageUrl(String id, String imageType) {
+        return String.format("%s/api/v1/unAuth/resource/image/%s/%s", getHostedServer(), imageType.toLowerCase(), id);
     }
 
 }

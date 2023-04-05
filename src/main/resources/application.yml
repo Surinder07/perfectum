@@ -112,11 +112,13 @@ application:
     activate-account: /account/verify-email?key=
     invite-user: /account/accept-invite?key=
     resetPassword: /account/reset-password-finish?key=
+    updateEmail: /account/update-email-verify?key=
     login: /login
   validity:
     activation-link: 1
     password-reset: 1
     user-invite: 1
+    email-update: 1
   #Admin and support email info
   mail:
     twitter-url: https://twitter.com/waaw
@@ -140,6 +142,11 @@ application:
     application-destination-prefix: /ws
     allowed-origins: ${security.cors-allowed-origins}
     notification-url: ${application.websockets.simple-broker}/notification
+    shift-url: ${application.websockets.simple-broker}/shift
+    timesheet-url: ${application.websockets.simple-broker}/timesheet
+    user-invite-url: ${application.websockets.simple-broker}/user-invite
+    holiday-upload-url: ${application.websockets.simple-broker}/holiday-upload
+    update-user-detail-url: ${application.websockets.simple-broker}/update-user-detail
   async:
     thread-name-prefix: AsyncThread-
     core-pool-size: 40

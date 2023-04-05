@@ -57,6 +57,8 @@ databaseChangeLog:
                     uniqueConstraintName: ux_waaw_user_id
               - column:
                   name: image_url
+                  name: stripe_id
+                  type: VARCHAR(100)
                   type: VARCHAR(500)
               - column:
                   name: lang_key

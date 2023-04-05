@@ -181,6 +181,30 @@ public class UserController {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
     }
 
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.user.updateEmailInit}")
+    @GetMapping("${api.endpoints.user.updateEmailInit}")
+    public void updateUserEmail(@RequestParam String email) {
+        try {
+            userService.updateEmailInit(email);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.user.updateEmailFinish}")
+    @GetMapping("${api.endpoints.user.updateEmailFinish}")
+    public void verifyUpdatedEmail(@RequestParam String token) {
+        userService.updateEmailFinish(token);
+    }
+
     // TODO Add API to toggle mobile and email notification preference
 
 }

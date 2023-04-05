@@ -1,7 +1,6 @@
 package ca.waaw.repository;
 
 import ca.waaw.domain.User;
-import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,7 +25,8 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findOneByUsernameAndDeleteFlag(String username, boolean deleteFlag);
 
-    Optional<User> findOneByUsernameOrEmail(String username, String email);
+    @Query(value = "SELECT u FROM User u WHERE (u.username = ?1 OR u.email = ?1) AND u.deleteFlag = FALSE")
+    Optional<User> getByUsernameOrEmail(String login);
 
     Optional<User> findOneByAuthority(Authority authority);
 
@@ -38,7 +38,7 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     List<User> findAllByOrganizationIdInAndAuthorityAndDeleteFlag(Set<String> organizationIds, Authority authority, boolean deleteFlag);
     
-    List<User> findAllByOrganizationIdInAndAuthorityInAndDeleteFlag(Set<String> organizationIds, Set<Authority> authorities, boolean deleteFlag);
+    List<User> findAllByOrganizationIdInAndAuthorityInAndDeleteFlag(List<String> organizationIds, List<Authority> authorities, boolean deleteFlag);
 
     Optional<List<User>> findAllByAccountStatusAndCreatedDateBefore(AccountStatus status, Instant date);
 
@@ -51,6 +51,8 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<User> findAllByIdInAndDeleteFlag(List<String> ids, boolean deleteFlag);
 
     List<User> findAllByLocationRoleIdAndDeleteFlag(String locationRoleId, boolean deleteFlag);
+
+    List<User> findAllByAccountStatusAndOrganizationIdAndDeleteFlag(AccountStatus status, String organizationId, boolean deleteFlag);
     
     List<User> findAllByOrganizationIdAndAuthorityInAndDeleteFlag(String organizationId, List<Authority> authorities, boolean deleteFlag);
 
