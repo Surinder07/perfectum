@@ -1,20 +1,29 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppCustomIdConfig;
+import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.*;
+import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.MailDto;
+import ca.waaw.dto.invoices.NewInvoiceDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.*;
 import ca.waaw.mapper.UserMapper;
+import ca.waaw.payment.stripe.StripeService;
 import ca.waaw.repository.*;
 import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
+import ca.waaw.service.WebSocketService;
+import ca.waaw.service.email.javamailsender.MailService;
+import ca.waaw.storage.AzureStorage;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.utils.CommonUtils;
+import com.stripe.exception.StripeException;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -22,11 +31,15 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @AllArgsConstructor
@@ -48,17 +61,29 @@ public class UserService {
 
     private final EmployeePreferencesRepository employeePreferencesRepository;
 
-    private final AppValidityTimeConfig appValidityTimeConfig;
-
-    private final AppUrlConfig appUrlConfig;
+    private final PaymentsService paymentsService;
 
     private final PasswordEncoder passwordEncoder;
 
     private final UserMailService userMailService;
 
+    private final MailService mailService;
+
     private final NotificationInternalService notificationInternalService;
 
+    private final AzureStorage azureStorage;
+
+    private final WebSocketService webSocketService;
+
+    private final StripeService stripeService;
+
+    private final AppValidityTimeConfig appValidityTimeConfig;
+
+    private final AppUrlConfig appUrlConfig;
+
     private final AppCustomIdConfig appCustomIdConfig;
+
+    private final AppRegexConfig appRegexConfig;
 
     @Transactional(rollbackFor = Exception.class)
     public void registerNewUser(NewRegistrationDto registrationDto) {
@@ -128,30 +153,54 @@ public class UserService {
         User loggedUser = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .map(user -> {
+                            userRepository.findOneByUsernameAndDeleteFlag(completeRegistrationDto.getUsername(), false)
+                                    .ifPresent(user1 -> {
+                                        throw new EntityAlreadyExistsException("user", "username", completeRegistrationDto.getUsername());
+                                    });
                             if (user.getAuthority().equals(Authority.ADMIN)) {
                                 if (StringUtils.isEmpty(completeRegistrationDto.getOrganizationName())) {
                                     throw new BadRequestException("Organization Name is required.", "Organization.name");
                                 }
                                 String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
                                         .orElse(appCustomIdConfig.getOrganizationPrefix() + "0000000000");
-                                int trialDays = 0;
-                                if (StringUtils.isNotEmpty(completeRegistrationDto.getPromoCode())) {
-                                    trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(completeRegistrationDto.getPromoCode(),
-                                                    PromoCodeType.TRIAL, false)
-                                            .map(PromotionCode::getPromotionValue)
-                                            .orElseThrow(() -> new EntityNotFoundException("promo code", completeRegistrationDto.getPromoCode()));
-                                }
                                 Organization organization = new Organization();
                                 organization.setName(completeRegistrationDto.getOrganizationName());
                                 organization.setTimezone(completeRegistrationDto.getTimezone());
                                 if (StringUtils.isNotEmpty(completeRegistrationDto.getFirstDayOfWeek())) {
                                     organization.setFirstDayOfWeek(DaysOfWeek.valueOf(completeRegistrationDto.getFirstDayOfWeek()));
                                 }
-                                organization.setTrialDays(trialDays);
+                                int trialDays = 0;
+                                if (StringUtils.isNotEmpty(completeRegistrationDto.getPromoCode())) {
+                                    trialDays = promotionCodeRepository.findOneByCodeAndTypeAndDeleteFlag(completeRegistrationDto.getPromoCode(),
+                                                    PromoCodeType.TRIAL, false)
+                                            .map(PromotionCode::getPromotionValue)
+                                            .orElseThrow(() -> new EntityNotFoundException("promo code"));
+                                    organization.setTrialEndDate(Instant.now().plus(trialDays, ChronoUnit.DAYS));
+                                } else {
+                                    organization.setTrialEndDate(Instant.now());
+                                }
+                                if (trialDays == 0) {
+                                    user.setAccountStatus(AccountStatus.PAYMENT_PENDING);
+                                    organization.setPaymentPending(true);
+                                    // TODO add invoice for platform fee
+                                } else user.setAccountStatus(AccountStatus.PAYMENT_INFO_PENDING);
                                 organization.setCreatedBy(user.getId());
                                 organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
                                 organizationRepository.save(organization);
+                                if (trialDays == 0) {
+                                    NewInvoiceDto platformInvoice = NewInvoiceDto.builder()
+                                            .paymentDate(organization.getTrialEndDate())
+                                            .currency(Currency.CAD)
+                                            .organizationId(organization.getId())
+                                            .quantity(1)
+                                            .unitPrice(200)
+                                            .type(TransactionType.PLATFORM_FEE)
+                                            .totalAmount(200)
+                                            .build();
+                                    paymentsService.createNewInvoice(platformInvoice);
+                                }
                                 user.setOrganizationId(organization.getId());
+                                addCustomerOnStripe(user, organization.getName());
                             }
                             UserMapper.completeRegistrationToEntity(completeRegistrationDto, user);
                             return user;
@@ -160,6 +209,43 @@ public class UserService {
                 )
                 .orElseThrow(AuthenticationException::new);
         // Updating jwt with the new username
+        final String jwt = tokenProvider.updateUsernameOrStatusInToken(loggedUser.getUsername(), loggedUser.getAccountStatus());
+        return new LoginResponseDto(jwt);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public LoginResponseDto completePaymentInfo(String stripeTokenId) {
+        UserOrganization loggedUser = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
+                        .map(user -> {
+                            try {
+                                stripeService.createNewCard(stripeTokenId, user.getStripeId());
+                            } catch (StripeException e) {
+                                e.printStackTrace();
+                                throw new BadRequestException(""); //todo
+                            }
+                            if (user.getOrganization().getTrialEndDate() != null && user.getOrganization().getTrialEndDate().isBefore(Instant.now())) {
+                                user.setAccountStatus(AccountStatus.PAYMENT_PENDING);
+                            } else {
+                                user.setAccountStatus(AccountStatus.TRIAL_PERIOD);
+                            }
+                            NewInvoiceDto platformInvoice = NewInvoiceDto.builder()
+                                    .paymentDate(user.getOrganization().getTrialEndDate())
+                                    .currency(Currency.CAD)
+                                    .organizationId(user.getOrganizationId())
+                                    .quantity(1)
+                                    .unitPrice(200)
+                                    .type(TransactionType.PLATFORM_FEE)
+                                    .totalAmount(200)
+                                    .build();
+                            paymentsService.createNewInvoice(platformInvoice);
+                            user.setLastModifiedBy(user.getId());
+                            return user;
+                        })
+                        .map(userOrganizationRepository::save)
+                )
+                .orElseThrow(AuthenticationException::new);
+        // Updating jwt with the new status
         final String jwt = tokenProvider.updateUsernameOrStatusInToken(loggedUser.getUsername(), loggedUser.getAccountStatus());
         return new LoginResponseDto(jwt);
     }
@@ -176,7 +262,7 @@ public class UserService {
                     }
                     Map<String, String> response = new HashMap<>();
                     if (code.getType().equals(PromoCodeType.TRIAL)) {
-                        response.put("message", String.format("Trial Period for %s days will be added to your account.", code.getPromotionValue()));
+                        response.put("message", String.format("Trial Period for %s days has been added to your account.", code.getPromotionValue()));
                     }
                     return response;
                 })

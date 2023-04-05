@@ -87,6 +87,16 @@ public class CommonUtils {
         }
     }
 
+    /**
+     * @param pattern pattern to match
+     * @param value   value to be matched
+     * @param field   field for which value is validated
+     */
+    public static void validateRegexString(String pattern, String value, String field) {
+        if (!Pattern.matches(pattern, value)) {
+            throw new BadRequestException("Field " + field + " contains invalid value");
+        }
+    }
 
     /**
      * @param commaSeparatedString comma separated string to be converted to list

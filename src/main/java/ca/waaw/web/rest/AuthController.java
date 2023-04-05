@@ -1,17 +1,18 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.domain.Organization;
 import ca.waaw.domain.User;
 import ca.waaw.dto.userdtos.LoginDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
 import ca.waaw.enumration.AccountStatus;
-import ca.waaw.enumration.Authority;
 import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.jwt.JWTFilter;
 import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.web.rest.errors.ErrorVM;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
-import ca.waaw.web.rest.errors.exceptions.application.TrialExpiredException;
+import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
+import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpHeaders;
@@ -51,6 +53,8 @@ public class AuthController {
 
     private final TokenProvider tokenProvider;
 
+    private final UserService userService;
+
     private final UserRepository userRepository;
 
     private final OrganizationRepository organizationRepository;
@@ -64,42 +68,55 @@ public class AuthController {
     @ApiResponse(responseCode = "402", description = "${api.swagger.error-description.trial-over}",
             content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorVM.class))})
     public ResponseEntity<LoginResponseDto> authenticate(@Valid @RequestBody LoginDto loginDto) {
-        Authentication authentication;
         try {
-            authentication = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(loginDto.getLogin(), loginDto.getPassword()));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        } catch (BadCredentialsException e) {
-            throw new AuthenticationException();
+            Authentication authentication;
+            try {
+                authentication = authenticationManager
+                        .authenticate(new UsernamePasswordAuthenticationToken(loginDto.getLogin(), loginDto.getPassword()));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (BadCredentialsException e) {
+                throw new AuthenticationException();
+            } catch (Exception e) {
+                log.error("Exception while logging in", e);
+                throw e;
+            }
+            Optional<User> userEntity = userRepository.getByUsernameOrEmail(loginDto.getLogin());
+            AccountStatus accountStatus = userEntity
+                    .map(user -> {
+                        if (!user.getAccountStatus().equals(AccountStatus.PROFILE_PENDING)) {
+                            Organization organization = organizationRepository.findOneByIdAndDeleteFlag(user.getOrganizationId(), false)
+                                    .orElseThrow(() -> new EntityNotFoundException("organization"));
+                            if (StringUtils.isEmpty(user.getStripeId())) {
+                                userService.addCustomerOnStripe(user, organization.getName());
+                                user.setAccountStatus(AccountStatus.PAYMENT_INFO_PENDING);
+                                userRepository.save(user);
+                            }
+                            if ((!organization.isPlatformFeePaid() && organization.getTrialEndDate().isBefore(Instant.now())) ||
+                                    organization.isPaymentPending()) {
+                                user.setAccountStatus(AccountStatus.PAYMENT_PENDING);
+                                userRepository.save(user);
+                                log.error("Payment pending for organization {}({})", organization.getName(), organization.getId());
+                            }
+                        }
+                        return user;
+                    })
+                    .map(User::getAccountStatus).orElse(null);
+            final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe(), accountStatus);
+            assert accountStatus != null;
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
+
+            // Update last login to current time
+            userEntity.map(user -> {
+                user.setLastLogin(Instant.now());
+                return user;
+            }).map(userRepository::save);
+
+            return new ResponseEntity<>(new LoginResponseDto(token), httpHeaders, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Exception while logging in", e);
+            e.printStackTrace();
             throw e;
         }
-        Optional<User> userEntity = userRepository.findOneByUsernameOrEmail(loginDto.getLogin(), loginDto.getLogin());
-        AccountStatus accountStatus = userEntity
-                .map(user -> {
-                    if (user.getAccountStatus().equals(AccountStatus.TRIAL_EXPIRED) &&
-                            !user.getAuthority().equals(Authority.ADMIN)) {
-                        throw new TrialExpiredException(user.getAuthority());
-                    }
-                    return user;
-                })
-                .map(User::getAccountStatus).orElse(null);
-        final String token = tokenProvider.createToken(authentication, loginDto.isRememberMe(), accountStatus);
-        assert accountStatus != null;
-        if(accountStatus.equals(AccountStatus.TRIAL_PERIOD)) {
-            // TODO send user notification for the number of days remaining.
-        }
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
-
-        // Update last login to current time
-        userEntity.map(user -> {
-            user.setLastLogin(Instant.now());
-            return user;
-        }).map(userRepository::save);
-
-        return new ResponseEntity<>(new LoginResponseDto(token), httpHeaders, HttpStatus.OK);
     }
 
 }

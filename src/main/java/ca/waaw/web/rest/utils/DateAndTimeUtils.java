@@ -1,6 +1,7 @@
 package ca.waaw.web.rest.utils;
 
 import ca.waaw.dto.DateTimeDto;
+import ca.waaw.dto.TimeDto;
 import ca.waaw.enumration.DaysOfWeek;
 import org.apache.commons.lang3.StringUtils;
 
@@ -49,10 +50,16 @@ public class DateAndTimeUtils {
 
     /**
      * @param timezone timezone, current date required in
-     * @return Instant object for current date and time
+     * @return DateTime object for current date and time
      */
-    public static Instant getCurrentDateTime(String timezone) {
-        return ZonedDateTime.now(ZoneId.of(timezone)).toInstant();
+    public static DateTimeDto getCurrentDateTime(String timezone) {
+        String dateString = Instant.now().atZone(ZoneId.of(timezone)).toString();
+        String[] date = dateString.split("T");
+        String[] timeString = date[1].substring(0, 5).split(":");
+        return DateTimeDto.builder()
+                .date(date[0])
+                .time(timeString[0] + ":" + timeString[1])
+                .build();
     }
 
     /**
@@ -163,6 +170,15 @@ public class DateAndTimeUtils {
         Instant start = date.atZone(ZoneOffset.UTC)
                 .withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
         Instant end = date.atZone(ZoneOffset.UTC)
+                .withHour(23).withMinute(59).withSecond(59).withNano(0).toInstant()
+                .plus(difference, ChronoUnit.DAYS);
+        return new Instant[]{start, end};
+    }
+
+    public static Instant[] getStartAndEndTimeForInstant(Instant date, int difference, String timezone) {
+        Instant start = date.atZone(ZoneId.of(timezone))
+                .withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
+        Instant end = date.atZone(ZoneId.of(timezone))
                 .withHour(23).withMinute(59).withSecond(59).withNano(0).toInstant()
                 .plus(difference, ChronoUnit.DAYS);
         return new Instant[]{start, end};
@@ -300,6 +316,17 @@ public class DateAndTimeUtils {
         if (!date.isBefore(todayRange[0]) && date.isBefore(todayRange[1])) newDate = "today";
         if (!date.isBefore(yesterdayRange[0]) && date.isBefore(yesterdayRange[1])) newDate = "yesterday";
         return newDate == null ? dateTime.getDate() : newDate + " " + dateTime.getTime();
+    }
+
+    public static int getTotalMinutesForTime(TimeDto dto) {
+        return (dto.getHours() * 60) + dto.getMinutes();
+    }
+
+    public static TimeDto getHourMinuteTimeFromMinutes(int minutes) {
+        return TimeDto.builder()
+                .hours(minutes / 60)
+                .minutes(minutes % 60)
+                .build();
     }
 
 }

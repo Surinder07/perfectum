@@ -1,39 +1,28 @@
 package ca.waaw.dto;
 
-import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
-
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreditCardDto {
 
-    @NotEmpty
-    @CapitalizeFirstLetter
-    private String firstName;
+    private String id;
 
-    @NotEmpty
-    @CapitalizeFirstLetter
-    private String lastName;
+    private String lastFourDigits;
 
-    private String cardNumber;
+    private String brand;
 
-    @Size(max = 7, message = "Please enter a valid expiry date")
-    private String expiry;
+    private boolean cvcChecked;
 
-    @Size(min = 3, max = 3, message = "Please enter a valid postal code")
-    private String securityCode;
+    private int expiryMonth;
 
-    private String country;
+    private int expiryYear;
 
-    @Size(min = 5, max = 6, message = "Please enter a valid postal code")
-    private String postalCode;
-
-    private String address;
+    private boolean isDefault;
 
 }

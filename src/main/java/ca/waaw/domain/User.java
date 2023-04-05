@@ -58,6 +58,9 @@ public class User extends AbstractEntity {
     @Column(name = "waaw_custom_id")
     private String waawId;
 
+    @Column(name = "stripe_id")
+    private String stripeId;
+
     @Column(name = "lang_key")
     private String langKey = "en";
 

@@ -79,6 +79,9 @@ public class UserOrganization extends AbstractEntity {
     @Column(name = "waaw_custom_id")
     private String waawId;
 
+    @Column(name = "stripe_id")
+    private String stripeId;
+
     @OneToOne(fetch = FetchType.LAZY)
     @NotFound(action = NotFoundAction.EXCEPTION)
     @JoinColumn(name = "organization_id", referencedColumnName = "uuid", updatable = false, insertable = false)

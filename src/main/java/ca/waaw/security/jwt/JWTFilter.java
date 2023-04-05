@@ -71,9 +71,15 @@ public class JWTFilter extends OncePerRequestFilter {
     private ErrorCodes checkLoginPermission(HttpServletRequest request, String jwtToken) {
         switch (tokenProvider.checkAccountStatus(jwtToken)) {
             case PAYMENT_PENDING:
-                return ErrorCodes.WE_004;
+                if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.confirmPayment"))) &&
+                        !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.createPaymentIntent"))) &&
+                        !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.getPendingInvoice"))) &&
+                        !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.createSetupIntent"))))
+                    return ErrorCodes.WE_003;
+                break;
             case PAYMENT_INFO_PENDING:
-                if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.addPaymentInfo"))))
+                if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.completePaymentInfo"))) &&
+                        !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.createSetupIntent"))))
                     return ErrorCodes.WE_002;
                 break;
             case PROFILE_PENDING:
@@ -81,10 +87,6 @@ public class JWTFilter extends OncePerRequestFilter {
                         !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.validatePromoCode"))))
                     return ErrorCodes.WE_001;
                 break;
-            case TRIAL_EXPIRED:
-                if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.user.getUserDetails")))) {
-                    return ErrorCodes.WE_003;
-                }
         }
         return null;
     }

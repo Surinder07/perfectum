@@ -1,5 +1,7 @@
 package ca.waaw.web.rest.errors;
 
+import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.ErrorCodes;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.errors.exceptions.application.*;
 import ca.waaw.web.rest.utils.CommonUtils;
@@ -124,10 +126,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(new ErrorVM(message, "key"), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(TrialExpiredException.class)
-    protected ResponseEntity<ErrorVM> handleTrialExpiredException(TrialExpiredException ex) {
-        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.trialExpiredEmployeeMessage, null);
-        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.PAYMENT_REQUIRED);
+    @ExceptionHandler(PaymentPendingException.class)
+    protected ResponseEntity<ErrorVM> handlePaymentPendingException(PaymentPendingException ex) {
+        String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.paymentPendingEmployeeMessage, null);
+        if (ex.getRole().equals(Authority.ADMIN))
+            return new ResponseEntity<>(new ErrorVM(ErrorCodes.WE_003), HttpStatus.FORBIDDEN);
+        else
+            return new ResponseEntity<>(new ErrorVM(message), HttpStatus.PAYMENT_REQUIRED);
     }
 
     @ExceptionHandler(PastValueNotDeletableException.class)

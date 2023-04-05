@@ -38,3 +38,5 @@ databaseChangeLog:
       file: db/changelog/changelog-requests.yml
   - include:
       file: db/changelog/changelog-requests_history.yml
+  - include:
+      file: db/changelog/changelog-invoices.yml

@@ -64,7 +64,7 @@ public class ApplicationStartupSqlService {
      * Will generate a user with {@link Authority#SUPER_USER} authority
      * If a super-user is already present in the database, new user will not be created.
      * If application.create-dummy-data-on-startup is set to true in application-profile.yml, it will
-     * also create some dummy users and locations
+     * also create some dummy users, locations and location roles
      */
     @Transactional(rollbackFor = Exception.class)
     public void checkExistenceAndGenerateSuperUser() {
@@ -94,7 +94,7 @@ public class ApplicationStartupSqlService {
                     PromotionCode.builder().code("WAAW30").promotionValue(30).type(PromoCodeType.TRIAL).build()
             );
             promotionCodeRepository.saveAll(codes);
-            log.info("Generating promo codes for 1 day, 10 days, 20 days and 30 days successful.");
+            log.info("Generating promo codes for 1 day, 10 days, 20 days and 30 days successful.\n {}", codes);
         } else {
             log.info("Skipped generating promo codes as some already exists.");
         }
@@ -174,7 +174,8 @@ public class ApplicationStartupSqlService {
         user.setUsername(username);
         user.setWaawId(customId);
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setAccountStatus(role.equals(Authority.ADMIN) ? AccountStatus.PROFILE_PENDING : AccountStatus.DISABLED);
+        user.setAccountStatus(role.equals(Authority.ADMIN) ? AccountStatus.PROFILE_PENDING :
+                (role.equals(Authority.SUPER_USER) ? AccountStatus.PAID_AND_ACTIVE : AccountStatus.DISABLED));
         user.setCreatedBy("SYSTEM");
         user.setAuthority(role);
         user.setFullTime(true);
@@ -213,6 +214,10 @@ public class ApplicationStartupSqlService {
         return role.getId();
     }
 
+    /**
+     * Create employee preferences for a dummy user
+     * @param userId userId for the employee
+     */
     private void createEmployeePreferences(String userId) {
         EmployeePreferences preferences = new EmployeePreferences();
         preferences.setUserId(userId);

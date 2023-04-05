@@ -49,6 +49,8 @@ public interface ShiftsRepository extends JpaRepository<Shifts, String> {
 
     List<Shifts> findAllByLocationRoleIdAndStartBetween(String locationRoleId, Instant startRange, Instant endRange);
 
-    List<Shifts> findAllByUserIdInAndStartBetween(List<String> userIds, Instant startRange, Instant endRange);
+    @Query(value = "SELECT COUNT(DISTINCT s.userId) FROM Shifts s WHERE s.organizationId = ?1 AND " +
+            "(s.start BETWEEN ?2 AND ?3) AND s.shiftStatus = 'RELEASED' AND s.deleteFlag = FALSE")
+    long getActiveEmployeesBetweenDates(String organizationId, Instant start, Instant end);
 
 }

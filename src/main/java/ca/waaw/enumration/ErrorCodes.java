@@ -6,8 +6,7 @@ package ca.waaw.enumration;
 public enum ErrorCodes {
     WE_001("Profile completion is pending"),
     WE_002("Payment Info is pending"),
-    WE_003("Trial period is over"),
-    WE_004("Payment is pending");
+    WE_003("Payment is pending");
 
     public final String value;
 

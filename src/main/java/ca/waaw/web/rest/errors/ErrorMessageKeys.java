@@ -15,7 +15,7 @@ public final class ErrorMessageKeys {
     public static final String authenticationFailedMessage = "error.authenticationFailedMessage";
     public static final String internalServerMessage = "error.internalServerMessage";
     public static final String entityAlreadyExistsMessage = "error.entityAlreadyExistsMessage";
-    public static final String trialExpiredEmployeeMessage = "error.trialExpiredEmployeeMessage";
+    public static final String paymentPendingEmployeeMessage = "error.paymentPendingEmployeeMessage";
     public static final String pastValueNotDeletableMessage = "error.pastValueNotDeletableMessage";
     public static final String shiftOverlappingMessage = "error.shiftOverlappingMessage";
     public static final String timesheetOverlappingMessage = "error.timesheetOverlappingMessage";

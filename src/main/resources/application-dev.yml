@@ -52,6 +52,12 @@ azure:
     api-key: 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
 
 #################################################
+#####    Payment properties    #####
+#################################################
+stripe:
+  api-key: sk_test_51IuozbEkZ4NGJcE2m9MpdvSkZbDTFlR2ot3a9vSsQG0QHdwOBKtV9s0pQtKiGN1y3jvMM5ED3dNtVOBxUAMKMxZn00aU9CKJdR
+
+#################################################
 #####    Application specific properties    #####
 #################################################
 application:

@@ -25,4 +25,6 @@ public class AppCustomIdConfig {
 
     private String reportPrefix;
 
+    private String invoicePrefix;
+
 }

@@ -80,7 +80,6 @@ public class FileToPojoUtils {
                             log.error("Error while populating {} object, {} field", cls, fieldName, e);
                         }
                     }
-                    System.out.println(skipRow.booleanValue());
                 });
                 if (skipRow.isFalse()) results.add(result);
             } catch (Exception e) {
