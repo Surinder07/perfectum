@@ -57,6 +57,7 @@ public class WebSecurityConfigurer {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        log.info("Open endpoints added: {}", Arrays.toString(appSecurityConfig.getUnAuthUrlPatterns()));
         http.cors().and().csrf().disable()
                 .authorizeRequests()
                 .antMatchers(appSecurityConfig.getUnAuthUrlPatterns()).permitAll()

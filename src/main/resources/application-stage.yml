@@ -38,8 +38,6 @@ azure:
     end-point: https://waaw-sms.communication.azure.com
     key-credential: kEjXJz/2DRm7taUTcr9mPWcB3dOb+lyki8bvhyzjRA3Syi0bRDBLt6q67CuGW9C49TZT2vPBpUn3g2nFBsyaoA==
   blob:
-    account-name: waawstorage
-    account-key: KJY8QGES7Z3iCzNgj0Z6qt/Vkwm/mQkWsArWgtdyRyjAb3zSssF2dYCH30/MKKH1Leya+WfKM24c+AStNRaKQQ==
     payrollName: stage-payroll
     payrollKey: sp=racwdli&st=2023-02-16T15:15:26Z&se=2026-09-29T23:15:26Z&sip=0.0.0.0-245.245.245.245&sv=2021-06-08&sr=c&sig=CHq1MPZGUHiZAaF0n8mfUnXNLSa%2BRpwKYbp3FZcfENQ%3D
     attendanceName: stage-attendance

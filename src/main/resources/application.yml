@@ -83,6 +83,13 @@ springdoc:
     operationsSorter: alpha
     tagsSorter: alpha
 
+##############################
+#####    Azure Config    #####
+##############################
+azure:
+  blob:
+    account-name: waawst0rage
+
 #################################################
 #####    Application specific properties    #####
 #################################################

@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -23,8 +25,8 @@ public class AzureStorage {
     public final AppAzureConfig config;
 
     public String uploadFile(MultipartFile file, FileType fileType) throws IOException {
-        String fileName = file.getOriginalFilename();
         try {
+            String fileName = (UUID.randomUUID().toString().split("-")[0]) + "_" + Objects.requireNonNull(file.getOriginalFilename()).toLowerCase().replaceAll(" ", "_");
             return uploadFile(fileName, file.getBytes(), fileType);
         } catch (Exception e) {
             log.error("Exception while reading multipart file", e);

@@ -35,8 +35,8 @@ public class AppAzureConfig {
         private String attendanceKey;
         private String holidayName;
         private String holidayKey;
-        private String pictureName;
-        private String pictureKey;
+        private String picturesName;
+        private String picturesKey;
         public String getContainerUrl(FileType type) {
             return "https://" + accountName + ".blob.core.windows.net/" + getContainerName(type);
         }
@@ -49,7 +49,7 @@ public class AppAzureConfig {
                 case HOLIDAYS:
                     return holidayName;
                 case PICTURES:
-                    return pictureName;
+                    return picturesName;
             }
             return null;
         }
@@ -62,7 +62,7 @@ public class AppAzureConfig {
                 case HOLIDAYS:
                     return holidayKey;
                 case PICTURES:
-                    return pictureKey;
+                    return picturesKey;
             }
             return null;
         }

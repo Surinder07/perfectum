@@ -1,6 +1,8 @@
 package ca.waaw.web.rest;
 
+import ca.waaw.storage.AzureStorage;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
+import ca.waaw.web.rest.service.ResourceService;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,10 +13,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +25,8 @@ import java.util.StringJoiner;
 @RequestMapping("/api")
 @Tag(name = "${api.swagger.groups.resources}")
 public class ResourceController {
+
+    private final ResourceService resourceService;
 
     @SwaggerBadRequest
     @Operation(description = "${api.description.resources.downloadSample}")
@@ -50,6 +51,14 @@ public class ResourceController {
         assert is != null;
         return CommonUtils.byteArrayResourceToResponse(new ByteArrayResource(is.readAllBytes()),
                 new StringJoiner(".").add(fileName).add(format).toString());
+    }
+
+    @SwaggerBadRequest
+    @Operation(description = "${api.description.resources.getImageLink}")
+    @GetMapping("${api.endpoints.resources.getImageLink}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/octet-stream")})
+    public ResponseEntity<byte[]> getImageLink(@PathVariable String type, @PathVariable String id) throws IOException {
+        return ResponseEntity.ok(resourceService.getImageLink(type, id));
     }
 
 }
