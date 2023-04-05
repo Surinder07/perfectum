@@ -1,5 +1,6 @@
 package ca.waaw.service.scheduler;
 
+import ca.waaw.domain.Organization;
 import ca.waaw.domain.Shifts;
 import ca.waaw.domain.Timesheet;
 import ca.waaw.domain.User;
@@ -7,20 +8,23 @@ import ca.waaw.dto.NotificationInfoDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.NotificationType;
 import ca.waaw.enumration.ShiftStatus;
+import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.ShiftsRepository;
 import ca.waaw.repository.TimesheetRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.service.NotificationInternalService;
+import ca.waaw.service.WebSocketService;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -36,7 +40,46 @@ public class ShiftsScheduler {
 
     private final UserRepository userRepository;
 
+    private final OrganizationRepository organizationRepository;
+
     private final NotificationInternalService notificationInternalService;
+
+    private final WebSocketService webSocketService;
+
+    @Scheduled(fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
+    public void checkToActivateTimers() {
+        log.info("Running scheduler to check for upcoming shift to allow timer");
+        List<Organization> organizations = organizationRepository.findAll()
+                .stream().filter(organization -> !organization.isDeleteFlag())
+                .collect(Collectors.toList());
+        int maxTimeGrace = organizations.stream().mapToInt(Organization::getClockInAllowedMinutesBeforeShift)
+                .max().orElse(5);
+        List<Map<String, Object>> infoToSend = new ArrayList<>();
+        Instant start = Instant.now().plus(maxTimeGrace, ChronoUnit.MINUTES).plus(1L, ChronoUnit.SECONDS);
+        List<Shifts> allShifts = shiftsRepository.getAllUpcomingOrOngoingShifts(start, Instant.now());
+        List<User> users = userRepository.findAllByIdInAndDeleteFlag(allShifts.stream()
+                .map(Shifts::getUserId).collect(Collectors.toList()), false);
+        organizations.forEach(organization -> {
+            int maxTime = organization.getClockInAllowedMinutesBeforeShift();
+            allShifts.stream().filter(shift -> shift.getOrganizationId().equals(organization.getId()))
+                    .filter(shift -> shift.getStart().isBefore(Instant.now().plus(maxTime, ChronoUnit.MINUTES)
+                            .plus(1L, ChronoUnit.SECONDS)))
+                    .filter(shift -> shift.getShiftStatus().equals(ShiftStatus.RELEASED))
+                    .forEach(shift -> {
+                        Map<String, Object> info = new HashMap<>();
+                        int timeRemaining = (int) Duration.between(Instant.now(), shift.getStart()).toMinutes();
+                        timeRemaining = timeRemaining - maxTime;
+                        if (timeRemaining < 0) timeRemaining = 0;
+                        info.put("timerActive", true);
+                        info.put("timeRemaining", timeRemaining);
+                        info.put("user", users.stream().filter(user -> user.getId().equals(shift.getUserId()))
+                                .findFirst().map(User::getUsername).orElse(null));
+                        infoToSend.add(info);
+                    });
+        });
+        infoToSend.forEach(info -> webSocketService.notifyUserToAllowClockIn(info.get("user").toString(),
+                Integer.parseInt(String.valueOf(info.get("timeRemaining")))));
+    }
 
     /**
      * Check if an employee has clocked in for their shift or not
@@ -66,7 +109,7 @@ public class ShiftsScheduler {
     }
 
     private void notifyAdminsForShifts(List<Shifts> shiftToNotifyFor, List<User> gAdmin, List<User> lAdmins,
-                                          List<User> users) {
+                                       List<User> users) {
         try {
             shiftToNotifyFor.forEach(shift -> {
                 log.info("Sending notification for missed shift: {}", shift);
@@ -83,6 +126,7 @@ public class ShiftsScheduler {
                             .builder()
                             .receiverUuid(admin.getId())
                             .receiverName(admin.getFullName())
+                            .receiverUsername(admin.getUsername())
                             .receiverMail(admin.getEmail())
                             .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
                             .language(admin.getLangKey() == null ? null : admin.getLangKey())

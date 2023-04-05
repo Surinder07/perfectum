@@ -1,5 +1,6 @@
 package ca.waaw.dto.locationandroledtos;
 
+import ca.waaw.dto.TimeDto;
 import ca.waaw.web.rest.utils.customannotations.CapitalizeFirstLetter;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
@@ -27,13 +28,13 @@ public class LocationRoleDto {
     private String name;
 
     @Schema(description = "minimum total hours an employee can work per day")
-    private int totalHoursPerDayMin;
+    private TimeDto totalHoursPerDayMin;
 
     @Schema(description = "maximum total hours an employee can work per day")
-    private int totalHoursPerDayMax;
+    private TimeDto totalHoursPerDayMax;
 
     @Schema(description = "minimum total hours an employee has to take between two shifts")
-    private int minHoursBetweenShifts;
+    private TimeDto minHoursBetweenShifts;
 
     @Schema(description = "maximum total consecutive days an employee can work")
     private int maxConsecutiveWorkDays;

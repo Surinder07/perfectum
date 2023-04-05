@@ -13,6 +13,12 @@ import java.time.Instant;
 @AllArgsConstructor
 public class ActiveTimesheetDto {
 
+    private boolean upcomingShift;
+
+    private int shiftsAfterMinutes;
+
+    private int totalTimeWorkedToday;
+
     private String startDate;
 
     private String startTime;

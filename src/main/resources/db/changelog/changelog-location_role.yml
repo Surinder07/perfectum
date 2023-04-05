@@ -30,13 +30,13 @@ databaseChangeLog:
                   name: location_id
                   type: VARCHAR(100)
               - column:
-                  name: total_hours_per_day_min
+                  name: total_minutes_per_day_min
                   type: SMALLINT
               - column:
-                  name: total_hours_per_day_max
+                  name: total_minutes_per_day_max
                   type: SMALLINT
               - column:
-                  name: min_hours_between_shifts
+                  name: min_minutes_between_shifts
                   type: SMALLINT
               - column:
                   name: max_consecutive_work_days

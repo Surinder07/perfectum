@@ -20,6 +20,7 @@ import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.NotificationInternalService;
 import ca.waaw.service.UserMailService;
+import ca.waaw.service.WebSocketService;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.errors.exceptions.application.MissingRequiredFieldsException;
 import ca.waaw.web.rest.utils.ApiResponseMessageKeys;
@@ -73,6 +74,8 @@ public class MemberService {
     private final ShiftsRepository shiftsRepository;
 
     private final NotificationInternalService notificationInternalService;
+
+    private final WebSocketService webSocketService;
 
     /**
      * Sends an invitation to user email
@@ -206,16 +209,18 @@ public class MemberService {
                     .receiverUuid(admin.getId())
                     .receiverName(admin.getFullName())
                     .receiverMail(admin.getEmail())
+                    .receiverUsername(admin.getUsername())
                     .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
                     .language(admin.getLangKey() == null ? null : admin.getLangKey())
                     .type(NotificationType.EMPLOYEE)
                     .build();
-            String[] now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
-                    admin.getOrganization().getTimezone() : admin.getLocation().getTimezone()).toString().split("T");
-            notificationInternalService.sendNotification("notification.upload.users", notificationInfo, now[0], now[1].substring(0, 5));
+            DateTimeDto now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
+                    admin.getOrganization().getTimezone() : admin.getLocation().getTimezone());
+            notificationInternalService.sendNotification("notification.upload.users", notificationInfo, now.getDate(), now.getTime());
+            webSocketService.notifyUserAboutHolidayUploadComplete(admin.getUsername());
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
-                .uploadNewEmployees, new Locale(admin.getLangKey())));
+                .uploadNewEmployees, admin.getLangKey()));
 
     }
 
@@ -266,6 +271,10 @@ public class MemberService {
                                     return employeePreferencesRepository.findOneByUserIdAndIsExpired(user.getId(), false)
                                             .map(preference -> UserMapper.entityToUserDetailsForAdmin(user, preference))
                                             .orElse(UserMapper.entityToUserDetailsForAdmin(user, null));
+                                })
+                                .map(user -> {
+                                    user.setImageUrl(user.getImageUrl() == null ? null : appUrlConfig.getImageUrl(user.getId(), "profile"));
+                                    return user;
                                 })
                                 .orElseThrow(() -> new EntityNotFoundException("user")))
                 )
@@ -375,9 +384,7 @@ public class MemberService {
                                             !admin.getLocationId().equals(user.getLocationId()))) {
                                 return null;
                             }
-                            Instant now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.MANAGER) ?
-                                    admin.getLocation().getTimezone() : admin.getOrganization().getTimezone());
-                            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), now, false).size();
+                            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), Instant.now(), false).size();
                             if (shifts > 0) throw new EntityNotDeletableException("user", "assigned shifts");
                             user.setDeleteFlag(true);
                             user.setLastModifiedBy(admin.getId());
@@ -406,9 +413,7 @@ public class MemberService {
                                             !admin.getLocationId().equals(user.getLocationId()))) {
                                 return null;
                             }
-                            Instant now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.MANAGER) ?
-                                    admin.getLocation().getTimezone() : admin.getOrganization().getTimezone());
-                            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), now, false).size();
+                            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), Instant.now(), false).size();
                             if (shifts > 0) throw new EntityNotDeletableException("user", "assigned shifts");
                             user.setAccountStatus(user.getAccountStatus().equals(AccountStatus.DISABLED) ?
                                     AccountStatus.PAID_AND_ACTIVE : AccountStatus.DISABLED);
@@ -468,10 +473,9 @@ public class MemberService {
     private void validateDependenciesIfLocationOrRoleUpdate(UpdateUserDto memberDto, UserOrganization user) {
         if (!(memberDto.getRoleId().equals(user.getLocationRoleId()) &&
                 memberDto.getLocationId().equals(user.getLocationId()))) {
-            Instant now = DateAndTimeUtils.getCurrentDateTime(user.getAuthority().equals(Authority.MANAGER) ?
-                    user.getLocation().getTimezone() : user.getOrganization().getTimezone());
-            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), now, false).size();
-            if (shifts > 0) throw new BadRequestException("Please remove all dependencies before updating location or role for user.");
+            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), Instant.now(), false).size();
+            if (shifts > 0)
+                throw new BadRequestException("Please remove all dependencies before updating location or role for user.");
         }
     }
 

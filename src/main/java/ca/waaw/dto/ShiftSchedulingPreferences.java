@@ -13,11 +13,11 @@ public class ShiftSchedulingPreferences {
 
     private String locationRoleId;
 
-    private int totalHoursPerDayMin;
+    private int totalMinutesPerDayMin;
 
-    private int totalHoursPerDayMax;
+    private int totalMinutesPerDayMax;
 
-    private int minHoursBetweenShifts;
+    private int minMinutesBetweenShifts;
 
     private int maxConsecutiveWorkDays;
 

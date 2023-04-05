@@ -64,7 +64,7 @@ databaseChangeLog:
                   type: VARCHAR(5)
               - column:
                   name: wages_per_hour
-                  type: DECIMAL
+                  type: DECIMAL(10,2)
               - column:
                   name: wages_currency
                   type: VARCHAR(5)

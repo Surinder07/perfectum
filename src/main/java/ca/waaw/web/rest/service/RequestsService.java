@@ -306,6 +306,7 @@ public class RequestsService {
         NotificationInfoDto notificationInfo = NotificationInfoDto
                 .builder()
                 .receiverUuid(sendTo.getId())
+                .receiverUsername(sendTo.getUsername())
                 .receiverName(sendTo.getFullName())
                 .receiverMail(sendTo.getEmail())
                 .receiverMobile(sendTo.getMobile() == null ? null : sendTo.getCountryCode() + sendTo.getMobile())
@@ -321,6 +322,7 @@ public class RequestsService {
                 .builder()
                 .receiverUuid(sendTo.getId())
                 .receiverName(sendTo.getFullName())
+                .receiverUsername(sendTo.getUsername())
                 .receiverMail(sendTo.getEmail())
                 .receiverMobile(sendTo.getMobile() == null ? null : sendTo.getCountryCode() + sendTo.getMobile())
                 .language(sendTo.getLangKey() == null ? null : sendTo.getLangKey())

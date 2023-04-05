@@ -23,6 +23,8 @@ public class UserDetailsDto {
 
     private String lastName;
 
+    private String imageUrl;
+
     private String mobile;
 
     private String countryCode;
@@ -31,11 +33,17 @@ public class UserDetailsDto {
 
     private Instant lastLogin;
 
+    private String organizationId;
+
     private String organization;
 
     private String organizationWaawId;
 
+    private String organizationLogoUrl;
+
     private String organizationTimezone;
+
+    private String timezone;
 
     private String role;
 
@@ -50,5 +58,7 @@ public class UserDetailsDto {
     private Boolean isSmsNotifications;
 
     private String status;
+
+    private int trialDaysPending; // TODO send timestamp to ui and calculate time there to update properly
 
 }

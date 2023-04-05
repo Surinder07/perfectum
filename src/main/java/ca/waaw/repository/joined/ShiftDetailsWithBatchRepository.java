@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Repository
 public interface ShiftDetailsWithBatchRepository extends JpaRepository<ShiftDetailsWithBatch, String> {
+
+    Optional<ShiftDetailsWithBatch> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
 
     @Query(value = "SELECT s FROM ShiftDetailsWithBatch s WHERE (?1 IS NULL OR (s.batch.name LIKE " +
             "CONCAT('%', ?1, '%') OR s.batch.waawId LIKE CONCAT('%', ?1, '%'))) AND (?2 IS NULL OR " +

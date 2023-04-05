@@ -1,6 +1,5 @@
 package ca.waaw.service.scheduler;
 
-import ca.waaw.domain.Timesheet;
 import ca.waaw.domain.joined.DetailedTimesheet;
 import ca.waaw.repository.joined.DetailedTimesheetRepository;
 import lombok.AllArgsConstructor;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -26,14 +26,14 @@ public class TimesheetScheduler {
     /**
      * check for clocked in person who might have forgotten to clock out
      */
-    @Scheduled(cron = "0 0/30 * * * *")
+    @Scheduled(fixedDelay = 60, timeUnit = TimeUnit.MINUTES)
     public void checkAndCloseActiveTimers() {
         log.info("Running scheduler to check for active timers");
         List<DetailedTimesheet> updatedTimeSheets = timesheetRepository.getAllActiveTimers()
                 .stream()
                 .peek(sheet -> {
-                    long maxAllowedShift = sheet.getLocationRole().getTotalHoursPerDayMax() == 0 ? 8 : sheet.getLocationRole().getTotalHoursPerDayMax();
-                    if ((Instant.now()).isAfter(sheet.getStart().plus(maxAllowedShift, ChronoUnit.HOURS)
+                    long maxAllowedShift = sheet.getLocationRole().getTotalMinutesPerDayMax() == 0 ? 8 : sheet.getLocationRole().getTotalMinutesPerDayMax();
+                    if ((Instant.now()).isAfter(sheet.getStart().plus(maxAllowedShift, ChronoUnit.MINUTES)
                             .plus(10, ChronoUnit.MINUTES))) {
                         sheet.setEnd(Instant.now());
                     }

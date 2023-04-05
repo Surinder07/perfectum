@@ -6,6 +6,7 @@ import ca.waaw.domain.User;
 import ca.waaw.domain.joined.LocationUsers;
 import ca.waaw.dto.locationandroledtos.*;
 import ca.waaw.web.rest.utils.CommonUtils;
+import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.springframework.beans.BeanUtils;
 
 public class LocationAndRoleMapper {
@@ -35,7 +36,7 @@ public class LocationAndRoleMapper {
         target.setTimezone(source.getTimezone());
         target.setName(source.getName());
         target.setActive(source.isActive());
-        target.setCreationDate(source.getCreatedDate().toString().split("T")[0]);
+        target.setCreationDate(DateAndTimeUtils.getDateTimeObject(source.getCreatedDate(), timezone).getDate());
         int activeEmployees = CommonUtils.getActiveEmployeesFromList(source.getUsers());
         target.setActiveEmployees(activeEmployees);
         target.setInactiveEmployees(source.getUsers().size() - activeEmployees);
@@ -56,12 +57,9 @@ public class LocationAndRoleMapper {
         target.setAdminRights(sourceRole.isAdmin());
         if (sourceRole.getMaxConsecutiveWorkDays() != 0)
             target.setMaxConsecutiveWorkDays(sourceRole.getMaxConsecutiveWorkDays());
-        if (sourceRole.getMinHoursBetweenShifts() != 0)
-            target.setMinHoursBetweenShifts(sourceRole.getMinHoursBetweenShifts());
-        if (sourceRole.getTotalHoursPerDayMin() != 0)
-            target.setTotalHoursPerDayMin(sourceRole.getTotalHoursPerDayMin());
-        if (sourceRole.getTotalHoursPerDayMax() != 0)
-            target.setTotalHoursPerDayMax(sourceRole.getTotalHoursPerDayMax());
+        target.setTotalMinutesPerDayMin(DateAndTimeUtils.getTotalMinutesForTime(sourceRole.getTotalHoursPerDayMin()));
+        target.setTotalMinutesPerDayMax(DateAndTimeUtils.getTotalMinutesForTime(sourceRole.getTotalHoursPerDayMax()));
+        target.setMinMinutesBetweenShifts(DateAndTimeUtils.getTotalMinutesForTime(sourceRole.getMinHoursBetweenShifts()));
         return target;
     }
 
@@ -91,6 +89,9 @@ public class LocationAndRoleMapper {
         LocationRoleDto target = new LocationRoleDto();
         BeanUtils.copyProperties(source, target);
         target.setAdmin(source.isAdminRights());
+        target.setMinHoursBetweenShifts(DateAndTimeUtils.getHourMinuteTimeFromMinutes(source.getMinMinutesBetweenShifts()));
+        target.setTotalHoursPerDayMin(DateAndTimeUtils.getHourMinuteTimeFromMinutes(source.getTotalMinutesPerDayMin()));
+        target.setTotalHoursPerDayMax(DateAndTimeUtils.getHourMinuteTimeFromMinutes(source.getTotalMinutesPerDayMax()));
         return target;
     }
 
@@ -99,11 +100,10 @@ public class LocationAndRoleMapper {
      * @param target entity in which info will be updated
      */
     public static void updateDtoToEntity(UpdateLocationRoleDto source, LocationRole target) {
-        if (source.getTotalHoursPerDayMin() != 0) target.setTotalHoursPerDayMin(source.getTotalHoursPerDayMin());
-        if (source.getTotalHoursPerDayMax() != 0) target.setTotalHoursPerDayMax(source.getTotalHoursPerDayMax());
-        if (source.getMinHoursBetweenShifts() != 0) target.setMinHoursBetweenShifts(source.getMinHoursBetweenShifts());
-        if (source.getMaxConsecutiveWorkDays() != 0)
-            target.setMaxConsecutiveWorkDays(source.getMaxConsecutiveWorkDays());
+        target.setTotalMinutesPerDayMin(DateAndTimeUtils.getTotalMinutesForTime(source.getTotalHoursPerDayMin()));
+        target.setTotalMinutesPerDayMax(DateAndTimeUtils.getTotalMinutesForTime(source.getTotalHoursPerDayMax()));
+        target.setMinMinutesBetweenShifts(DateAndTimeUtils.getTotalMinutesForTime(source.getMinHoursBetweenShifts()));
+        target.setMaxConsecutiveWorkDays(source.getMaxConsecutiveWorkDays());
     }
 
 }

@@ -325,6 +325,11 @@ public class UserService {
                                     return admin;
                                 })
                         )
+                        .map(user -> {
+                            token.setExpired(true);
+                            userTokenRepository.save(token);
+                            return user;
+                        })
                 )
                 .orElseThrow(() -> new EntityNotFoundException("invite key"));
     }
@@ -391,7 +396,12 @@ public class UserService {
                     }
                     return token;
                 })
-                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false))
+                .flatMap(token -> userRepository.findOneByIdAndDeleteFlag(token.getUserId(), false)
+                        .map(user -> {
+                            token.setExpired(true);
+                            userTokenRepository.save(token);
+                            return user;
+                        }))
                 .map(user -> {
                     user.setPasswordHash(passwordEncoder.encode(passwordResetDto.getNewPassword()));
                     user.setLastModifiedBy(user.getId());
@@ -413,6 +423,40 @@ public class UserService {
                         .map(UserMapper::entityToDto)
                 )
                 .orElseThrow(UnauthorizedException::new);
+    }
+
+    /**
+     * Update logged user details (Available only for ADMIN
+     *
+     * @param updateLoggedUserDto details to update
+     */
+    public void updateLoggedUserDetails(UpdateLoggedUserDto updateLoggedUserDto) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN);
+        String userId = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(loggedUser -> {
+                    loggedUser.setFirstName(updateLoggedUserDto.getFirstName());
+                    loggedUser.setLastName(updateLoggedUserDto.getLastName());
+                    loggedUser.setMobile(String.valueOf(updateLoggedUserDto.getMobile()));
+                    loggedUser.setCountry(updateLoggedUserDto.getCountry());
+                    loggedUser.setCountryCode(updateLoggedUserDto.getCountryCode());
+                    loggedUser.setLastModifiedBy(loggedUser.getId());
+                    return loggedUser;
+                })
+                .map(userRepository::save)
+                .map(user -> CommonUtils.logMessageAndReturnObject(user, "info", UserService.class,
+                        "Updated logged in user details: {}", user))
+                .map(User::getId)
+                .orElseThrow(AuthenticationException::new);
+        UserDetailsDto response = userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
+                .map(UserMapper::entityToDto)
+                .map(user -> {
+                    user.setImageUrl(user.getImageUrl() == null ? null : appUrlConfig.getImageUrl(user.getId(), "profile"));
+                    user.setOrganizationLogoUrl(user.getOrganizationLogoUrl() == null ? null : appUrlConfig.getImageUrl(user.getOrganizationId(), "organization"));
+                    return user;
+                })
+                .orElseThrow(AuthenticationException::new);
+        webSocketService.updateUserDetailsForUi(response.getUsername(), response);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -497,6 +541,18 @@ public class UserService {
                 })
                 .orElseThrow(AuthenticationException::new);
         webSocketService.updateUserDetailsForUi(response.getUsername(), response);
+    }
+
+    public void addCustomerOnStripe(User user, String organizationName) {
+        String stripeCustomerId;
+        try {
+            stripeCustomerId = stripeService.createNewCustomer(user.getEmail(), organizationName,
+                    user.getMobile() != null ? user.getCountryCode() + user.getMobile() : null);
+        } catch (StripeException e) {
+            e.printStackTrace();
+            throw new BadRequestException(""); //todo
+        }
+        user.setStripeId(stripeCustomerId);
     }
 
 }

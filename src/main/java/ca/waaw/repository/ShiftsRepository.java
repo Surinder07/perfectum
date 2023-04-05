@@ -41,13 +41,16 @@ public interface ShiftsRepository extends JpaRepository<Shifts, String> {
             "s.end BETWEEN ?2 AND ?3) AND s.deleteFlag = FALSE")
     List<Shifts> getByUserIdBetweenDates(String userId, Instant startRange, Instant endRange);
 
-    List<Shifts> findAllByUserIdAndDeleteFlagAndStartBetween(String userId, boolean deleteFlag, Instant startRange, Instant endRange);
-
     List<Shifts> findAllByLocationIdAndStartBetween(String locationId, Instant startRange, Instant endRange);
 
     List<Shifts> findAllByOrganizationIdAndStartBetweenAndDeleteFlag(String organizationId, Instant startRange, Instant endRange, boolean deleteFlag);
 
-    List<Shifts> findAllByLocationRoleIdAndStartBetween(String locationRoleId, Instant startRange, Instant endRange);
+    @Query(value = "SELECT s FROM Shifts s WHERE s.start < ?1 AND s.end > ?2 AND s.deleteFlag = FALSE")
+    List<Shifts> getAllUpcomingOrOngoingShifts(Instant start, Instant end);
+
+    @Query(value = "SELECT s FROM Shifts s WHERE s.userId = ?1 AND s.start < ?2 AND s.end > ?3 AND " +
+            "s.deleteFlag = FALSE")
+    Optional<Shifts> getAllUpcomingOrOngoingShifts(String userId, Instant start, Instant end);
 
     @Query(value = "SELECT COUNT(DISTINCT s.userId) FROM Shifts s WHERE s.organizationId = ?1 AND " +
             "(s.start BETWEEN ?2 AND ?3) AND s.shiftStatus = 'RELEASED' AND s.deleteFlag = FALSE")

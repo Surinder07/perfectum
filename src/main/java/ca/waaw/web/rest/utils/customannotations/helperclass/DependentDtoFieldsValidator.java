@@ -2,11 +2,8 @@ package ca.waaw.web.rest.utils.customannotations.helperclass;
 
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.shifts.NewShiftDto;
-import ca.waaw.dto.userdtos.OrganizationPreferences;
 import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.Currency;
-import ca.waaw.enumration.DaysOfWeek;
-import ca.waaw.enumration.PayrollGenerationType;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
 import ca.waaw.web.rest.utils.customannotations.helperclass.enumuration.DependentDtoFieldsValidatorType;
@@ -38,17 +35,12 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
      * Check for different validations required.
      * </p>
      * <p>
-     * 2. {@link DependentDtoFieldsValidatorType#ORGANIZATION_PREFERENCES_PAYROLL}
-     * Used in {@link OrganizationPreferences}
-     * If frequency is set to weekly, day should be passed in dayDate, or else a date (1-31) should be passed.
-     * </p>
-     * <p>
-     * 3. {@link DependentDtoFieldsValidatorType#EMPLOYEE_PREFERENCES_WAGES}
+     * 2. {@link DependentDtoFieldsValidatorType#EMPLOYEE_PREFERENCES_WAGES}
      * Used in {@link EmployeePreferencesDto}
      * If wages are sent in the preferences both amount and currency should be there
      * </p>
      * <p>
-     * 4. {@link DependentDtoFieldsValidatorType#LOCATION_ROLE_TO_USER_ROLE}
+     * 3. {@link DependentDtoFieldsValidatorType#LOCATION_ROLE_TO_USER_ROLE}
      * Used in various DTOs
      * If logged-in user ha role of ADMIN locationId is required to be sent in request
      * </p>
@@ -82,21 +74,6 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
                             (userIds != null && userIds.size() > 0);
                 }
                 return true;
-            case ORGANIZATION_PREFERENCES_PAYROLL:
-                String payrollGenerationFrequency = null;
-                String dayDateForPayroll = null;
-                if (PARSER.parseExpression("payrollGenerationFrequency").getValue(value) != null &&
-                        !String.valueOf(PARSER.parseExpression("payrollGenerationFrequency").getValue(value)).equals("")) {
-                    payrollGenerationFrequency = String.valueOf(PARSER.parseExpression("payrollGenerationFrequency").getValue(value));
-                }
-                if (PARSER.parseExpression("dayDateForPayroll").getValue(value) != null &&
-                        !String.valueOf(PARSER.parseExpression("dayDateForPayroll").getValue(value)).equals("")) {
-                    dayDateForPayroll = String.valueOf(PARSER.parseExpression("dayDateForPayroll").getValue(value));
-                }
-                boolean error = (StringUtils.isNumeric(dayDateForPayroll) && (Integer.parseInt(dayDateForPayroll) < 0 &&
-                        Integer.parseInt(dayDateForPayroll) > 31)) || !EnumUtils.isValidEnum(DaysOfWeek.class, dayDateForPayroll);
-                if (!EnumUtils.isValidEnum(PayrollGenerationType.class, payrollGenerationFrequency)) error = true;
-                return !error;
             case EMPLOYEE_PREFERENCES_WAGES:
                 float wagesPerHour = 0;
                 String wagesCurrency = null;

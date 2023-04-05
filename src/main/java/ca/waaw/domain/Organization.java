@@ -45,8 +45,14 @@ public class Organization extends AbstractEntity {
     @Column(name = "days_before_shifts_assigned")
     private int daysBeforeShiftsAssigned = 4;
 
-    @Column(name = "is_paid_until")
-    private Instant isPaidUntil;
+    @Column(name="clock_in_allowed_minutes_before_shift")
+    private int clockInAllowedMinutesBeforeShift;
+
+    @Column(name = "next_payment_on")
+    private Instant nextPaymentOn;
+
+    @Column(name = "platform_fee_paid")
+    private boolean platformFeePaid;
 
     @Column(name = "waaw_custom_id")
     private String waawId;

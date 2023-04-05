@@ -58,10 +58,10 @@ public class UserController {
         userService.verifyEmail(key);
     }
 
-    @SwaggerCreated
+    @SwaggerOk
     @SwaggerBadRequest
     @SwaggerAlreadyExist
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = LoginResponseDto.class, description = "Updates the username in jwt"))})
     @Operation(description = "${api.description.user.completeRegistration}")
@@ -75,22 +75,21 @@ public class UserController {
         }
     }
 
-//    @SwaggerCreated
-//    @SwaggerBadRequest
-//    @SwaggerAlreadyExist
-//    @ResponseStatus(HttpStatus.CREATED)
-//    @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
-//            schema = @Schema(implementation = LoginResponseDto.class, description = "Updates the username in jwt"))})
-//    @Operation(description = "${api.description.user.completeRegistration}")
-//    @PutMapping("${api.endpoints.user.completeRegistration}")
-//    public ResponseEntity<LoginResponseDto> completePaymentInfo(@Valid @RequestBody CreditCardDto creditCardDto) {
-//        try {
-//            return ResponseEntity.ok(userService.completePaymentInfo(creditCardDto));
-//        } catch (Exception e) {
-//            log.error("Exception occurred while completing payment info", e);
-//            throw e;
-//        }
-//    }
+    @SwaggerOk
+    @SwaggerBadRequest
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponse(responseCode = "200", description = "Success", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = LoginResponseDto.class, description = "Updates the username in jwt"))})
+    @Operation(description = "${api.description.user.completePaymentInfo}")
+    @GetMapping("${api.endpoints.user.completePaymentInfo}")
+    public ResponseEntity<LoginResponseDto> completePaymentInfo(@RequestParam String stripeTokenId) {
+        try {
+            return ResponseEntity.ok(userService.completePaymentInfo(stripeTokenId));
+        } catch (Exception e) {
+            log.error("Exception occurred while completing user profile", e);
+            throw e;
+        }
+    }
 
     @SwaggerOk
     @SwaggerNotFound
@@ -179,6 +178,16 @@ public class UserController {
             schema = @Schema(implementation = UserDetailsDto.class))})
     public ResponseEntity<UserDetailsDto> getLoggedInUser() {
         return ResponseEntity.ok(userService.getLoggedInUserAccount());
+    }
+
+    @SwaggerOk
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.user.updateUser}")
+    @PutMapping("${api.endpoints.user.updateUser}")
+    public void updateUserDetails(@Valid @RequestBody UpdateLoggedUserDto updateLoggedUserDto) {
+        userService.updateLoggedUserDetails(updateLoggedUserDto);
     }
 
     @SwaggerOk

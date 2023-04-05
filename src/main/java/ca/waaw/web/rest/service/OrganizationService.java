@@ -1,12 +1,17 @@
 package ca.waaw.web.rest.service;
 
+import ca.waaw.config.applicationconfig.AppUrlConfig;
+import ca.waaw.domain.Organization;
 import ca.waaw.domain.OrganizationHolidays;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.ApiResponseMessageDto;
+import ca.waaw.dto.DateTimeDto;
 import ca.waaw.dto.NotificationInfoDto;
 import ca.waaw.dto.holiday.HolidayDto;
 import ca.waaw.dto.userdtos.OrganizationPreferences;
+import ca.waaw.dto.userdtos.UserDetailsDto;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.FileType;
 import ca.waaw.enumration.NotificationType;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
@@ -19,6 +24,8 @@ import ca.waaw.repository.UserRepository;
 import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.NotificationInternalService;
+import ca.waaw.service.WebSocketService;
+import ca.waaw.storage.AzureStorage;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.errors.exceptions.FileNotReadableException;
@@ -40,10 +47,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -68,6 +72,12 @@ public class OrganizationService {
 
     private final NotificationInternalService notificationInternalService;
 
+    private final AzureStorage azureStorage;
+
+    private final WebSocketService webSocketService;
+
+    private final AppUrlConfig appUrlConfig;
+
     /**
      * Updates the preferences of logged-in admins organization
      *
@@ -75,13 +85,24 @@ public class OrganizationService {
      */
     public void updateOrganizationPreferences(OrganizationPreferences preferences) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN);
-        SecurityUtils.getCurrentUserLogin()
+        String userId = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .flatMap(user -> organizationRepository.findOneByIdAndDeleteFlag(user.getOrganizationId(), false))
                 .map(organization -> UserMapper.updateOrganizationPreferences(organization, preferences))
                 .map(organization -> CommonUtils.logMessageAndReturnObject(organization, "info", UserService.class,
                         "Organization Preferences for organization id ({}) updated: {}", organization.getId(), preferences))
-                .map(organizationRepository::save);
+                .map(organizationRepository::save)
+                .map(Organization::getCreatedBy)
+                .orElseThrow(AuthenticationException::new);
+        UserDetailsDto response = userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
+                .map(UserMapper::entityToDto)
+                .map(userDto -> {
+                    userDto.setImageUrl(userDto.getImageUrl() == null ? null : appUrlConfig.getImageUrl(userDto.getId(), "profile"));
+                    userDto.setOrganizationLogoUrl(userDto.getOrganizationLogoUrl() == null ? null : appUrlConfig.getImageUrl(userDto.getOrganizationId(), "organization"));
+                    return userDto;
+                })
+                .orElseThrow(AuthenticationException::new);
+        webSocketService.updateUserDetailsForUi(response.getUsername(), response);
     }
 
     /**
@@ -138,20 +159,22 @@ public class OrganizationService {
                     .receiverUuid(admin.getId())
                     .receiverName(admin.getFullName())
                     .receiverMail(admin.getEmail())
+                    .receiverUsername(admin.getUsername())
                     .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
                     .language(admin.getLangKey() == null ? null : admin.getLangKey())
                     .type(NotificationType.CALENDAR)
                     .build();
-            String[] now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
-                    admin.getOrganization().getTimezone() : admin.getLocation().getTimezone()).toString().split("T");
-            notificationInternalService.sendNotification("notification.upload.holidays", notificationInfo, now[0], now[1].substring(0, 5));
+            DateTimeDto now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
+                    admin.getOrganization().getTimezone() : admin.getLocation().getTimezone());
+            notificationInternalService.sendNotification("notification.upload.holidays", notificationInfo, now.getDate(), now.getTime());
             if (pastDates.isTrue())
-                notificationInternalService.sendNotification("notification.holiday.past", notificationInfo, now[0], now[1].substring(0, 5));
+                notificationInternalService.sendNotification("notification.holiday.past", notificationInfo, now.getDate(), now.getTime());
             if (nextYearDates.isTrue())
-                notificationInternalService.sendNotification("notification.holiday.nextYear", notificationInfo, now[0], now[1].substring(0, 5));
+                notificationInternalService.sendNotification("notification.holiday.nextYear", notificationInfo, now.getDate(), now.getTime());
+            webSocketService.notifyUserAboutHolidayUploadComplete(admin.getUsername());
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
-                .fileUploadProcessing, new Locale(admin.getLangKey())));
+                .fileUploadProcessing, admin.getLangKey()));
     }
 
     /**

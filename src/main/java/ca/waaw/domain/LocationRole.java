@@ -38,14 +38,14 @@ public class LocationRole extends AbstractEntity {
     @JoinColumn(name = "location_id", referencedColumnName = "uuid", updatable = false, insertable = false)
     private Location location;
 
-    @Column(name = "total_hours_per_day_min")
-    private int totalHoursPerDayMin = 4;
+    @Column(name = "total_minutes_per_day_min")
+    private int totalMinutesPerDayMin = 240;
 
-    @Column(name = "total_hours_per_day_max")
-    private int totalHoursPerDayMax = 8;
+    @Column(name = "total_minutes_per_day_max")
+    private int totalMinutesPerDayMax = 480;
 
-    @Column(name = "min_hours_between_shifts")
-    private int minHoursBetweenShifts = 12;
+    @Column(name = "min_minutes_between_shifts")
+    private int minMinutesBetweenShifts = 720;
 
     @Column(name = "max_consecutive_work_days")
     private int maxConsecutiveWorkDays = 6;

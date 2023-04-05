@@ -1,24 +1,21 @@
-package ca.waaw.dto;
+package ca.waaw.dto.shifts;
 
+import ca.waaw.dto.DateTimeDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TimesheetDto {
+public class UpdateShiftDto {
 
-    @Schema(description = "Required for editing timesheet")
+    @Schema(description = "Required for assigned shifts")
     private String id;
-
-    @Schema(description = "Required for new timesheet")
-    private String userId;
 
     @Valid
     @NotNull
@@ -28,7 +25,6 @@ public class TimesheetDto {
     @NotNull
     private DateTimeDto end;
 
-    @NotEmpty
     private String comments;
 
 }

@@ -78,6 +78,7 @@ public class ReportsService {
                 .email(loggedUser.getEmail())
                 .actionUrl(appMailConfig.getUiUrl())
                 .langKey(loggedUser.getLangKey())
+                .buttonText("Go to WaaW")
                 .message("You generated a report from " + reportDto.getStartDate() + " to " + reportDto.getEndDate() +
                         ". Please find the report attached below.")
                 .title(reportDto.getReportType().toLowerCase() + " report ")

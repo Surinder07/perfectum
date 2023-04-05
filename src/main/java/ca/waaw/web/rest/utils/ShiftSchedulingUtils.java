@@ -43,10 +43,10 @@ public class ShiftSchedulingUtils {
             long shiftSecondsForSameDay = checkShiftOverlapAndReturnShiftHours(existingSameDatShifts,
                     shift.getStart(), shift.getEnd());
             // Check for maximum and minimum hours per day of shift
-            if ((shiftDurationInSeconds + shiftSecondsForSameDay) > shiftSchedulingPreferences.getTotalHoursPerDayMax() * 3600L) {
+            if ((shiftDurationInSeconds + shiftSecondsForSameDay) > shiftSchedulingPreferences.getTotalMinutesPerDayMax() * 60L) {
                 conflictReasons.add("Maximum hours for shift per day exceeded.");
                 log.warn("Maximum hours for shift per day exceeded for shift {}", shift.getId());
-            } else if ((shiftDurationInSeconds + shiftSecondsForSameDay) < shiftSchedulingPreferences.getTotalHoursPerDayMin() * 3600L) {
+            } else if ((shiftDurationInSeconds + shiftSecondsForSameDay) < shiftSchedulingPreferences.getTotalMinutesPerDayMin() * 60L) {
                 conflictReasons.add("Minimum hours for shift per day not reached.");
                 log.warn("Minimum hours for shift per day not reached for shift {}", shift.getId());
             }
@@ -103,17 +103,16 @@ public class ShiftSchedulingUtils {
                 .anyMatch(tempShift -> {
                     if (tempShift.getStart().isBefore(shift.getStart())) {
                         return tempShift.getEnd().getEpochSecond() - shift.getStart().getEpochSecond() <
-                                shiftSchedulingPreferences.getMinHoursBetweenShifts() * 3600L;
+                                shiftSchedulingPreferences.getMinMinutesBetweenShifts() * 60L;
                     } else {
                         return shift.getEnd().getEpochSecond() - tempShift.getStart().getEpochSecond() <
-                                shiftSchedulingPreferences.getMinHoursBetweenShifts() * 3600L;
+                                shiftSchedulingPreferences.getMinMinutesBetweenShifts() * 60L;
                     }
                 });
         if (shiftDifferenceFailed) {
             conflictReasons.add("Minimum hours between two shifts is not being followed.");
             log.warn("Minimum hours between two shifts is not being followed for shift {}", shift.getId());
         }
-
     }
 
     /**
@@ -126,7 +125,7 @@ public class ShiftSchedulingUtils {
      */
     public static void validateMaximumConsecutiveWorkDays(List<Shifts> shiftsToCheck, Shifts shift, List<String> conflictReasons,
                                                           ShiftSchedulingPreferences shiftSchedulingPreferences) {
-        if (shiftsToCheck.size() > shiftSchedulingPreferences.getMaxConsecutiveWorkDays()) {
+                if (shiftsToCheck.size() > shiftSchedulingPreferences.getMaxConsecutiveWorkDays()) {
             AtomicReference<Instant> startCompareDate = new AtomicReference<>(shift.getStart()
                     .minus(shiftSchedulingPreferences.getMaxConsecutiveWorkDays(), ChronoUnit.DAYS));
             MutableBoolean conflict = new MutableBoolean(false);
@@ -169,45 +168,45 @@ public class ShiftSchedulingUtils {
                         getTimeDifference(dto.getSundayStartTime(), dto.getSundayEndTime())
                 )
                 .filter(duration -> duration != 0F).collect(Collectors.toList());
-        return allShiftDurations.stream().anyMatch(duration -> duration < preferences.getTotalHoursPerDayMin() ||
-                duration > preferences.getTotalHoursPerDayMax()) || allStartTimes.size() > preferences.getMaxConsecutiveWorkDays()
-                || checkTimeDifferenceForEachDay(dto, preferences.getMinHoursBetweenShifts());
+        return allShiftDurations.stream().anyMatch(duration -> duration < preferences.getTotalMinutesPerDayMin() ||
+                duration > preferences.getTotalMinutesPerDayMax()) || allStartTimes.size() > preferences.getMaxConsecutiveWorkDays()
+                || checkTimeDifferenceForEachDay(dto, preferences.getMinMinutesBetweenShifts());
     }
 
     /**
      * @param dto               employee preferences to be updated
-     * @param minHourDifference min difference between two shifts required
+     * @param minMinutesDifference min difference between two shifts required
      * @return true if min difference between two shifts is not followed
      */
-    public static boolean checkTimeDifferenceForEachDay(EmployeePreferencesDto dto, int minHourDifference) {
-        return checkTimeDifferenceForTwoDays(dto.getMondayStartTime(), dto.getSundayEndTime(), dto.getTuesdayStartTime(), minHourDifference)
-                || checkTimeDifferenceForTwoDays(dto.getTuesdayStartTime(), dto.getSundayEndTime(), dto.getWednesdayStartTime(), minHourDifference)
-                || checkTimeDifferenceForTwoDays(dto.getWednesdayStartTime(), dto.getSundayEndTime(), dto.getThursdayStartTime(), minHourDifference)
-                || checkTimeDifferenceForTwoDays(dto.getThursdayStartTime(), dto.getSundayEndTime(), dto.getFridayStartTime(), minHourDifference)
-                || checkTimeDifferenceForTwoDays(dto.getFridayStartTime(), dto.getSundayEndTime(), dto.getSaturdayStartTime(), minHourDifference)
-                || checkTimeDifferenceForTwoDays(dto.getSaturdayStartTime(), dto.getSundayEndTime(), dto.getSundayStartTime(), minHourDifference)
-                || checkTimeDifferenceForTwoDays(dto.getSundayStartTime(), dto.getSundayEndTime(), dto.getMondayStartTime(), minHourDifference);
+    public static boolean checkTimeDifferenceForEachDay(EmployeePreferencesDto dto, int minMinutesDifference) {
+        return checkTimeDifferenceForTwoDays(dto.getMondayStartTime(), dto.getSundayEndTime(), dto.getTuesdayStartTime(), minMinutesDifference)
+                || checkTimeDifferenceForTwoDays(dto.getTuesdayStartTime(), dto.getSundayEndTime(), dto.getWednesdayStartTime(), minMinutesDifference)
+                || checkTimeDifferenceForTwoDays(dto.getWednesdayStartTime(), dto.getSundayEndTime(), dto.getThursdayStartTime(), minMinutesDifference)
+                || checkTimeDifferenceForTwoDays(dto.getThursdayStartTime(), dto.getSundayEndTime(), dto.getFridayStartTime(), minMinutesDifference)
+                || checkTimeDifferenceForTwoDays(dto.getFridayStartTime(), dto.getSundayEndTime(), dto.getSaturdayStartTime(), minMinutesDifference)
+                || checkTimeDifferenceForTwoDays(dto.getSaturdayStartTime(), dto.getSundayEndTime(), dto.getSundayStartTime(), minMinutesDifference)
+                || checkTimeDifferenceForTwoDays(dto.getSundayStartTime(), dto.getSundayEndTime(), dto.getMondayStartTime(), minMinutesDifference);
     }
 
     /**
      * @param firstDayStart     first day start time (24:00 hours pattern)
      * @param firstDayEnd       working hours for first day
      * @param secondDayStart    second day start time (24:00 hours pattern)
-     * @param minHourDifference min difference between two shifts required
+     * @param minMinuteDifference min difference between two shifts required
      * @return true if min difference between two shifts is not followed
      */
     private static boolean checkTimeDifferenceForTwoDays(String firstDayStart, String firstDayEnd, String secondDayStart,
-                                                         int minHourDifference) {
+                                                         int minMinuteDifference) {
         if (StringUtils.isNotEmpty(firstDayStart) && StringUtils.isNotEmpty(secondDayStart)) {
             return DateAndTimeUtils.getTimeDifference(firstDayStart, secondDayStart, 1) <
-                    (minHourDifference + getTimeDifference(firstDayEnd, firstDayStart));
+                    (minMinuteDifference + getTimeDifference(firstDayEnd, firstDayStart));
         }
         return false;
     }
 
     private static float getTimeDifference(String time1, String time2) {
         return StringUtils.isNotEmpty(time1) && StringUtils.isNotEmpty(time2) ?
-                ((float) Duration.between(LocalTime.parse(time1), LocalTime.parse(time2)).toMinutes() / 60) : 0;
+                ((float) Duration.between(LocalTime.parse(time1), LocalTime.parse(time2)).toMinutes()) : 0;
     }
 
     /**
@@ -219,42 +218,42 @@ public class ShiftSchedulingUtils {
     public static Instant[] getStartEndFromEmployeePreference(Instant date, EmployeePreferencesWithUser preferences, String timezone) {
         DayOfWeek day = date.atZone(ZoneId.of(timezone)).getDayOfWeek();
         String startTime = null;
-        float workingHours = 0;
+        float workingMinutes = 0;
         switch (day) {
             case MONDAY:
                 startTime = preferences.getMondayStartTime();
-                workingHours = getTimeDifference(preferences.getMondayStartTime(), preferences.getMondayEndTime());
+                workingMinutes = getTimeDifference(preferences.getMondayStartTime(), preferences.getMondayEndTime());
                 break;
             case TUESDAY:
                 startTime = preferences.getTuesdayStartTime();
-                workingHours = getTimeDifference(preferences.getTuesdayStartTime(), preferences.getTuesdayEndTime());
+                workingMinutes = getTimeDifference(preferences.getTuesdayStartTime(), preferences.getTuesdayEndTime());
                 break;
             case WEDNESDAY:
                 startTime = preferences.getWednesdayStartTime();
-                workingHours = getTimeDifference(preferences.getWednesdayStartTime(), preferences.getWednesdayEndTime());
+                workingMinutes = getTimeDifference(preferences.getWednesdayStartTime(), preferences.getWednesdayEndTime());
                 break;
             case THURSDAY:
                 startTime = preferences.getThursdayStartTime();
-                workingHours = getTimeDifference(preferences.getThursdayStartTime(), preferences.getThursdayEndTime());
+                workingMinutes = getTimeDifference(preferences.getThursdayStartTime(), preferences.getThursdayEndTime());
                 break;
             case FRIDAY:
                 startTime = preferences.getFridayStartTime();
-                workingHours = getTimeDifference(preferences.getFridayStartTime(), preferences.getFridayEndTime());
+                workingMinutes = getTimeDifference(preferences.getFridayStartTime(), preferences.getFridayEndTime());
                 break;
             case SATURDAY:
                 startTime = preferences.getSaturdayStartTime();
-                workingHours = getTimeDifference(preferences.getSaturdayStartTime(), preferences.getSaturdayEndTime());
+                workingMinutes = getTimeDifference(preferences.getSaturdayStartTime(), preferences.getSaturdayEndTime());
                 break;
             case SUNDAY:
                 startTime = preferences.getSundayStartTime();
-                workingHours = getTimeDifference(preferences.getSundayStartTime(), preferences.getSundayEndTime());
+                workingMinutes = getTimeDifference(preferences.getSundayStartTime(), preferences.getSundayEndTime());
                 break;
         }
         if (StringUtils.isEmpty(startTime)) return null;
         String[] startTimeArray = startTime.split(":");
         Instant shiftStart = date.atZone(ZoneId.of(timezone)).withHour(Integer.parseInt(startTimeArray[0]))
                 .withMinute(Integer.parseInt(startTimeArray[1])).withSecond(0).withNano(0).toInstant();
-        return new Instant[]{shiftStart, shiftStart.plus((long) (workingHours * 60), ChronoUnit.MINUTES)};
+        return new Instant[]{shiftStart, shiftStart.plus((long) (workingMinutes), ChronoUnit.MINUTES)};
     }
 
     /**
@@ -422,9 +421,9 @@ public class ShiftSchedulingUtils {
         if (locationRole == null) return null;
         ShiftSchedulingPreferences preferences = new ShiftSchedulingPreferences();
         preferences.setLocationRoleId(locationRole.getId());
-        preferences.setTotalHoursPerDayMin(locationRole.getTotalHoursPerDayMin());
-        preferences.setTotalHoursPerDayMax(locationRole.getTotalHoursPerDayMax());
-        preferences.setTotalHoursPerDayMin(locationRole.getTotalHoursPerDayMin());
+        preferences.setTotalMinutesPerDayMin(locationRole.getTotalMinutesPerDayMin());
+        preferences.setTotalMinutesPerDayMax(locationRole.getTotalMinutesPerDayMax());
+        preferences.setTotalMinutesPerDayMin(locationRole.getTotalMinutesPerDayMin());
         preferences.setMaxConsecutiveWorkDays(locationRole.getMaxConsecutiveWorkDays());
         return preferences;
     }

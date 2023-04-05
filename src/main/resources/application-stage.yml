@@ -14,8 +14,8 @@ logging:
 #####    Security Configurations    #####
 #########################################
 security:
-  un-auth-url-patterns: /api/*/unAuth/**, /api/unAuth/**, /test/**, /swagger-ui.html, /swagger-ui/**, /v3/api-docs/**, ${application.websocket.connection-endpoint}/**
-  cors-allowed-origins: http://localhost:3000, https://agreeable-mud-0a6835c10.2.azurestaticapps.net, https://staging.waaw.ca
+  un-auth-url-patterns: /api/*/unAuth/**, /api/unAuth/**, /test/**, /swagger-ui.html, /swagger-ui/**, /v3/api-docs/**, ${application.websockets.connection-endpoint}/**
+  cors-allowed-origins: http://localhost:3000, https://lemon-forest-0becf5d10.2.azurestaticapps.net, https://staging.waaw.ca
   # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
   jwt-secret: YjE0OTg3YTEyM2YwY2YyNGJjYmZlYTUwNjJkZDQ0YzYxNmUwNjIyMGVkOTIxNTEyODA1M2I3Yjk0NTU5NmIyNjMwZTJiZTlmNjA0YTAyNGY3MzdjOGNlNzQ4OTQzNTAxYmJiM2VlYmRiZGE1YTM5NjhiNGEyNWE1YzA0YTY1MTI=
   jwt-default-token-validity-in-seconds: 1800

@@ -7,10 +7,13 @@ import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.*;
+import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 public class UserMapper {
@@ -25,15 +28,23 @@ public class UserMapper {
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
         target.setOrganizationTimezone(source.getOrganization().getTimezone());
+        target.setTimezone(source.getAuthority().equals(Authority.ADMIN) ? source.getOrganization().getTimezone() :
+                source.getLocation().getTimezone());
         target.setRole(source.getAuthority().toString());
         target.setStatus(source.getAccountStatus().toString());
-        target.setStartOfWeek(source.getOrganization().getFirstDayOfWeek().toString());
+        if (!source.getOrganization().isPlatformFeePaid() && source.getOrganization().getTrialEndDate() != null) {
+            target.setTrialDaysPending((int) Duration.between(Instant.now(), source.getOrganization().getTrialEndDate()).toDays());
+        }
+        target.setStartOfWeek(CommonUtils.capitalizeString(source.getOrganization().getFirstDayOfWeek().toString()));
         if (source.getAuthority().equals(Authority.ADMIN)) {
             OrganizationPreferences preferences = new OrganizationPreferences();
             preferences.setDaysBeforeShiftsAssigned(source.getOrganization().getDaysBeforeShiftsAssigned());
             preferences.setIsOvertimeRequestEnabled(source.getOrganization().isOvertimeRequestEnabled());
             preferences.setIsTimeclockEnabledDefault(source.getOrganization().isTimeclockEnabledDefault());
             preferences.setIsTimeoffEnabledDefault(source.getOrganization().isTimeoffEnabledDefault());
+            preferences.setPayrollGenerationFrequency(CommonUtils.capitalizeString(source.getOrganization()
+                    .getPayrollGenerationFrequency().toString()));
+            preferences.setClockInAllowedMinutesBeforeShift(source.getOrganization().getClockInAllowedMinutesBeforeShift());
             target.setOrganizationPreferences(preferences);
         }
         return target;
@@ -75,11 +86,8 @@ public class UserMapper {
         userTarget.setFirstName(source.getFirstName());
         userTarget.setLastName(source.getLastName());
         if (StringUtils.isNotEmpty(source.getUsername())) userTarget.setUsername(source.getUsername());
-        userTarget.setLangKey(source.getLangKey());
         userTarget.setCountryCode(source.getCountryCode());
         userTarget.setMobile(String.valueOf(source.getMobile()));
-        // TODO Change status when payment part is added
-        userTarget.setAccountStatus(AccountStatus.PAID_AND_ACTIVE);
     }
 
     /**
@@ -171,6 +179,7 @@ public class UserMapper {
         if (source.getPayrollGenerationFrequency() != null) {
             target.setPayrollGenerationFrequency(PayrollGenerationType.valueOf(source.getPayrollGenerationFrequency().toUpperCase()));
         }
+        target.setClockInAllowedMinutesBeforeShift(source.getClockInAllowedMinutesBeforeShift());
         return target;
     }
 

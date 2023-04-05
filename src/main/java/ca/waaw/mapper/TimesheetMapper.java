@@ -14,15 +14,16 @@ public class TimesheetMapper {
      * @param loggedInUser logged-in user for whom timer will be started
      * @return Timesheet entity to be saved in the database
      */
-    public static Timesheet createNewEntityForLoggedInUser(UserOrganization loggedInUser) {
+    public static Timesheet createNewEntityForLoggedInUser(UserOrganization loggedInUser, String shiftId) {
         Timesheet target = new Timesheet();
-        target.setStart(DateAndTimeUtils.getCurrentDateTime(loggedInUser.getLocation().getTimezone()));
+        target.setStart(Instant.now());
         target.setOrganizationId(loggedInUser.getOrganizationId());
         target.setLocationId(loggedInUser.getLocationId());
         target.setLocationRoleId(loggedInUser.getLocationRoleId());
         target.setType(TimeSheetType.CLOCKED);
         target.setCreatedBy(loggedInUser.getId());
         target.setUserId(loggedInUser.getId());
+        target.setShiftId(shiftId);
         return target;
     }
 
