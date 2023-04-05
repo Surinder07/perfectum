@@ -24,7 +24,11 @@ spring:
   messages:
     basename: i18n/messages
   thymeleaf:
-    mode: HTML5
+    enabled: true
+    check-template: true
+    check-template-location: true
+    cache: false
+    mode: HTML
     prefix: classpath:/templates/
     suffix: .html
   mail:

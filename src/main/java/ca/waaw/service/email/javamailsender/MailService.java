@@ -58,7 +58,7 @@ public class MailService {
      *                     example -> Subject: "{0} invites you to join", args: "Pragra"
      */
     public void sendEmailFromTemplate(MailDto message, String templateName, String titleKey, String... args) {
-        CompletableFuture.runAsync(() -> {
+//        CompletableFuture.runAsync(() -> {
             if (message.getEmail() == null) {
                 log.debug("Email id is required for sending email.");
                 return;
@@ -86,7 +86,7 @@ public class MailService {
                 log.error("Exception while sending email to user '{}'", message.getEmail(), e);
                 e.printStackTrace();
             }
-        });
+//        });
     }
 
     private void sendEmail(String to, String subject, String content) {

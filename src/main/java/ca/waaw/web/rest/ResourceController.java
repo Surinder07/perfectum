@@ -1,6 +1,5 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.storage.AzureStorage;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.service.ResourceService;
 import ca.waaw.web.rest.utils.CommonUtils;
