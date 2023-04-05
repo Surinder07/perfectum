@@ -70,6 +70,9 @@ public class UserOrganization extends AbstractEntity {
     @Column
     private String country;
 
+    @Column(name = "image_file")
+    private String imageFile;
+
     @Column(name = "password_hash")
     private String passwordHash;
 

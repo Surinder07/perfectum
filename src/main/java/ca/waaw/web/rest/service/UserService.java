@@ -108,7 +108,6 @@ public class UserService {
         log.info("New User registered: {}", user);
         log.info("New activation token generated: {}", token);
         String activationUrl = appUrlConfig.getActivateAccountUrl(token.getToken());
-        // @todo email and change activation url
         userMailService.sendVerificationEmail(user, activationUrl);
     }
 
@@ -416,11 +415,15 @@ public class UserService {
     /**
      * @return User details of the logged-in user account
      */
-    //@TODO update details as per updated dto
     public UserDetailsDto getLoggedInUserAccount() {
         return SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .map(UserMapper::entityToDto)
+                        .map(user -> {
+                            user.setImageUrl(user.getImageUrl() == null ? null : appUrlConfig.getImageUrl(user.getId(), "profile"));
+                            user.setOrganizationLogoUrl(user.getOrganizationLogoUrl() == null ? null : appUrlConfig.getImageUrl(user.getOrganizationId(), "organization"));
+                            return user;
+                        })
                 )
                 .orElseThrow(UnauthorizedException::new);
     }
@@ -533,6 +536,34 @@ public class UserService {
                 )
                 .orElseThrow(() -> new ExpiredKeyException("email update"));
         UserDetailsDto response = Optional.of(updateUser)
+                .map(UserMapper::entityToDto)
+                .map(user -> {
+                    user.setImageUrl(user.getImageUrl() == null ? null : appUrlConfig.getImageUrl(user.getId(), "profile"));
+                    user.setOrganizationLogoUrl(user.getOrganizationLogoUrl() == null ? null : appUrlConfig.getImageUrl(user.getOrganizationId(), "organization"));
+                    return user;
+                })
+                .orElseThrow(AuthenticationException::new);
+        webSocketService.updateUserDetailsForUi(response.getUsername(), response);
+    }
+
+    public void updateProfilePic(MultipartFile file) throws Exception {
+        String fileName;
+        try {
+            fileName = azureStorage.uploadFile(file, FileType.PICTURES);
+        } catch (IOException e) {
+            throw new Exception("There was an error while uploading your image.");
+        }
+        String userId = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(loggedUser -> {
+                    loggedUser.setImageFile(fileName);
+                    loggedUser.setLastModifiedBy(loggedUser.getId());
+                    return loggedUser;
+                })
+                .map(userRepository::save)
+                .map(User::getId)
+                .orElseThrow(AuthenticationException::new);
+        UserDetailsDto response = userOrganizationRepository.findOneByIdAndDeleteFlag(userId, false)
                 .map(UserMapper::entityToDto)
                 .map(user -> {
                     user.setImageUrl(user.getImageUrl() == null ? null : appUrlConfig.getImageUrl(user.getId(), "profile"));

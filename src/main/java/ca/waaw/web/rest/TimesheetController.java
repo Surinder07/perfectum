@@ -87,6 +87,22 @@ public class TimesheetController {
         }
     }
 
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.timesheet.getById}")
+    @GetMapping("${api.endpoints.timesheet.getById}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = TimesheetDetailsDto.class))})
+    public ResponseEntity<TimesheetDetailsDto> getTimeSheetsById(@RequestParam String id) {
+        try {
+            return ResponseEntity.ok(timesheetService.getTimeSheetsById(id));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
     @SwaggerCreated
     @SwaggerBadRequest
     @SwaggerAlreadyExist

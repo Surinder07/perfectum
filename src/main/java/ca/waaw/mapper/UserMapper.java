@@ -25,6 +25,8 @@ public class UserMapper {
     public static UserDetailsDto entityToDto(UserOrganization source) {
         UserDetailsDto target = new UserDetailsDto();
         BeanUtils.copyProperties(source, target);
+        target.setImageUrl(source.getImageFile());
+        target.setOrganizationLogoUrl(source.getOrganization().getImageFile());
         target.setOrganization(source.getOrganization().getName());
         target.setOrganizationWaawId(source.getOrganization().getWaawId());
         target.setOrganizationTimezone(source.getOrganization().getTimezone());
@@ -153,6 +155,7 @@ public class UserMapper {
     public static UserDetailsForAdminDto entityToUserDetailsForAdmin(UserOrganization userSource, EmployeePreferences preferencesSource) {
         UserDetailsForAdminDto target = new UserDetailsForAdminDto();
         BeanUtils.copyProperties(userSource, target);
+        target.setImageUrl(userSource.getImageFile());
         target.setLocationName(userSource.getLocation().getName());
         target.setLocationRoleName(userSource.getLocationRole().getName());
         target.setFullTime(userSource.isFullTime());

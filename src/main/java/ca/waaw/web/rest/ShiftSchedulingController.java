@@ -6,6 +6,7 @@ import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.shifts.BatchDetailsDto;
 import ca.waaw.dto.shifts.NewShiftDto;
 import ca.waaw.dto.shifts.ShiftDetailsDto;
+import ca.waaw.dto.shifts.UpdateShiftDto;
 import ca.waaw.enumration.ShiftStatus;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.service.ShiftSchedulingService;
@@ -66,10 +67,15 @@ public class ShiftSchedulingController {
     @SwaggerUnauthorized
     @SwaggerAuthenticated
     @ResponseStatus(HttpStatus.OK)
-    @Operation(description = "${api.description.shift-management.updateShift}")
-    @PutMapping("${api.endpoints.shift-management.updateShift}")
-    public void updateShift() {
-        // TODO
+    @Operation(description = "${api.description.shift-management.editShift}")
+    @PutMapping("${api.endpoints.shift-management.editShift}")
+    public void updateShift(@Valid @RequestBody UpdateShiftDto updateShiftDto) {
+        try {
+            shiftSchedulingService.updateShift(updateShiftDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @SwaggerOk
@@ -188,6 +194,22 @@ public class ShiftSchedulingController {
                     shiftStatus, searchKey));
         } catch (Exception e) {
             log.error("Exception while getting all user shifts", e);
+            throw e;
+        }
+    }
+
+    @SwaggerNotFound
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.shift-management.getById}")
+    @GetMapping("${api.endpoints.shift-management.getById}")
+    @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
+            schema = @Schema(implementation = ShiftDetailsDto.class))})
+    public ResponseEntity<ShiftDetailsDto> getShiftById(@RequestParam String id) {
+        try {
+            return ResponseEntity.ok(shiftSchedulingService.getShiftById(id));
+        } catch (Exception e) {
+            e.printStackTrace();
             throw e;
         }
     }

@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.util.Map;
@@ -167,8 +168,8 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(description = "${api.description.user.updateProfileImage}")
     @PostMapping("${api.endpoints.user.updateProfileImage}")
-    public void updateProfileImage() {
-        // TODO Add logic
+    public void updateProfileImage(@RequestPart MultipartFile file) throws Exception {
+        userService.updateProfilePic(file);
     }
 
     @SwaggerAuthenticated

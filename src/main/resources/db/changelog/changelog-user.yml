@@ -56,9 +56,10 @@ databaseChangeLog:
                     unique: true
                     uniqueConstraintName: ux_waaw_user_id
               - column:
-                  name: image_url
                   name: stripe_id
                   type: VARCHAR(100)
+              - column:
+                  name: image_file
                   type: VARCHAR(500)
               - column:
                   name: lang_key

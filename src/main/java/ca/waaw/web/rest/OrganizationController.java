@@ -110,4 +110,14 @@ public class OrganizationController {
         organizationService.deleteHoliday(holidayId);
     }
 
+    @SwaggerOk
+    @SwaggerBadRequest
+    @SwaggerAuthenticated
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(description = "${api.description.organization.uploadLogo}")
+    @PostMapping("${api.endpoints.organization.uploadLogo}")
+    public void updateOrganizationLogo(@RequestPart MultipartFile file) throws Exception {
+        organizationService.updateOrganizationLogo(file);
+    }
+
 }

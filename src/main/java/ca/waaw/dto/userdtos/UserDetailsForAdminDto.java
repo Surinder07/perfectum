@@ -16,6 +16,8 @@ public class UserDetailsForAdminDto {
 
     private String email;
 
+    private String imageUrl;
+
     private String country;
 
     private String countryCode;

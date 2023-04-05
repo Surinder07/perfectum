@@ -305,6 +305,35 @@ public class OrganizationService {
                 .collect(Collectors.toList());
     }
 
+    public void updateOrganizationLogo(MultipartFile file) throws Exception {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN);
+        String fileName;
+        try {
+            fileName = azureStorage.uploadFile(file, FileType.PICTURES);
+        } catch (IOException e) {
+            throw new Exception("There was an error while uploading your image.");
+        }
+        UserOrganization user = SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(userOrganization -> {
+                    Organization organization = userOrganization.getOrganization();
+                    organization.setImageFile(fileName);
+                    organization.setLastModifiedBy(organization.getCreatedBy());
+                    organizationRepository.save(organization);
+                    return userOrganization;
+                })
+                .orElseThrow(AuthenticationException::new);
+        UserDetailsDto response = Optional.of(user)
+                .map(UserMapper::entityToDto)
+                .map(userDto -> {
+                    userDto.setImageUrl(userDto.getImageUrl() == null ? null : appUrlConfig.getImageUrl(userDto.getId(), "profile"));
+                    userDto.setOrganizationLogoUrl(userDto.getOrganizationLogoUrl() == null ? null : appUrlConfig.getImageUrl(userDto.getOrganizationId(), "organization"));
+                    return userDto;
+                })
+                .orElseThrow(AuthenticationException::new);
+        webSocketService.updateUserDetailsForUi(response.getUsername(), response);
+    }
+
     /**
      * Will throw an error if date is in past or next year (next year is allowed if month is december)
      *

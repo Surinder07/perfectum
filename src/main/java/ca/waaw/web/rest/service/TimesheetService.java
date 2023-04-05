@@ -1,16 +1,18 @@
 package ca.waaw.web.rest.service;
 
+import ca.waaw.domain.Shifts;
 import ca.waaw.domain.Timesheet;
 import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.DateTimeDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.TimesheetDto;
 import ca.waaw.dto.timesheet.ActiveTimesheetDto;
+import ca.waaw.dto.timesheet.TimesheetDetailsDto;
 import ca.waaw.enumration.Authority;
 import ca.waaw.mapper.TimesheetMapper;
+import ca.waaw.repository.ShiftsRepository;
 import ca.waaw.repository.TimesheetRepository;
 import ca.waaw.repository.UserRepository;
-import ca.waaw.repository.joined.DetailedTimesheetRepository;
 import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
@@ -28,7 +30,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @AllArgsConstructor
@@ -36,16 +40,17 @@ public class TimesheetService {
 
     private final TimesheetRepository timesheetRepository;
 
-    private final DetailedTimesheetRepository detailedTimesheetRepository;
-
     private final UserOrganizationRepository userOrganizationRepository;
 
     private final UserRepository userRepository;
+
+    private final ShiftsRepository shiftsRepository;
 
     /**
      * Start timesheet recording for logged-in user
      */
     public void startTimesheetRecording() {
+        // todo add shift mapping
         CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
@@ -56,7 +61,14 @@ public class TimesheetService {
                                     });
                             return loggedUser;
                         })
-                        .map(TimesheetMapper::createNewEntityForLoggedInUser)
+                        .map(loggedUser -> {
+                            Instant start = Instant.now().plus(loggedUser.getOrganization().getClockInAllowedMinutesBeforeShift(),
+                                    ChronoUnit.MINUTES).plus(1L, ChronoUnit.SECONDS);
+                            String shiftId = shiftsRepository.getAllUpcomingOrOngoingShifts(loggedUser.getId(), start, Instant.now())
+                                    .map(Shifts::getId)
+                                    .orElseThrow(() -> new EntityNotFoundException("shift"));
+                            return TimesheetMapper.createNewEntityForLoggedInUser(loggedUser, shiftId);
+                        })
                 )
                 .map(timesheetRepository::save)
                 .map(timesheet -> CommonUtils.logMessageAndReturnObject(timesheet, "info", TimesheetService.class,
@@ -72,7 +84,7 @@ public class TimesheetService {
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
                         .map(loggedUser -> timesheetRepository.getActiveTimesheet(loggedUser.getId())
                                 .map(timesheet -> {
-                                    timesheet.setEnd(DateAndTimeUtils.getCurrentDateTime(loggedUser.getLocation().getTimezone()));
+                                    timesheet.setEnd(Instant.now());
                                     return timesheet;
                                 })
                         )
@@ -88,18 +100,31 @@ public class TimesheetService {
      */
     public ActiveTimesheetDto getActiveTimesheet() {
         CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE, Authority.MANAGER);
-        Instant[] todayRange = DateAndTimeUtils.getStartAndEndTimeForInstant(Instant.now());
         UserOrganization loggedUser = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .orElseThrow(AuthenticationException::new);
+        //TODO add total hours worked today
         ActiveTimesheetDto response = timesheetRepository.getActiveTimesheet(loggedUser.getId())
                 .map(timesheet -> mapActiveTimesheet(timesheet, loggedUser.getLocation().getTimezone()))
-                .orElse(null);
-        if (response == null) {
-            response = timesheetRepository.getByUserIdBetweenDates(loggedUser.getId(), todayRange[0], todayRange[1])
-                    .map(timesheet -> mapActiveTimesheet(timesheet, loggedUser.getLocation().getTimezone()))
-                    .orElse(null);
-        }
+                .orElse(new ActiveTimesheetDto());
+        Instant start = Instant.now().plus(loggedUser.getOrganization().getClockInAllowedMinutesBeforeShift(),
+                ChronoUnit.MINUTES).plus(1L, ChronoUnit.SECONDS);
+        shiftsRepository.getAllUpcomingOrOngoingShifts(loggedUser.getId(), start, Instant.now())
+                .ifPresent(shift -> {
+                    response.setUpcomingShift(true);
+                    int timeRemaining = (int) Duration.between(Instant.now(), shift.getStart()).toMinutes();
+                    timeRemaining = timeRemaining - loggedUser.getOrganization().getClockInAllowedMinutesBeforeShift();
+                    if (timeRemaining < 0) timeRemaining = 0;
+                    response.setShiftsAfterMinutes(timeRemaining);
+                });
+        Instant[] todayRange = DateAndTimeUtils.getTodayInstantRange(loggedUser.getAuthority().equals(Authority.ADMIN) ?
+                loggedUser.getOrganization().getTimezone() : loggedUser.getLocation().getTimezone());
+        int timeToday = timesheetRepository.getAllByUserIdBetweenDates(loggedUser.getId(), todayRange[0], todayRange[1])
+                .stream()
+                .filter(timesheet -> timesheet.getEnd() != null)
+                .mapToInt(timesheet -> (int) Duration.between(timesheet.getStart(), timesheet.getEnd()).toSeconds())
+                .sum();
+        response.setTotalTimeWorkedToday(timeToday);
         return response;
     }
 
@@ -126,6 +151,7 @@ public class TimesheetService {
      * @param type      type of added timesheet
      * @return pagination list of all time sheets
      */
+    // todo add shift info and comments in response
     public PaginationDto getAllTimeSheet(int pageNo, int pageSize, String startDate, String endDate, String type, String userId) {
         UserOrganization loggedUser = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
@@ -144,29 +170,46 @@ public class TimesheetService {
         return CommonUtils.getPaginationResponse(timesheetPage, TimesheetMapper::entityToDetailedDto, timezone);
     }
 
+    public TimesheetDetailsDto getTimeSheetsById(String id) {
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(loggedUser -> timesheetRepository.findOneByIdAndDeleteFlag(id, false)
+                        .map(timesheet -> {
+                            if ((loggedUser.getAuthority().equals(Authority.MANAGER) &&
+                                    loggedUser.getLocationId().equals(timesheet.getLocationId())) ||
+                                    !loggedUser.getOrganizationId().equals(timesheet.getOrganizationId())) {
+                                return null;
+                            }
+                            String timezone = loggedUser.getAuthority().equals(Authority.MANAGER) ?
+                                    loggedUser.getLocation().getTimezone() : loggedUser.getOrganization().getTimezone();
+                            return TimesheetMapper.entityToDetailedDto(timesheet, timezone);
+                        }).orElseThrow(() -> new EntityNotFoundException("timesheet"))
+                ).orElseThrow(AuthenticationException::new);
+    }
+
     // Add timesheet (admin)
     public void addNewTimesheet(TimesheetDto timesheetDto) {
-        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
-        if (StringUtils.isEmpty(timesheetDto.getUserId()))
-            throw new BadRequestException("Missing a required value.", "userId");
-        SecurityUtils.getCurrentUserLogin()
-                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
-                .map(loggedUser -> userOrganizationRepository.findOneByIdAndDeleteFlag(timesheetDto.getUserId(), false)
-                        .map(user -> {
-                            Instant start = DateAndTimeUtils.getDateInstant(timesheetDto.getStart().getDate(),
-                                    timesheetDto.getStart().getTime(), user.getLocation().getTimezone());
-                            Instant end = DateAndTimeUtils.getDateInstant(timesheetDto.getEnd().getDate(),
-                                    timesheetDto.getEnd().getTime(), user.getLocation().getTimezone());
-                            timesheetRepository.getByUserIdBetweenDates(user.getId(), start, end)
-                                    .ifPresent(timesheet -> {
-                                        throw new TimesheetOverlappingException();
-                                    });
-                            return TimesheetMapper.dtoToEntity(loggedUser.getId(), start, end);
-                        })
-                        .map(timesheetRepository::save)
-                        .map(timesheet -> CommonUtils.logMessageAndReturnObject(timesheet, "info", TimesheetService.class,
-                                "Timesheet edited successfully: {}", timesheet))
-                );
+//        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
+//        if (StringUtils.isEmpty(timesheetDto.getUserId()))
+//            throw new BadRequestException("Missing a required value.", "userId");
+//        SecurityUtils.getCurrentUserLogin()
+//                .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
+//                .map(loggedUser -> userOrganizationRepository.findOneByIdAndDeleteFlag(timesheetDto.getUserId(), false)
+//                        .map(user -> {
+//                            Instant start = DateAndTimeUtils.getDateInstant(timesheetDto.getStart().getDate(),
+//                                    timesheetDto.getStart().getTime(), user.getLocation().getTimezone());
+//                            Instant end = DateAndTimeUtils.getDateInstant(timesheetDto.getEnd().getDate(),
+//                                    timesheetDto.getEnd().getTime(), user.getLocation().getTimezone());
+//                            timesheetRepository.getByUserIdBetweenDates(user.getId(), start, end)
+//                                    .ifPresent(timesheet -> {
+//                                        throw new TimesheetOverlappingException();
+//                                    });
+//                            return TimesheetMapper.dtoToEntity(loggedUser.getId(), start, end);
+//                        })
+//                        .map(timesheetRepository::save)
+//                        .map(timesheet -> CommonUtils.logMessageAndReturnObject(timesheet, "info", TimesheetService.class,
+//                                "Timesheet edited successfully: {}", timesheet))
+//                );
     }
 
     /**
@@ -174,27 +217,31 @@ public class TimesheetService {
      */
     public void editTimesheet(TimesheetDto timesheetDto) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
-        if (StringUtils.isEmpty(timesheetDto.getUserId()))
+        if (StringUtils.isEmpty(timesheetDto.getId()))
             throw new BadRequestException("Missing a required value.", "id");
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(loggedUser -> timesheetRepository.findOneByIdAndDeleteFlag(timesheetDto.getId(), false)
                         .flatMap(timesheet -> userOrganizationRepository.findOneByIdAndDeleteFlag(timesheet.getUserId(), false)
                                 .map(user -> {
+                                    if (!loggedUser.getOrganizationId().equals(user.getOrganizationId()) ||
+                                            (loggedUser.getAuthority().equals(Authority.MANAGER) &&
+                                                    (!loggedUser.getLocationId().equals(user.getLocationId()) ||
+                                                            user.getLocationRole().isAdminRights()))) return null;
                                     Instant start = DateAndTimeUtils.getDateInstant(timesheetDto.getStart().getDate(),
                                             timesheetDto.getStart().getTime(), user.getLocation().getTimezone());
                                     Instant end = DateAndTimeUtils.getDateInstant(timesheetDto.getEnd().getDate(),
                                             timesheetDto.getEnd().getTime(), user.getLocation().getTimezone());
                                     timesheetRepository.getByUserIdBetweenDates(user.getId(), start, end)
                                             .ifPresent(timesheet1 -> {
-                                                if (!(timesheet.getStart().equals(timesheet1.getStart()) &&
-                                                        timesheet.getEnd().equals(timesheet1.getEnd()))) {
+                                                if (!timesheet.equals(timesheet1)) {
                                                     throw new TimesheetOverlappingException();
                                                 }
                                             });
                                     timesheet.setStart(start);
                                     timesheet.setEnd(end);
                                     timesheet.setLastModifiedBy(loggedUser.getId());
+                                    timesheet.setComment(timesheetDto.getComments());
                                     return timesheet;
                                 })
                                 .map(timesheetRepository::save)

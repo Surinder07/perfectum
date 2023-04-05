@@ -33,14 +33,17 @@ public class Organization extends AbstractEntity {
     @Column(name = "trial_end_date")
     private Instant trialEndDate;
 
+    @Column(name = "image_file")
+    private String imageFile;
+
     @Column(name = "is_timeclock_enabled")
-    private boolean isTimeclockEnabledDefault;
+    private boolean isTimeclockEnabledDefault = true;
 
     @Column(name = "is_timeoff_enabled")
-    private boolean isTimeoffEnabledDefault;
+    private boolean isTimeoffEnabledDefault = true;
 
     @Column(name = "is_overtime_enabled")
-    private boolean isOvertimeRequestEnabled;
+    private boolean isOvertimeRequestEnabled = true;
 
     @Column(name = "days_before_shifts_assigned")
     private int daysBeforeShiftsAssigned = 4;

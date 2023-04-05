@@ -46,8 +46,8 @@ public class User extends AbstractEntity {
     @Column
     private String mobile;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Column(name = "image_file")
+    private String imageFile;
 
     @Column(name = "password_hash")
     private String passwordHash;
