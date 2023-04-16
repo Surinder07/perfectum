@@ -38,14 +38,14 @@ azure:
     end-point: https://waaw-sms.communication.azure.com
     key-credential: kEjXJz/2DRm7taUTcr9mPWcB3dOb+lyki8bvhyzjRA3Syi0bRDBLt6q67CuGW9C49TZT2vPBpUn3g2nFBsyaoA==
   blob:
-    payrollName: stage-payroll
-    payrollKey: sp=racwdli&st=2023-02-16T15:15:26Z&se=2026-09-29T23:15:26Z&sip=0.0.0.0-245.245.245.245&sv=2021-06-08&sr=c&sig=CHq1MPZGUHiZAaF0n8mfUnXNLSa%2BRpwKYbp3FZcfENQ%3D
-    attendanceName: stage-attendance
-    attendanceKey: sp=racwdli&st=2023-02-17T01:32:10Z&se=2026-02-17T09:32:10Z&sip=0.0.0.0-255.255.255.255&sv=2021-06-08&sr=c&sig=9SwM633QWXeBouPVNFYMFByCrakxshhgJvh8vuW6iyk%3D
-    holidayName: stage-holiday
-    holidayKey: sp=racwdli&st=2023-02-16T22:10:05Z&se=2026-02-17T06:10:05Z&sip=0.0.0.0-255.255.255.255&sv=2021-06-08&sr=c&sig=IuK8I%2Bz6mz0l1ZPlGsLNDgmjMMn8jUye1sB3OHgPAYk%3D
-    picturesName: stage-pictures
-    picturesKey: sp=r&st=2023-02-16T22:21:19Z&se=2026-02-17T06:21:19Z&sip=0.0.0.0-255.255.255.255&sv=2021-06-08&sr=c&sig=HFSYu0%2FvfROAomH8bzNeh6VKK64%2F2HY9vQMhZqyX1%2B0%3D
+    payroll-name: development
+    payroll-key: sp=racwdli&st=2023-04-06T12:49:52Z&se=2200-04-06T20:49:52Z&sv=2021-12-02&sr=c&sig=ayBl0rNCAJtgQHTe4hvsKmb8IyoAS6iPXHukwVcnkWs%3D
+    attendance-name: development
+    attendance-key: sp=racwdli&st=2023-04-06T12:49:52Z&se=2200-04-06T20:49:52Z&sv=2021-12-02&sr=c&sig=ayBl0rNCAJtgQHTe4hvsKmb8IyoAS6iPXHukwVcnkWs%3D
+    holiday-name: development
+    holiday-key: sp=racwdli&st=2023-04-06T12:49:52Z&se=2200-04-06T20:49:52Z&sv=2021-12-02&sr=c&sig=ayBl0rNCAJtgQHTe4hvsKmb8IyoAS6iPXHukwVcnkWs%3D
+    pictures-name: development
+    pictures-key: sp=racwdli&st=2023-04-06T12:49:52Z&se=2200-04-06T20:49:52Z&sv=2021-12-02&sr=c&sig=ayBl0rNCAJtgQHTe4hvsKmb8IyoAS6iPXHukwVcnkWs%3D
   send-grid:
     sender-name: WaaW
     sender-email: customer.service@waaw.ca

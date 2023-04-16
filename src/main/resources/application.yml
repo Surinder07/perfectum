@@ -69,6 +69,8 @@ springdoc:
 azure:
   blob:
     account-name: waawst0rage
+    common-container-name: common-resources
+    common-container-key: sp=racwdli&st=2023-04-06T12:49:15Z&se=2200-04-06T20:49:15Z&sv=2021-12-02&sr=c&sig=gFl%2FnZ%2FNMzIATMtY1saxSCaFJjTuMB7cQPGiX5syhsA%3D
 
 #################################################
 #####    Application specific properties    #####
