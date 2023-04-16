@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("unused")
@@ -50,7 +51,8 @@ public class PaymentsScheduler {
     }
 
     //    @Scheduled(cron = "0 15 0 */3 * ?")
-    @Scheduled(cron = "0 5 0 * * ?")
+//    @Scheduled(cron = "0 5 0 * * ?")
+    @Scheduled(fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
     public void generateInvoices() {
         List<Invoices> newInvoices = new ArrayList<>();
         log.info("Looking for invoices to generate at {}", Instant.now());

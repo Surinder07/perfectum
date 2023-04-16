@@ -57,7 +57,12 @@ public class TimesheetController {
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json",
             schema = @Schema(implementation = ActiveTimesheetDto.class))})
     public ResponseEntity<ActiveTimesheetDto> getActiveTimesheet() {
-        return ResponseEntity.ok(timesheetService.getActiveTimesheet());
+        try {
+            return ResponseEntity.ok(timesheetService.getActiveTimesheet());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw  e;
+        }
     }
 
     @SwaggerBadRequest

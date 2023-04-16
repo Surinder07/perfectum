@@ -49,7 +49,7 @@ public interface ShiftsRepository extends JpaRepository<Shifts, String> {
     List<Shifts> getAllUpcomingOrOngoingShifts(Instant start, Instant end);
 
     @Query(value = "SELECT s FROM Shifts s WHERE s.userId = ?1 AND s.start < ?2 AND s.end > ?3 AND " +
-            "s.deleteFlag = FALSE")
+            "s.shiftStatus = 'RELEASED' AND s.deleteFlag = FALSE")
     Optional<Shifts> getAllUpcomingOrOngoingShifts(String userId, Instant start, Instant end);
 
     @Query(value = "SELECT COUNT(DISTINCT s.userId) FROM Shifts s WHERE s.organizationId = ?1 AND " +

@@ -13,7 +13,7 @@
                     <div class="content-box">
                         <h1 th:text="#{email.invitation.title(${dto.organizationName})}"></h1>
                         <p>
-                            <span th:text="#{email.greeting.no.name}"></span>
+                            <span th:text="#{email.greeting(${dto.name})}"></span>
                             <br/><br/>
                             <span th:text="#{email.invitation.content(${dto.organizationName})}"></span>
                         </p>
