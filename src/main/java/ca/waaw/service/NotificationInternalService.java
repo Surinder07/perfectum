@@ -13,7 +13,6 @@ import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Locale;
 import java.util.Map;
 
 @Service

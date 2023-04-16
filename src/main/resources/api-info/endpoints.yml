@@ -115,3 +115,4 @@ api:
       getById: /v1/payment/invoice/get
       confirmPayment: /v1/payment/invoice/confirm
       getPendingInvoice: /v1/payment/invoice/pending/get
+      updateDefaultCard: /v1/payment/card/default/update

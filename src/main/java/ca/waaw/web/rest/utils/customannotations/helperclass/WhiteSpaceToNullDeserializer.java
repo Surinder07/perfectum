@@ -16,7 +16,8 @@ public class WhiteSpaceToNullDeserializer  extends StdDeserializer<String> {
 
     @Override
     public String deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return _parseString(p, ctxt).trim().equals("") ? null : _parseString(p, ctxt);
+        return _parseString(p, ctxt).trim().equals("") || _parseString(p, ctxt).trim().equals("null") ?
+                null : _parseString(p, ctxt);
     }
 
 }

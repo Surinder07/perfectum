@@ -5,6 +5,7 @@ import ca.waaw.domain.User;
 import ca.waaw.dto.userdtos.LoginDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
 import ca.waaw.enumration.AccountStatus;
+import ca.waaw.enumration.Authority;
 import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.jwt.JWTFilter;
@@ -86,7 +87,7 @@ public class AuthController {
                         if (!user.getAccountStatus().equals(AccountStatus.PROFILE_PENDING)) {
                             Organization organization = organizationRepository.findOneByIdAndDeleteFlag(user.getOrganizationId(), false)
                                     .orElseThrow(() -> new EntityNotFoundException("organization"));
-                            if (StringUtils.isEmpty(user.getStripeId())) {
+                            if (StringUtils.isEmpty(user.getStripeId()) && user.getAuthority().equals(Authority.ADMIN)) {
                                 userService.addCustomerOnStripe(user, organization.getName());
                                 user.setAccountStatus(AccountStatus.PAYMENT_INFO_PENDING);
                                 userRepository.save(user);

@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -150,8 +149,8 @@ public class PaymentsService {
             response.setInvoiceDate(DateAndTimeUtils.getDateTimeObject(invoice.getInvoiceDate(), timezone.get()).getDate());
             response.setDateRange(
                     invoice.getInvoiceStart() == null ? "-" :
-                    DateAndTimeUtils.getDateTimeObject(invoice.getInvoiceStart(), timezone.get()).getDate() + " - " +
-                            DateAndTimeUtils.getDateTimeObject(invoice.getInvoiceEnd(), timezone.get()).getDate()
+                            DateAndTimeUtils.getDateTimeObject(invoice.getInvoiceStart(), timezone.get()).getDate() + " - " +
+                                    DateAndTimeUtils.getDateTimeObject(invoice.getInvoiceEnd(), timezone.get()).getDate()
             );
             response.setDueDate(DateAndTimeUtils.getDateTimeObject(invoice.getDueDate(), timezone.get()).getDate());
             response.setPaymentDate(invoice.getPaymentDate() == null ? "-" : DateAndTimeUtils.getDateTimeObject(invoice.getPaymentDate(), timezone.get()).getDate());
@@ -192,7 +191,7 @@ public class PaymentsService {
                                     if (organization.isPaymentPending()) {
                                         organization.setPaymentPending(false);
                                         List<User> usersToUpdate = userRepository.findAllByAccountStatusAndOrganizationIdAndDeleteFlag(AccountStatus.PAYMENT_PENDING,
-                                                organization.getId(), false)
+                                                        organization.getId(), false)
                                                 .stream()
                                                 .peek(user1 -> {
                                                     user1.setAccountStatus(AccountStatus.PAID_AND_ACTIVE);
@@ -201,7 +200,9 @@ public class PaymentsService {
                                                 .collect(Collectors.toList());
                                         userRepository.saveAll(usersToUpdate);
                                     }
-                                    organization.setNextPaymentOn(organization.getNextPaymentOn().plus(3, ChronoUnit.DAYS));
+                                    // TODO
+                                    organization.setNextPaymentOn((organization.getNextPaymentOn() == null ? Instant.now() :
+                                            organization.getNextPaymentOn()).plus(3, ChronoUnit.DAYS));
                                     organizationRepository.save(organization);
                                     //TODO Update all users to active
                                     return user;
@@ -251,6 +252,22 @@ public class PaymentsService {
                 ).orElseThrow(AuthenticationException::new);
     }
 
+    public void updateDefaultCard(String cardId) {
+        CommonUtils.checkRoleAuthorization(Authority.ADMIN);
+        SecurityUtils.getCurrentUserLogin()
+                .flatMap(username -> userRepository.findOneByUsernameAndDeleteFlag(username, false))
+                .map(loggedUser -> {
+                    try {
+                        stripeService.updateDefaultCard(loggedUser.getStripeId(), cardId);
+                        return loggedUser;
+                    } catch (StripeException e) {
+                        log.error("Exception while updating default card for stripe user: {}",
+                                loggedUser, e);
+                        return null;
+                    }
+                }).orElseThrow(AuthenticationException::new);
+    }
+
     public void createNewInvoice(NewInvoiceDto newInvoiceDto) {
         String currentOrgCustomId = invoicesRepository.getLastUsedCustomId()
                 .orElse(appCustomIdConfig.getInvoicePrefix() + "0000000000");
@@ -273,9 +290,9 @@ public class PaymentsService {
 //        System.out.println(LocalDate.now(ZoneId.of( "Canada/Central" )).plusMonths(1));
         Instant instant = Instant.now();
 
-        ZoneId zoneId = ZoneId.of( "Canada/Central" );
-        ZonedDateTime zdt = ZonedDateTime.ofInstant( instant , zoneId );
-        ZonedDateTime zdtMonthLater = zdt.plusMonths( 1 );
+        ZoneId zoneId = ZoneId.of("Canada/Central");
+        ZonedDateTime zdt = ZonedDateTime.ofInstant(instant, zoneId);
+        ZonedDateTime zdtMonthLater = zdt.plusMonths(1);
         System.out.println(instant);
         System.out.println(zdtMonthLater.toInstant());
     }

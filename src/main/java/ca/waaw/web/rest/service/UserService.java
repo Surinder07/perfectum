@@ -177,6 +177,7 @@ public class UserService {
                                     organization.setTrialEndDate(Instant.now().plus(trialDays, ChronoUnit.DAYS));
                                 } else {
                                     organization.setTrialEndDate(Instant.now());
+                                    organization.setPaymentPending(true);
                                 }
                                 if (trialDays == 0) {
                                     user.setAccountStatus(AccountStatus.PAYMENT_PENDING);

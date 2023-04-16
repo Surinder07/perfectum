@@ -70,6 +70,14 @@ public class PaymentsController {
         return ResponseEntity.ok(paymentsService.createNewPaymentIntent(invoiceId));
     }
 
+    @SwaggerOk
+    @SwaggerAuthenticated
+    @Operation(description = "${api.description.payment-apis.updateDefaultCard}")
+    @PutMapping("${api.endpoints.payment-apis.updateDefaultCard}")
+    public void updateDefaultCard(@RequestParam String cardId) {
+        paymentsService.updateDefaultCard(cardId);
+    }
+
     @SwaggerBadRequest
     @SwaggerAuthenticated
     @Operation(description = "${api.description.payment-apis.getInvoices}")

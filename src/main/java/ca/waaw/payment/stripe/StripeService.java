@@ -113,6 +113,18 @@ public class StripeService {
         return paymentIntent.getClientSecret();
     }
 
+    public void updateDefaultCard(String customerId, String cardId) throws StripeException {
+        Stripe.apiKey = paymentConfig.getApiKey();
+        CustomerRetrieveParams retrieveParams = CustomerRetrieveParams.builder()
+                .addExpand("sources")
+                .build();
+        Customer customer = Customer.retrieve(customerId, retrieveParams, null);
+        CustomerUpdateParams params = CustomerUpdateParams.builder()
+                .setDefaultSource(cardId)
+                .build();
+        customer.update(params);
+    }
+
     public static void main(String[] args) throws StripeException {
         Stripe.apiKey = "sk_test_51IuozbEkZ4NGJcE2m9MpdvSkZbDTFlR2ot3a9vSsQG0QHdwOBKtV9s0pQtKiGN1y3jvMM5ED3dNtVOBxUAMKMxZn00aU9CKJdR";
         CustomerRetrieveParams retrieveParams = CustomerRetrieveParams.builder()

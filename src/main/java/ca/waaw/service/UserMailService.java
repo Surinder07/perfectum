@@ -36,6 +36,7 @@ public class UserMailService {
         List<MailDto> messageDtoList = mailDtoList.stream()
                         .map(mailDto -> MailDto.builder()
                                 .email(mailDto.getUser().getEmail())
+                                .name(mailDto.getUser().getFullName())
                                 .actionUrl(mailDto.getInviteUrl())
                                 .langKey(mailDto.getUser().getLangKey())
                                 .message(mailDto.getUser())
