@@ -30,6 +30,8 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findOneByAuthority(Authority authority);
 
+    Optional<User> findOneByAuthorityAndOrganizationId(Authority authority, String organizationId);
+
     List<User> findAllByAuthorityAndLocationIdAndDeleteFlag(Authority authority, String locationId, boolean deleteFlag);
 
     List<User> findAllByAuthorityAndOrganizationIdAndDeleteFlag(Authority authority, String organizationId, boolean deleteFlag);

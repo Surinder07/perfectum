@@ -17,11 +17,13 @@ import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.ReportsInternalService;
 import ca.waaw.service.email.javamailsender.MailService;
+import ca.waaw.service.email.javamailsender.TempMailService;
 import ca.waaw.storage.AzureStorage;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
+import ca.waaw.web.rest.utils.MessageConstants;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -50,6 +52,8 @@ public class ReportsService {
 
     private final MailService mailService;
 
+    private final TempMailService tempMailService;
+
     private final AppCustomIdConfig appCustomIdConfig;
 
     public ApiResponseMessageDto generateReport(GenerateReportDto reportDto) {
@@ -75,15 +79,18 @@ public class ReportsService {
         reports.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
         reportsRepository.save(reports);
         MailDto mailDto = MailDto.builder()
+                .name(loggedUser.getFullName())
                 .email(loggedUser.getEmail())
                 .actionUrl(appMailConfig.getUiUrl())
                 .langKey(loggedUser.getLangKey())
                 .buttonText("Go to WaaW")
-                .message("You generated a report from " + reportDto.getStartDate() + " to " + reportDto.getEndDate() +
-                        ". Please find the report attached below.")
-                .title(reportDto.getReportType().toLowerCase() + " report ")
+//                .message("You generated a report from " + reportDto.getStartDate() + " to " + reportDto.getEndDate() +
+//                        ". Please find the report attached below.")
+//                .title(reportDto.getReportType().toLowerCase() + " report ")
                 .build();
-        mailService.sendEmailFromTemplate(mailDto, "mail/TitleDescriptionTemplate", dataForFile, fileName, "email.report.generate.title");
+        tempMailService.sendEmailFromTemplate(mailDto, MessageConstants.emailReportGenerate, null,
+                new String[] {reportDto.getStartDate(), reportDto.getEndDate()}, dataForFile, fileName);
+//        mailService.sendEmailFromTemplate(mailDto, "mail/TitleDescriptionTemplate", dataForFile, fileName, "email.report.generate.title");
         return new ApiResponseMessageDto("You will receive the report on your email once its generated.");
     }
 

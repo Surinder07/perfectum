@@ -12,7 +12,7 @@ import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.ShiftsRepository;
 import ca.waaw.repository.TimesheetRepository;
 import ca.waaw.repository.UserRepository;
-import ca.waaw.service.NotificationInternalService;
+import ca.waaw.service.AppNotificationService;
 import ca.waaw.service.WebSocketService;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +42,7 @@ public class ShiftsScheduler {
 
     private final OrganizationRepository organizationRepository;
 
-    private final NotificationInternalService notificationInternalService;
+    private final AppNotificationService appNotificationService;
 
     private final WebSocketService webSocketService;
 
@@ -67,11 +67,11 @@ public class ShiftsScheduler {
                     .filter(shift -> shift.getShiftStatus().equals(ShiftStatus.RELEASED))
                     .forEach(shift -> {
                         Map<String, Object> info = new HashMap<>();
-                        int timeRemaining = (int) Duration.between(Instant.now(), shift.getStart()).toMinutes();
-                        timeRemaining = timeRemaining - maxTime;
+                        int timeRemaining = (int) Duration.between(Instant.now(), shift.getStart()).toSeconds();
+                        timeRemaining = timeRemaining - (maxTime * 60);
                         if (timeRemaining < 0) timeRemaining = 0;
                         info.put("timerActive", true);
-                        info.put("timeRemaining", timeRemaining);
+                        info.put("timeRemaining", timeRemaining); // Seconds
                         info.put("user", users.stream().filter(user -> user.getId().equals(shift.getUserId()))
                                 .findFirst().map(User::getUsername).orElse(null));
                         infoToSend.add(info);
@@ -132,7 +132,7 @@ public class ShiftsScheduler {
                             .language(admin.getLangKey() == null ? null : admin.getLangKey())
                             .type(NotificationType.REQUEST)
                             .build();
-                    notificationInternalService.sendNotification("notification.shift.missed", notificationInfo, user.getFullName());
+                    appNotificationService.sendNotification("notification.shift.missed", notificationInfo, user.getFullName());
                 });
                 log.info("Sending notification for missed shift successful");
             });

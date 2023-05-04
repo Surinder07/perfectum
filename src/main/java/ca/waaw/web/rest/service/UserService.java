@@ -6,8 +6,7 @@ import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
 import ca.waaw.domain.*;
 import ca.waaw.domain.joined.UserOrganization;
-import ca.waaw.dto.MailDto;
-import ca.waaw.dto.invoices.NewInvoiceDto;
+import ca.waaw.dto.invoices.NewPaymentDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.*;
 import ca.waaw.mapper.UserMapper;
@@ -16,7 +15,7 @@ import ca.waaw.repository.*;
 import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.security.jwt.TokenProvider;
-import ca.waaw.service.NotificationInternalService;
+import ca.waaw.service.AppNotificationService;
 import ca.waaw.service.UserMailService;
 import ca.waaw.service.WebSocketService;
 import ca.waaw.service.email.javamailsender.MailService;
@@ -69,7 +68,7 @@ public class UserService {
 
     private final MailService mailService;
 
-    private final NotificationInternalService notificationInternalService;
+    private final AppNotificationService appNotificationService;
 
     private final AzureStorage azureStorage;
 
@@ -182,13 +181,12 @@ public class UserService {
                                 if (trialDays == 0) {
                                     user.setAccountStatus(AccountStatus.PAYMENT_PENDING);
                                     organization.setPaymentPending(true);
-                                    // TODO add invoice for platform fee
                                 } else user.setAccountStatus(AccountStatus.PAYMENT_INFO_PENDING);
                                 organization.setCreatedBy(user.getId());
                                 organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
                                 organizationRepository.save(organization);
                                 if (trialDays == 0) {
-                                    NewInvoiceDto platformInvoice = NewInvoiceDto.builder()
+                                    NewPaymentDto platformInvoice = NewPaymentDto.builder()
                                             .paymentDate(organization.getTrialEndDate())
                                             .currency(Currency.CAD)
                                             .organizationId(organization.getId())
@@ -229,7 +227,7 @@ public class UserService {
                             } else {
                                 user.setAccountStatus(AccountStatus.TRIAL_PERIOD);
                             }
-                            NewInvoiceDto platformInvoice = NewInvoiceDto.builder()
+                            NewPaymentDto platformInvoice = NewPaymentDto.builder()
                                     .paymentDate(user.getOrganization().getTrialEndDate())
                                     .currency(Currency.CAD)
                                     .organizationId(user.getOrganizationId())
@@ -321,7 +319,7 @@ public class UserService {
                         .flatMap(user -> userOrganizationRepository.findOneByIdAndDeleteFlag(user.getId(), false))
                         .map(user -> userRepository.findOneByIdAndDeleteFlag(token.getCreatedBy(), false)
                                 .map(admin -> {
-                                    notificationInternalService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl());
+                                    appNotificationService.notifyAdminAboutNewUser(user, admin, appUrlConfig.getLoginUrl());
                                     return admin;
                                 })
                         )
@@ -491,18 +489,7 @@ public class UserService {
                 .map(user -> CommonUtils.logMessageAndReturnObject(user, "info", UserService.class,
                         "Initialized email update process for: {}", user))
                 .orElseThrow(AuthenticationException::new);
-        Map<String, String> message = CommonUtils.getPropertyMapFromMessagesResourceBundle("notification.email.update",
-                loggedUser.getLangKey());
-        MailDto mailDto = MailDto.builder()
-                .email(loggedUser.getEmailToUpdate())
-                .name(loggedUser.getFirstName())
-                .actionUrl(verificationUrl.get())
-                .langKey(loggedUser.getLangKey())
-                .buttonText("Verify Email")
-                .message(String.format(message.get("mailDescription"), loggedUser.getEmail(), loggedUser.getEmailToUpdate()))
-                .title(message.get("title"))
-                .build();
-        mailService.sendEmailFromTemplate(mailDto, "mail/TitleDescriptionTemplate", "notification.email.update.title");
+        userMailService.sendUpdateEmailMail(loggedUser, verificationUrl.get());
     }
 
     @Transactional(rollbackFor = Exception.class)

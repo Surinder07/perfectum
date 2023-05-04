@@ -15,7 +15,7 @@ public class ActiveTimesheetDto {
 
     private boolean upcomingShift;
 
-    private int shiftsAfterMinutes;
+    private int shiftsAfterSeconds;
 
     private int totalTimeWorkedToday;
 

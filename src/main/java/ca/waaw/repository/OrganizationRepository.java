@@ -13,8 +13,11 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
 
     Optional<Organization> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
 
-    @Query(value = "SELECT o FROM Organization o WHERE o.deleteFlag = FALSE")
+    @Query(value = "SELECT o FROM Organization o WHERE o.deleteFlag = FALSE AND o.paymentPending = FALSE")
     List<Organization> getAllActiveOrganization();
+
+    @Query(value = "SELECT o FROM Organization o WHERE o.trialEndDate > CURRENT_TIMESTAMP AND o.deleteFlag = FALSE")
+    List<Organization> getAllTrialEnding();
 
     @Query(value = "SELECT num FROM (SELECT ROW_NUMBER() OVER (ORDER BY created_date ASC) AS num, uuid " +
             "AS id FROM organization WHERE SUBSTRING(name, 1, 3) = SUBSTRING(?1, 1, 3) ) AS TEMP " +

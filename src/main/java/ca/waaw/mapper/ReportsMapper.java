@@ -46,6 +46,7 @@ public class ReportsMapper {
             String roleName = roles.stream().filter(role -> role.getId().equals(employee.getLocationRoleId())).findFirst()
                     .orElseThrow().getName();
             shifts.stream().sorted(Comparator.comparing(Shifts::getStart))
+                    .filter(shift -> shift.getUserId() != null)
                     .filter(shift -> shift.getUserId().equals(employee.getUserId()))
                     .forEach(shift -> {
                         Object[] row = new Object[headers.length];
@@ -131,10 +132,12 @@ public class ReportsMapper {
             row[6] = roles.stream().filter(role -> role.getId().equals(employee.getLocationRoleId())).findFirst()
                     .orElseThrow().getName();
             long shiftsAssigned = shifts.stream()
+                    .filter(shift -> StringUtils.isNotEmpty(shift.getUserId()))
                     .filter(shift -> shift.getUserId().equals(employee.getUserId()))
                     .mapToLong(shift -> Duration.between(shift.getStart(), shift.getEnd()).toMinutes())
                     .sum();
             long hoursWorked = timesheet.stream()
+                    .filter(shift -> StringUtils.isNotEmpty(shift.getUserId()))
                     .filter(sheet -> sheet.getUserId().equals(employee.getUserId()))
                     .mapToLong(sheet -> Duration.between(sheet.getStart(), sheet.getEnd()).toMinutes())
                     .sum();

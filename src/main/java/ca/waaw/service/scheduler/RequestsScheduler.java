@@ -8,7 +8,7 @@ import ca.waaw.enumration.NotificationType;
 import ca.waaw.enumration.RequestStatus;
 import ca.waaw.repository.RequestsRepository;
 import ca.waaw.repository.UserRepository;
-import ca.waaw.service.NotificationInternalService;
+import ca.waaw.service.AppNotificationService;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +30,7 @@ public class RequestsScheduler {
 
     private final UserRepository userRepository;
 
-    private final NotificationInternalService notificationInternalService;
+    private final AppNotificationService appNotificationService;
 
     @Scheduled(fixedRate = 14400, timeUnit = TimeUnit.SECONDS)
     private void sendNotificationForPendingRequests() {
@@ -66,7 +66,7 @@ public class RequestsScheduler {
                                         .type(NotificationType.REQUEST)
                                         .build();
                                 String requestType = request.getType().toString().toLowerCase().replaceAll("_", " ");
-                                notificationInternalService.sendNotification("notification.request.pending", notificationInfo, requestType, requestor.getFullName());
+                                appNotificationService.sendNotification("notification.request.pending", notificationInfo, requestType, requestor.getFullName());
                             }
                         })));
     }

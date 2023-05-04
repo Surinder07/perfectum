@@ -108,14 +108,14 @@ public class TimesheetService {
                 .map(timesheet -> mapActiveTimesheet(timesheet, loggedUser.getLocation().getTimezone()))
                 .orElse(new ActiveTimesheetDto());
         Instant start = Instant.now().plus(loggedUser.getOrganization().getClockInAllowedMinutesBeforeShift(),
-                ChronoUnit.MINUTES).plus(1L, ChronoUnit.SECONDS);
+                ChronoUnit.MINUTES).plus(1L, ChronoUnit.SECONDS).plus(5L, ChronoUnit.MINUTES);
         shiftsRepository.getAllUpcomingOrOngoingShifts(loggedUser.getId(), start, Instant.now())
                 .ifPresent(shift -> {
                     response.setUpcomingShift(true);
-                    int timeRemaining = (int) Duration.between(Instant.now(), shift.getStart()).toMinutes();
-                    timeRemaining = timeRemaining - loggedUser.getOrganization().getClockInAllowedMinutesBeforeShift();
+                    int timeRemaining = (int) Duration.between(Instant.now(), shift.getStart()).toSeconds();
+                    timeRemaining = timeRemaining - (loggedUser.getOrganization().getClockInAllowedMinutesBeforeShift() * 60);
                     if (timeRemaining < 0) timeRemaining = 0;
-                    response.setShiftsAfterMinutes(timeRemaining);
+                    response.setShiftsAfterSeconds(timeRemaining);
                 });
         Instant[] todayRange = DateAndTimeUtils.getTodayInstantRange(loggedUser.getAuthority().equals(Authority.ADMIN) ?
                 loggedUser.getOrganization().getTimezone() : loggedUser.getLocation().getTimezone());

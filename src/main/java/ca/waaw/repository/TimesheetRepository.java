@@ -27,7 +27,7 @@ public interface TimesheetRepository extends JpaRepository<Timesheet, String> {
     Optional<Timesheet> getActiveTimesheet(String userId);
 
     @Query(value = "SELECT t FROM Timesheet t WHERE t.userId = ?1 AND ((?2 IS NULL OR ?3 IS NULL) OR " +
-            "t.start BETWEEN ?2 AND ?3) AND t.end IS NULL AND (?4 IS NULL OR t.type = ?4) AND t.deleteFlag = FALSE")
+            "t.start BETWEEN ?2 AND ?3) AND (?4 IS NULL OR t.type = ?4) AND t.deleteFlag = FALSE")
     Page<Timesheet> filterTimesheet(String userId, Instant start, Instant end, String type, Pageable pageable);
 
     List<Timesheet> findAllByLocationIdAndStartBetweenAndDeleteFlag(String locationId, Instant start, Instant end, boolean deleteFlag);

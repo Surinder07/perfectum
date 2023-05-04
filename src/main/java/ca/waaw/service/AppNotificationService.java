@@ -3,27 +3,57 @@ package ca.waaw.service;
 import ca.waaw.domain.Notification;
 import ca.waaw.domain.User;
 import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.dto.MailDto;
 import ca.waaw.dto.NotificationInfoDto;
 import ca.waaw.dto.emailmessagedtos.InviteAcceptedMailDto;
-import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.NotificationType;
 import ca.waaw.mapper.NotificationMapper;
 import ca.waaw.repository.NotificationRepository;
+import ca.waaw.service.email.javamailsender.TempMailService;
 import ca.waaw.web.rest.utils.CommonUtils;
 import lombok.AllArgsConstructor;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.Map;
 
 @Service
 @AllArgsConstructor
-public class NotificationInternalService {
+public class AppNotificationService {
 
     private final NotificationMailService notificationMailService;
 
     private final NotificationRepository notificationRepository;
 
     private final WebSocketService webSocketService;
+
+    private final TempMailService tempMailService;
+
+    private final MessageSource messageSource;
+
+    public void sendApplicationNotification(String[] messageConstant, NotificationInfoDto notificationInfo, boolean sendEmail,
+                                            String... messageArguments) {
+        Locale locale = Locale.forLanguageTag(notificationInfo.getLanguage());
+        String title = messageSource.getMessage(messageConstant[0], null, locale);
+        String description = messageSource.getMessage(messageConstant[1], messageArguments, locale);
+        Notification notification = new Notification();
+        notification.setTitle(title);
+        notification.setDescription(description);
+        notification.setType(notificationInfo.getType());
+        notification.setUserId(notificationInfo.getReceiverUuid());
+        notificationRepository.save(notification);
+        webSocketService.notifyUser(NotificationMapper.entityToDto(notification, "UTC"),
+                notificationInfo.getReceiverUsername());
+        if (sendEmail) {
+            MailDto messageDto = MailDto.builder()
+                    .email(notificationInfo.getReceiverMail())
+                    .name(notificationInfo.getReceiverName())
+                    .langKey(notificationInfo.getLanguage())
+                    .build();
+            tempMailService.sendEmailFromTemplate(messageDto, messageConstant, null, messageArguments);
+        }
+    }
 
     public void sendNotification(String propertyKey, NotificationInfoDto notificationInfo, String... messageArguments) {
         Map<String, String> properties = CommonUtils.getPropertyMapFromMessagesResourceBundle(propertyKey,
@@ -49,7 +79,8 @@ public class NotificationInternalService {
      */
     public void notifyAdminAboutNewUser(UserOrganization user, User admin, String loginUrl) {
         InviteAcceptedMailDto message = new InviteAcceptedMailDto();
-        populateInviteAcceptedMessageLocationAndRole(message, user);
+        message.setLocation(user.getLocation().getName());
+        message.setRole(user.getLocationRole().getName());
         if (admin.isEmailNotifications()) {
             message.setAdminName(CommonUtils.combineFirstAndLastName(admin.getFirstName(), admin.getLastName()));
             message.setEmail(admin.getEmail());
@@ -70,31 +101,6 @@ public class NotificationInternalService {
         notificationRepository.save(notification);
         //todo change to admins timezone
         webSocketService.notifyUser(NotificationMapper.entityToDto(notification, user.getLocation().getTimezone()), admin.getUsername());
-    }
-
-    /**
-     * Will update location_role and location information in message based on user roles
-     *
-     * @param message {@link InviteAcceptedMailDto} object
-     * @param user    invited user details
-     */
-    private void populateInviteAcceptedMessageLocationAndRole(InviteAcceptedMailDto message, UserOrganization user) {
-        String role;
-        String location;
-        if (user.getAuthority().equals(Authority.ADMIN) || user.getAuthority().equals(Authority.SUPER_USER )) {
-            role = "Global Admin";
-            location = "All";
-        } else if (user.getAuthority().equals(Authority.MANAGER)) {
-            location = user.getLocation().getName();
-            role = "Location Admin";
-        } else {
-            location = user.getLocation().getName();
-            role = String.format(user.getAuthority().equals(Authority.CONTRACTOR) ? "Contractor / %s" : "Employee / %s",
-                    user.getLocationRole().getName());
-        }
-        message.setLocation(location);
-        message.setUserEmail(user.getEmail());
-        message.setRole(role);
     }
 
 }

@@ -5,6 +5,7 @@ import ca.waaw.enumration.AccountStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,6 +15,14 @@ import java.util.Optional;
 public interface UserOrganizationRepository extends JpaRepository<UserOrganization, String> {
 
     Optional<UserOrganization> findOneByIdAndDeleteFlag(String id, boolean deleteFlag);
+
+    @Query(value = "SELECT uo FROM UserOrganization uo WHERE uo.deleteFlag = FALSE AND uo.organization.deleteFlag = " +
+            "FALSE AND uo.organization.paymentPending = FALSE AND uo.authority = 'ADMIN'")
+    List<UserOrganization> getAllActiveOrganizationWithAdmin();
+
+    @Query(value = "SELECT uo FROM UserOrganization uo WHERE uo.organization.trialEndDate > CURRENT_TIMESTAMP AND " +
+            "uo.deleteFlag = FALSE AND uo.organization.deleteFlag = FALSE AND uo.authority = 'ADMIN'")
+    List<UserOrganization> getAllTrialEndingWithAdmin();
 
     List<UserOrganization> findAllByDeleteFlagAndIdIn(boolean deleteFlag, List<String> ids);
 

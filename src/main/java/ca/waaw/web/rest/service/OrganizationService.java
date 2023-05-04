@@ -23,7 +23,7 @@ import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
-import ca.waaw.service.NotificationInternalService;
+import ca.waaw.service.AppNotificationService;
 import ca.waaw.service.WebSocketService;
 import ca.waaw.storage.AzureStorage;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
@@ -70,7 +70,7 @@ public class OrganizationService {
 
     private final FileHandler fileHandler;
 
-    private final NotificationInternalService notificationInternalService;
+    private final AppNotificationService appNotificationService;
 
     private final AzureStorage azureStorage;
 
@@ -166,11 +166,11 @@ public class OrganizationService {
                     .build();
             DateTimeDto now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
                     admin.getOrganization().getTimezone() : admin.getLocation().getTimezone());
-            notificationInternalService.sendNotification("notification.upload.holidays", notificationInfo, now.getDate(), now.getTime());
+            appNotificationService.sendNotification("notification.upload.holidays", notificationInfo, now.getDate(), now.getTime());
             if (pastDates.isTrue())
-                notificationInternalService.sendNotification("notification.holiday.past", notificationInfo, now.getDate(), now.getTime());
+                appNotificationService.sendNotification("notification.holiday.past", notificationInfo, now.getDate(), now.getTime());
             if (nextYearDates.isTrue())
-                notificationInternalService.sendNotification("notification.holiday.nextYear", notificationInfo, now.getDate(), now.getTime());
+                appNotificationService.sendNotification("notification.holiday.nextYear", notificationInfo, now.getDate(), now.getTime());
             webSocketService.notifyUserAboutHolidayUploadComplete(admin.getUsername());
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys

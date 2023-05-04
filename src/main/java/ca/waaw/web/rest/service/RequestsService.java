@@ -14,7 +14,7 @@ import ca.waaw.repository.*;
 import ca.waaw.repository.joined.DetailedRequestsRepository;
 import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
-import ca.waaw.service.NotificationInternalService;
+import ca.waaw.service.AppNotificationService;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
@@ -64,7 +64,7 @@ public class RequestsService {
 
     private final AppCustomIdConfig appCustomIdConfig;
 
-    private final NotificationInternalService notificationInternalService;
+    private final AppNotificationService appNotificationService;
 
     @Transactional(rollbackFor = Exception.class)
     public void addNewRequest(NewRequestDto newRequestDto) {
@@ -314,7 +314,7 @@ public class RequestsService {
                 .type(NotificationType.REQUEST)
                 .build();
         String requestType = request.getType().toString().toLowerCase().replaceAll("_", " ");
-        notificationInternalService.sendNotification("notification.request.new", notificationInfo, actionTaker.getFullName(), requestType);
+        appNotificationService.sendNotification("notification.request.new", notificationInfo, actionTaker.getFullName(), requestType);
     }
 
     private void notifyUserOrAdmin(DetailedRequests request, User actionTaker, User sendTo, String type) {
@@ -333,7 +333,7 @@ public class RequestsService {
         if (type.equals("approve")) property = "notification.request.accept";
         if (type.equals("respond")) property = "notification.request.respond";
         String requestType = request.getType().toString().toLowerCase().replaceAll("_", " ");
-        notificationInternalService.sendNotification(property, notificationInfo, actionTaker.getFullName(), requestType);
+        appNotificationService.sendNotification(property, notificationInfo, actionTaker.getFullName(), requestType);
     }
 
 }

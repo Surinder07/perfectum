@@ -18,7 +18,7 @@ import ca.waaw.mapper.UserMapper;
 import ca.waaw.repository.*;
 import ca.waaw.repository.joined.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
-import ca.waaw.service.NotificationInternalService;
+import ca.waaw.service.AppNotificationService;
 import ca.waaw.service.UserMailService;
 import ca.waaw.service.WebSocketService;
 import ca.waaw.web.rest.errors.exceptions.*;
@@ -73,7 +73,7 @@ public class MemberService {
 
     private final ShiftsRepository shiftsRepository;
 
-    private final NotificationInternalService notificationInternalService;
+    private final AppNotificationService appNotificationService;
 
     private final WebSocketService webSocketService;
 
@@ -216,7 +216,7 @@ public class MemberService {
                     .build();
             DateTimeDto now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
                     admin.getOrganization().getTimezone() : admin.getLocation().getTimezone());
-            notificationInternalService.sendNotification("notification.upload.users", notificationInfo, now.getDate(), now.getTime());
+            appNotificationService.sendNotification("notification.upload.users", notificationInfo, now.getDate(), now.getTime());
             webSocketService.notifyUserAboutHolidayUploadComplete(admin.getUsername());
         });
         return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys

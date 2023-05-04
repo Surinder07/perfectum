@@ -157,8 +157,9 @@ public class ApplicationStartupSqlService {
         organization.setWaawId(CommonUtils.getNextCustomId(currentOrgCustomId, appCustomIdConfig.getLength()));
         organization.setName(name == null ? appSuperUserConfig.getOrganization() : name);
         organization.setTimezone(appSuperUserConfig.getTimezone());
-        organization.setTrialEndDate(Instant.now().plus(30, ChronoUnit.DAYS));
-        organization.setNextPaymentOn(Instant.now().plus(30, ChronoUnit.DAYS));
+        organization.setTrialEndDate(Instant.now());
+        organization.setNextPaymentOn(Instant.now().plus(300, ChronoUnit.DAYS));
+        organization.setPlatformFeePaid(true);
         organization.setCreatedBy("SYSTEM");
         organizationRepository.save(organization);
         log.info("Created a new organization: {}", organization);
@@ -173,9 +174,10 @@ public class ApplicationStartupSqlService {
         user.setEmail(email);
         user.setUsername(username);
         user.setWaawId(customId);
+        if (user.getAuthority().equals(Authority.ADMIN)) user.setStripeId("cus_NpW3H7xDkEi1Vi");
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setAccountStatus(role.equals(Authority.ADMIN) ? AccountStatus.PROFILE_PENDING :
-                (role.equals(Authority.SUPER_USER) ? AccountStatus.PAID_AND_ACTIVE : AccountStatus.DISABLED));
+        user.setAccountStatus((role.equals(Authority.SUPER_USER) || role.equals(Authority.ADMIN)) ?
+                AccountStatus.PAID_AND_ACTIVE : AccountStatus.DISABLED);
         user.setCreatedBy("SYSTEM");
         user.setAuthority(role);
         user.setFullTime(true);
