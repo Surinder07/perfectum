@@ -6,6 +6,8 @@ import ca.waaw.dto.userdtos.LoginDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
 import ca.waaw.enumration.AccountStatus;
 import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.PaymentStatus;
+import ca.waaw.repository.PaymentHistoryRepository;
 import ca.waaw.repository.OrganizationRepository;
 import ca.waaw.repository.UserRepository;
 import ca.waaw.security.jwt.JWTFilter;
@@ -13,6 +15,7 @@ import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.web.rest.errors.ErrorVM;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
+import ca.waaw.web.rest.service.PaymentsService;
 import ca.waaw.web.rest.service.UserService;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerBadRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("unused")
 @RestController
@@ -59,6 +63,10 @@ public class AuthController {
     private final UserRepository userRepository;
 
     private final OrganizationRepository organizationRepository;
+
+    private final PaymentHistoryRepository paymentHistoryRepository;
+
+    private final PaymentsService paymentsService;
 
     @SwaggerBadRequest
     @Operation(description = "${api.description.authentication}")
@@ -97,6 +105,8 @@ public class AuthController {
                                 user.setAccountStatus(AccountStatus.PAYMENT_PENDING);
                                 userRepository.save(user);
                                 log.error("Payment pending for organization {}({})", organization.getName(), organization.getId());
+                            } else {
+                                checkForPendingPayment(organization, user);
                             }
                         }
                         return user;
@@ -118,6 +128,18 @@ public class AuthController {
             e.printStackTrace();
             throw e;
         }
+    }
+
+    private void checkForPendingPayment(Organization organization, User user) {
+        paymentHistoryRepository.findOneByOrganizationIdAndPaymentStatus(organization.getId(), PaymentStatus.UNPAID)
+                .filter(payment -> payment.getDueDate().isBefore(Instant.now()))
+                .ifPresent(payment -> {
+                    organization.setPaymentPending(true);
+                    user.setAccountStatus(AccountStatus.PAYMENT_PENDING);
+                    organizationRepository.save(organization);
+                    userRepository.save(user);
+                    CompletableFuture.runAsync(() -> paymentsService.notifyUserAboutAccountSuspension(user, payment, organization.getTimezone()));
+                });
     }
 
 }

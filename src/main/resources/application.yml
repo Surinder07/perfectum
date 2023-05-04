@@ -144,6 +144,7 @@ application:
     shift-prefix: S
     report-prefix: P
     invoice-prefix: I
+    transaction-prefix: T
   invoices:
     allowDaysBeforeDueDate: 5
 

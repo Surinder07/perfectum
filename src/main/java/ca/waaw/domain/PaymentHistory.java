@@ -1,7 +1,7 @@
 package ca.waaw.domain;
 
 import ca.waaw.enumration.Currency;
-import ca.waaw.enumration.InvoiceStatus;
+import ca.waaw.enumration.PaymentStatus;
 import ca.waaw.enumration.TransactionType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -16,8 +16,8 @@ import java.util.UUID;
 @Entity
 @ToString
 @EqualsAndHashCode
-@Table(name = "invoices")
-public class Invoices implements Serializable {
+@Table(name = "payment_history")
+public class PaymentHistory implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -25,8 +25,11 @@ public class Invoices implements Serializable {
     @Column(name = "uuid")
     private String id = UUID.randomUUID().toString();
 
-    @Column(name = "waaw_id")
-    private String waawId;
+    @Column(name = "invoice_id")
+    private String invoiceId;
+
+    @Column(name = "transaction_id")
+    private String transactionId;
 
     @Column(name = "stripe_id")
     private String stripeId;
@@ -61,8 +64,8 @@ public class Invoices implements Serializable {
     private Instant invoiceEnd;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "invoice_status")
-    private InvoiceStatus invoiceStatus = InvoiceStatus.UNPAID;
+    @Column(name = "payment_status")
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
     @Column(name = "due_date")
     private Instant dueDate;

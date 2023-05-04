@@ -60,6 +60,18 @@ public class StripeService {
         log.info("Saved a new card with id ({}) for stripe customer: {}", card.getId(), customerId);
     }
 
+    public void updateDefaultCard(String customerId, String cardId) throws StripeException {
+        Stripe.apiKey = paymentConfig.getApiKey();
+        CustomerRetrieveParams retrieveParams = CustomerRetrieveParams.builder()
+                .addExpand("sources")
+                .build();
+        Customer customer = Customer.retrieve(customerId, retrieveParams, null);
+        CustomerUpdateParams params = CustomerUpdateParams.builder()
+                .setDefaultSource(cardId)
+                .build();
+        customer.update(params);
+    }
+
     public void deleteCard(String cardId, String customerId) throws StripeException {
         Stripe.apiKey = paymentConfig.getApiKey();
         CustomerRetrieveParams retrieveParams = CustomerRetrieveParams.builder()
@@ -96,7 +108,8 @@ public class StripeService {
                 .collect(Collectors.toList());
     }
 
-    public String createNewPaymentIntent(String customerId, float amount, String currency, String invoiceId) throws StripeException {
+    public Map<String, String> createNewPaymentIntent(String customerId, float amount, String currency, String invoiceId,
+                                         String transactionId, String customerEmail) throws StripeException {
         Stripe.apiKey = paymentConfig.getApiKey();
         if (currency == null) currency = "CAD";
         PaymentIntentCreateParams params =
@@ -105,47 +118,23 @@ public class StripeService {
                         .setAmount((long) (amount * 100))
                         .setCurrency(currency)
                         .addPaymentMethodType("card")
-                        .putMetadata("invoiceId", invoiceId)
+                        .putMetadata("waaw invoice id", invoiceId)
+                        .putMetadata("waaw transaction id", transactionId)
                         .setCustomer(customerId)
+                        .setReceiptEmail(customerEmail)
                         .build();
         PaymentIntent paymentIntent = PaymentIntent.create(params);
         log.info("Successfully created a payment intent for customer({}) for a amount of {} {}", customerId, amount, currency);
-        return paymentIntent.getClientSecret();
+        Map<String, String> response = new HashMap<>();
+        response.put("clientSecret", paymentIntent.getClientSecret());
+        response.put("intentId", paymentIntent.getId());
+        return response;
     }
 
-    public void updateDefaultCard(String customerId, String cardId) throws StripeException {
+    public void cancelPaymentIntent(String intentId) throws StripeException {
         Stripe.apiKey = paymentConfig.getApiKey();
-        CustomerRetrieveParams retrieveParams = CustomerRetrieveParams.builder()
-                .addExpand("sources")
-                .build();
-        Customer customer = Customer.retrieve(customerId, retrieveParams, null);
-        CustomerUpdateParams params = CustomerUpdateParams.builder()
-                .setDefaultSource(cardId)
-                .build();
-        customer.update(params);
-    }
-
-    public static void main(String[] args) throws StripeException {
-        Stripe.apiKey = "sk_test_51IuozbEkZ4NGJcE2m9MpdvSkZbDTFlR2ot3a9vSsQG0QHdwOBKtV9s0pQtKiGN1y3jvMM5ED3dNtVOBxUAMKMxZn00aU9CKJdR";
-        CustomerRetrieveParams retrieveParams = CustomerRetrieveParams.builder()
-                .addExpand("sources")
-                .build();
-        Customer customer = Customer.retrieve("cus_NV1B10NztRL1Lj", retrieveParams, null);
-        PaymentSourceCollectionListParams params = PaymentSourceCollectionListParams.builder()
-                .setObject("card")
-                .build();
-        PaymentSourceCollection cards = customer.getSources().list(params);
-        cards.getData().stream()
-                .map(paymentSource -> (Card) paymentSource)
-                .forEach(System.out::println);
-        PaymentIntentCreateParams params1 =
-                PaymentIntentCreateParams
-                        .builder()
-                        .setAmount(1099L)
-                        .setCurrency("usd")
-                        .addPaymentMethodType("card")
-                        .setCustomer("")
-                        .build();
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(intentId);
+        paymentIntent.cancel();
     }
 
 }

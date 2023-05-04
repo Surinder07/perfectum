@@ -27,4 +27,6 @@ public class AppCustomIdConfig {
 
     private String invoicePrefix;
 
+    private String transactionPrefix;
+
 }

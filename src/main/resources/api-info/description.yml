@@ -146,10 +146,11 @@ api:
     payment-apis:
       createSetupIntent: Get the client secret to add new card for UI
       addNewCard: Use the token from dtripe to add a new card under a customer
+      updateDefaultCard: Update the default card for a user
+      deleteCard: Delete a card from customers list
       getAllCards: Get a list of all cards for logged in user
       createPaymentIntent: Create a payment intent for stripe to receive the client secret to be used for payment
-      getInvoices: Get all invoices for the logged-in user
-      getById: Get an invoice by id
-      confirmPayment: Park a payment as confirmed if received a success msg from stripe
-      getPendingInvoice: Get any pending invoice for the logged-in user
-      updateDefaultCard: Update the default card for a user
+      getPayments: Get all invoices for the logged-in user
+      getPaymentById: Get an invoice by id
+      confirmPayment: Update the status of payment as PAID or FAILED
+      getPendingPayment: Get any pending invoice for the logged-in user

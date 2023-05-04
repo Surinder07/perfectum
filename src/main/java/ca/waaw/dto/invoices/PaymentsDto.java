@@ -1,7 +1,7 @@
 package ca.waaw.dto.invoices;
 
 import ca.waaw.enumration.Currency;
-import ca.waaw.enumration.InvoiceStatus;
+import ca.waaw.enumration.PaymentStatus;
 import ca.waaw.enumration.TransactionType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,11 +10,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class InvoiceDto {
+public class PaymentsDto {
 
     private String id;
 
-    private String waawId;
+    private String invoiceId;
+
+    private String transactionId;
 
     private String stripeId;
 
@@ -34,7 +36,7 @@ public class InvoiceDto {
 
     private String dateRange;
 
-    private InvoiceStatus invoiceStatus;
+    private PaymentStatus paymentStatus;
 
     private String dueDate;
 

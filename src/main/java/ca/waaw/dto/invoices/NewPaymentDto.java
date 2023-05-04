@@ -13,7 +13,7 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NewInvoiceDto {
+public class NewPaymentDto {
 
     private String organizationId;
 

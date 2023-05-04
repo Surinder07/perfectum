@@ -1,5 +1,5 @@
 package ca.waaw.enumration;
 
-public enum InvoiceStatus {
+public enum PaymentStatus {
     PAID, UNPAID, FAILED
 }

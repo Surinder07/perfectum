@@ -2,7 +2,7 @@ package ca.waaw.web.rest;
 
 import ca.waaw.dto.CreditCardDto;
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.invoices.InvoiceDto;
+import ca.waaw.dto.invoices.PaymentsDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
 import ca.waaw.web.rest.service.PaymentsService;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerAuthenticated;
@@ -80,15 +80,15 @@ public class PaymentsController {
 
     @SwaggerBadRequest
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.payment-apis.getInvoices}")
-    @GetMapping("${api.endpoints.payment-apis.getInvoices}")
+    @Operation(description = "${api.description.payment-apis.getPayments}")
+    @GetMapping("${api.endpoints.payment-apis.getPayments}")
     @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/json", array = @ArraySchema(
-            schema = @Schema(implementation = InvoiceDto.class)))},
+            schema = @Schema(implementation = PaymentsDto.class)))},
             description = "${api.swagger.schema-description.pagination}")
-    public ResponseEntity<PaginationDto> getAllInvoices(@PathVariable int pageNo,
+    public ResponseEntity<PaginationDto> getAllPayments(@PathVariable int pageNo,
                                                         @PathVariable int pageSize) {
         try {
-            return ResponseEntity.ok(paymentsService.getAllInvoices(pageNo, pageSize, null, null, null));
+            return ResponseEntity.ok(paymentsService.getFullPaymentHistory(pageNo, pageSize, null, null, null));
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -97,19 +97,19 @@ public class PaymentsController {
 
     @SwaggerOk
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.payment-apis.getById}")
-    @GetMapping("${api.endpoints.payment-apis.getById}")
-    public ResponseEntity<InvoiceDto> getById(@RequestParam String invoiceId) {
-        return ResponseEntity.ok(paymentsService.getById(invoiceId));
+    @Operation(description = "${api.description.payment-apis.getPaymentById}")
+    @GetMapping("${api.endpoints.payment-apis.getPaymentById}")
+    public ResponseEntity<PaymentsDto> getPaymentHistoryById(@RequestParam String paymentId) {
+        return ResponseEntity.ok(paymentsService.getPaymentHistoryById(paymentId));
     }
 
     @SwaggerOk
     @SwaggerAuthenticated
     @Operation(description = "${api.description.payment-apis.confirmPayment}")
     @GetMapping("${api.endpoints.payment-apis.confirmPayment}")
-    public ResponseEntity<LoginResponseDto> confirmPayment(@RequestParam String invoiceId, @RequestParam String stripeId) {
+    public ResponseEntity<LoginResponseDto> confirmPayment(@RequestParam String paymentId, @RequestParam boolean success) {
         try {
-            return ResponseEntity.ok(paymentsService.confirmPayment(invoiceId, stripeId));
+            return ResponseEntity.ok(paymentsService.confirmPayment(paymentId, success));
         } catch(Exception e) {
             e.printStackTrace();
             throw e;
@@ -118,10 +118,10 @@ public class PaymentsController {
 
     @SwaggerOk
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.payment-apis.getPendingInvoice}")
-    @GetMapping("${api.endpoints.payment-apis.getPendingInvoice}")
-    public ResponseEntity<InvoiceDto> getPendingInvoice() {
-        return ResponseEntity.ok(paymentsService.getPendingInvoice());
+    @Operation(description = "${api.description.payment-apis.getPendingPayment}")
+    @GetMapping("${api.endpoints.payment-apis.getPendingPayment}")
+    public ResponseEntity<PaymentsDto> getPendingPayment() {
+        return ResponseEntity.ok(paymentsService.getPendingPayment());
     }
 
 }

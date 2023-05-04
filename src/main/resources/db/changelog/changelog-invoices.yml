@@ -76,3 +76,43 @@ databaseChangeLog:
             column:
               name: waaw_id
               type: VARCHAR(25)
+  - changeSet:
+      id: add_column_transaction_id
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: invoices
+              columnName: transaction_id
+      changes:
+        - addColumn:
+            tableName: invoices
+            columns:
+              - column:
+                  name: transaction_id
+                  type: VARCHAR(25)
+                  afterColumn: waaw_id
+        - renameColumn:
+            columnDataType: VARCHAR(25)
+            newColumnName: invoice_id
+            oldColumnName: waaw_id
+            tableName: invoices
+        - renameColumn:
+            columnDataType: VARCHAR(50)
+            newColumnName: payment_status
+            oldColumnName: invoice_status
+            tableName: invoices
+        - dropIndex:
+            indexName:  idx_waaw_invoice_id
+            tableName:  invoices
+        - createIndex:
+            indexName: idx_waaw_transaction_id
+            tableName: invoices
+            unique: true
+            column:
+              name: transaction_id
+              type: VARCHAR(25)
+        - renameTable:
+            newTableName: payment_history
+            oldTableName: invoices
