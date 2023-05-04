@@ -5,7 +5,9 @@ import ca.waaw.enumration.ErrorCodes;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.errors.exceptions.application.*;
 import ca.waaw.web.rest.utils.CommonUtils;
+import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.MessageSource;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -21,12 +23,16 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @SuppressWarnings("unused")
 @ControllerAdvice
+@AllArgsConstructor
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private final MessageSource messageSource;
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers,
@@ -221,6 +227,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<ErrorVM> handleAlreadySubscribedException(AlreadySubscribedException ex) {
         String message = CommonUtils.getPropertyFromMessagesResourceBundle(ErrorMessageKeys.alreadySubscribedMessage,
                 null);
+        return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(EntityCantBeActivatedException.class)
+    protected ResponseEntity<ErrorVM> handleEntityCantBeActivatedException(EntityCantBeActivatedException ex) {
+        String message = messageSource.getMessage("error.entityCantBeActivatedMessage",
+                new String[]{ex.getReasonEntities(), ex.getEntity()}, Locale.ENGLISH);
         return new ResponseEntity<>(new ErrorVM(message), HttpStatus.CONFLICT);
     }
 

@@ -413,8 +413,15 @@ public class MemberService {
                                             !admin.getLocationId().equals(user.getLocationId()))) {
                                 return null;
                             }
-                            int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), Instant.now(), false).size();
-                            if (shifts > 0) throw new EntityNotDeletableException("user", "assigned shifts");
+                            if (user.getAccountStatus().equals(AccountStatus.DISABLED)) {
+                                boolean activeParent = locationRoleRepository.findOneByIdAndDeleteFlag(user.getLocationRoleId(), false)
+                                        .filter(LocationRole::isActive)
+                                        .isPresent();
+                                if (!activeParent) throw new EntityCantBeActivatedException("employee", "role");
+                            } else {
+                                int shifts = shiftsRepository.findAllByUserIdAndStartAfterAndDeleteFlag(user.getId(), Instant.now(), false).size();
+                                if (shifts > 0) throw new EntityNotDeletableException("user", "assigned shifts");
+                            }
                             user.setAccountStatus(user.getAccountStatus().equals(AccountStatus.DISABLED) ?
                                     AccountStatus.PAID_AND_ACTIVE : AccountStatus.DISABLED);
                             user.setLastModifiedBy(admin.getId());
