@@ -70,7 +70,7 @@ public class RequestsMapper {
         target.setId(source.getId());
         target.setStatus(source.getStatus().toString());
         target.setAssignedTo(source.getAssignedTo().getFullName());
-        target.setCreatedDate(DateAndTimeUtils.getDateTimeObject(source.getCreatedDate(), timezone).getDate());
+        target.setCreatedDate(DateAndTimeUtils.getFullMonthDate(source.getCreatedDate(), timezone));
         target.setType(source.getType().toString());
         target.setSubType(source.getSubType() == null ? null : source.getSubType().toString());
         target.setLocation(source.getLocation().getName());
@@ -120,8 +120,13 @@ public class RequestsMapper {
         else if (type.equalsIgnoreCase(RequestType.TIME_OFF.toString()) &&
                 (subType.equals(RequestSubType.SICK_LEAVE_FULL_DAY) ||
                         subType.equals(RequestSubType.VACATION_LEAVE_FULL_DAY))) {
-            return " from " + DateAndTimeUtils.getDateWithFullMonth(start, timezone) + " to " +
+            return DateAndTimeUtils.isSameDay(start, end, timezone) ? " on " + DateAndTimeUtils.getDateWithFullMonth(start, timezone)
+                    : " from " + DateAndTimeUtils.getDateWithFullMonth(start, timezone) + " to " +
                     DateAndTimeUtils.getDateWithFullMonth(end, timezone);
+        } else if (DateAndTimeUtils.isSameDay(start, end, timezone)) {
+            return " on " + DateAndTimeUtils.getDateWithFullMonth(start, timezone) +
+                    " from " + DateAndTimeUtils.getDateTimeObject(start, timezone).getTime() + " to " +
+                    DateAndTimeUtils.getDateTimeObject(end, timezone).getTime();
         } else {
             return " from " + DateAndTimeUtils.getDateWithFullMonth(start, timezone) +
                     " " + DateAndTimeUtils.getDateTimeObject(start, timezone).getTime() + " to " +

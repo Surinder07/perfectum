@@ -87,9 +87,9 @@ public class ShiftsMapper {
     public static BatchDetailsDto entitiesToListingDto(BatchDetails batchSource, Map<String, List<ShiftDetails>> shiftsSource, String timezone) {
         BatchDetailsDto target = new BatchDetailsDto();
         BeanUtils.copyProperties(batchSource, target);
-        target.setStartDate(DateAndTimeUtils.getDateTimeObject(batchSource.getStartDate(), timezone).getDate());
-        target.setEndDate(DateAndTimeUtils.getDateTimeObject(batchSource.getEndDate(), timezone).getDate());
-        target.setCreationDate(DateAndTimeUtils.getDateTimeObject(batchSource.getCreatedDate(), timezone).getDate());
+        target.setStartDate(DateAndTimeUtils.getFullMonthDate(batchSource.getStartDate(), timezone));
+        target.setEndDate(DateAndTimeUtils.getFullMonthDate(batchSource.getEndDate(), timezone));
+        target.setCreationDate(DateAndTimeUtils.getFullMonthDate(batchSource.getCreatedDate(), timezone));
         target.setStatus(batchSource.getStatus() == null ? "-" : batchSource.getStatus().toString());
         List<ShiftDetailsDto> shifts = shiftsSource.get(batchSource.getId()) == null ?
                 new ArrayList<>() : shiftsSource.get(batchSource.getId())
@@ -134,8 +134,8 @@ public class ShiftsMapper {
         targetShift.setLocationRoleName(source.getLocationRole() == null ? "N/A" : source.getLocationRole().getName());
         targetShift.setShiftType(source.getShiftType());
         targetShift.setShiftStatus(source.getShiftStatus());
-        targetShift.setStart(DateAndTimeUtils.getDateTimeObject(source.getStart(), timezone));
-        targetShift.setEnd(DateAndTimeUtils.getDateTimeObject(source.getEnd(), timezone));
+        targetShift.setStart(DateAndTimeUtils.getDateTimeObjectWithFullDate(source.getStart(), timezone));
+        targetShift.setEnd(DateAndTimeUtils.getDateTimeObjectWithFullDate(source.getEnd(), timezone));
         targetShift.setNotes(source.getNotes());
         return targetShift;
     }

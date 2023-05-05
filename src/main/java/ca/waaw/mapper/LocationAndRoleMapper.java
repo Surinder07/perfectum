@@ -36,7 +36,7 @@ public class LocationAndRoleMapper {
         target.setTimezone(source.getTimezone());
         target.setName(source.getName());
         target.setActive(source.isActive());
-        target.setCreationDate(DateAndTimeUtils.getDateTimeObject(source.getCreatedDate(), timezone).getDate());
+        target.setCreationDate(DateAndTimeUtils.getFullMonthDate(source.getCreatedDate(), timezone));
         int activeEmployees = CommonUtils.getActiveEmployeesFromList(source.getUsers());
         target.setActiveEmployees(activeEmployees);
         target.setInactiveEmployees(source.getUsers().size() - activeEmployees);
@@ -67,12 +67,12 @@ public class LocationAndRoleMapper {
      * @param source location role info to be updated
      * @return Dto to be returned as API response
      */
-    public static LocationRoleDetailedDto entityToDto(LocationRole source) {
+    public static LocationRoleDetailedDto entityToDto(LocationRole source, String timezone) {
         LocationRoleDetailedDto target = new LocationRoleDetailedDto();
         target.setId(source.getId());
         target.setWaawId(source.getWaawId());
         target.setName(source.getName());
-        target.setCreationDate(source.getCreatedDate().toString().split("T")[0]);
+        target.setCreationDate(DateAndTimeUtils.getFullMonthDate(source.getCreatedDate(), timezone));
         target.setActive(source.isActive());
         target.setAdmin(source.isAdminRights());
         target.setLocation(source.getLocation().getName());

@@ -23,9 +23,9 @@ public class ReportsMapper {
         ReportListingDto target = new ReportListingDto();
         target.setId(source.getId());
         target.setWaawId(source.getWaawId());
-        target.setFrom(source.getFromDate());
-        target.setTo(source.getToDate());
-        target.setCreatedOn(DateAndTimeUtils.getDateTimeObject(source.getCreatedDate(), timezone).getDate());
+        target.setFrom(DateAndTimeUtils.getFullMonthDate(DateAndTimeUtils.getDateInstant(source.getFromDate(), "12:00", timezone), timezone));
+        target.setTo(DateAndTimeUtils.getFullMonthDate(DateAndTimeUtils.getDateInstant(source.getToDate(), "12:00", timezone), timezone));
+        target.setCreatedOn(DateAndTimeUtils.getFullMonthDate(source.getCreatedDate(), timezone));
         target.setLocationName(source.getLocation().getName());
         return target;
     }

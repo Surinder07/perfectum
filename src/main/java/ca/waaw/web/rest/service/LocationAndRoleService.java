@@ -20,6 +20,7 @@ import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
+import com.sun.jna.platform.unix.solaris.LibKstat;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -168,25 +169,26 @@ public class LocationAndRoleService {
                                           Boolean admin, String startDate, String endDate) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         Pageable getSortedByName = PageRequest.of(pageNo, pageSize, Sort.by("name").ascending());
-        AtomicReference<Boolean> isAdmin = new AtomicReference<>(admin);
+        AtomicReference<String> timezone = new AtomicReference<>(null);
         Page<LocationRole> locationPage = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .map(user -> {
+                    Boolean isAdmin = admin;
                     String finalLocationId = locationId;
-                    String timezone = user.getAuthority().equals(Authority.ADMIN) ? user.getOrganization().getTimezone() :
-                            user.getLocation().getTimezone();
+                    timezone.set(user.getAuthority().equals(Authority.ADMIN) ? user.getOrganization().getTimezone() :
+                            user.getLocation().getTimezone());
                     Instant[] dateRange = StringUtils.isNotEmpty(startDate) ?
-                            DateAndTimeUtils.getStartAndEndTimeForInstant(startDate, endDate, timezone) :
+                            DateAndTimeUtils.getStartAndEndTimeForInstant(startDate, endDate, timezone.get()) :
                             new Instant[]{null, null};
                     if (user.getAuthority().equals(Authority.MANAGER)) {
                         finalLocationId = user.getLocationId();
-                        isAdmin.set(false);
+                        isAdmin = false;
                     }
                     return locationRoleRepository.searchAndFilterRole(searchKey, user.getOrganizationId(), finalLocationId,
-                            dateRange[0], dateRange[1], isAdmin.get(), active, getSortedByName);
+                            dateRange[0], dateRange[1], isAdmin, active, getSortedByName);
                 })
                 .orElseThrow(AuthenticationException::new);
-        return CommonUtils.getPaginationResponse(locationPage, LocationAndRoleMapper::entityToDto);
+        return CommonUtils.getPaginationResponse(locationPage, LocationAndRoleMapper::entityToDto, timezone.get());
     }
 
     /**

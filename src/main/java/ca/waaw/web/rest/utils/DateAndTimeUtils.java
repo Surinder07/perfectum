@@ -25,6 +25,17 @@ public class DateAndTimeUtils {
     }
 
     /**
+     * @param dateTime Instant object from the database (UTC)
+     * @param timezone timezone to which we will change time to
+     * @return Date Time object with date and time to be sent to frontend with date like(Jun 22, 2022)
+     */
+    public static DateTimeDto getDateTimeObjectWithFullDate(Instant dateTime, String timezone) {
+        String[] splitDate = dateTime.atZone(ZoneId.of(timezone)).toString().split("T");
+        String time = splitDate[1].substring(0, 5);
+        return DateTimeDto.builder().date(getFullMonthDate(dateTime, timezone)).time(time).build();
+    }
+
+    /**
      * @param date     Date in format yyyy-MM-dd
      * @param time     Time in format HH:mm
      * @param timezone timezone to which we will change time to
@@ -43,9 +54,8 @@ public class DateAndTimeUtils {
      * @return date in format dd month name, yyyy as a String
      */
     public static String getDateWithFullMonth(Instant date, String timezone) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MMMM/yyyy");
-        String[] requiredDate = formatter.format(date.atZone(ZoneId.of(timezone))).split("/");
-        return requiredDate[0] + " " + requiredDate[1] + ", " + requiredDate[2];
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM, yyyy");
+        return formatter.format(date.atZone(ZoneId.of(timezone)));
     }
 
     /**
@@ -277,15 +287,31 @@ public class DateAndTimeUtils {
     /**
      * @param date     Instant object
      * @param timezone timezone
-     * @return date in format (January 13)
+     * @return date in format (Jan 13, 2023)
      */
     public static String getFullMonthDate(Instant date, String timezone) {
         DateTimeFormatter formatter = DateTimeFormatter
-                .ofPattern("MMMM dd")
+                .ofPattern("MMM dd, yyyy")
                 .withZone(ZoneId.of(timezone));
         return LocalDateTime
                 .ofInstant(date, ZoneId.of(timezone))
-                .format(formatter);
+                .format(formatter).replace(".", "");
+    }
+
+    /**
+     * @param date     Instant object
+     * @param timezone timezone
+     * @return date in format (Jan 13, 2023 21:00)
+     */
+    public static String getFullMonthDateWithTime(Instant date, String timezone) {
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("MMM dd, yyyy")
+                .withZone(ZoneId.of(timezone));
+        String newDate = LocalDateTime
+                .ofInstant(date, ZoneId.of(timezone))
+                .format(formatter).replace(".", "");
+        String time = getDateTimeObject(date, timezone).getTime();
+        return newDate + " " + time;
     }
 
     /**
@@ -311,7 +337,7 @@ public class DateAndTimeUtils {
         Instant[] todayRange = getTodayInstantRange(timezone);
         Instant[] yesterdayRange = new Instant[]{todayRange[0].minus(1, ChronoUnit.DAYS),
                 todayRange[1].minus(1, ChronoUnit.DAYS)};
-        DateTimeDto dateTime = getDateTimeObject(date, timezone);
+        DateTimeDto dateTime = getDateTimeObjectWithFullDate(date, timezone);
         String newDate = null;
         if (!date.isBefore(todayRange[0]) && date.isBefore(todayRange[1])) newDate = "today";
         if (!date.isBefore(yesterdayRange[0]) && date.isBefore(yesterdayRange[1])) newDate = "yesterday";
@@ -327,6 +353,10 @@ public class DateAndTimeUtils {
                 .hours(minutes / 60)
                 .minutes(minutes % 60)
                 .build();
+    }
+
+    public static boolean isSameDay(Instant date1, Instant date2, String timezone) {
+        return getDateTimeObject(date1, timezone).getDate().equals(getDateTimeObject(date2, timezone).getDate());
     }
 
 }

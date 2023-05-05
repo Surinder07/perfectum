@@ -141,7 +141,7 @@ public class UserMapper {
         target.setFullName(source.getFullName());
         target.setLocation(source.getLocation() == null ? "-" : source.getLocation().getName());
         target.setRole(source.getLocationRole() == null ? "-" : source.getLocationRole().getName());
-        target.setLastLogin(source.getLastLogin() == null ? "-" : DateAndTimeUtils.getDateTimeObject(source.getLastLogin(), timezone).toString());
+        target.setLastLogin(source.getLastLogin() == null ? "-" : DateAndTimeUtils.getFullMonthDateWithTime(source.getLastLogin(), timezone));
         target.setFullTime(source.isFullTime());
         target.setStatus(source.getAccountStatus());
         return target;

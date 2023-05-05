@@ -4,7 +4,6 @@ import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.config.applicationconfig.AppInvoiceConfig;
 import ca.waaw.domain.PaymentHistory;
 import ca.waaw.domain.User;
-import ca.waaw.domain.joined.UserOrganization;
 import ca.waaw.dto.CreditCardDto;
 import ca.waaw.dto.MailDto;
 import ca.waaw.dto.PaginationDto;
@@ -31,7 +30,6 @@ import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import ca.waaw.web.rest.utils.MessageConstants;
 import com.stripe.exception.StripeException;
-import com.stripe.model.Invoice;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -184,14 +182,14 @@ public class PaymentsService {
         return CommonUtils.getPaginationResponse(paymentsPage, (payment) -> {
             PaymentsDto response = new PaymentsDto();
             BeanUtils.copyProperties(payment, response);
-            response.setInvoiceDate(DateAndTimeUtils.getDateTimeObject(payment.getInvoiceDate(), timezone.get()).getDate());
+            response.setInvoiceDate(DateAndTimeUtils.getFullMonthDate(payment.getInvoiceDate(), timezone.get()));
             response.setDateRange(
                     payment.getInvoiceStart() == null ? "-" :
-                            DateAndTimeUtils.getDateTimeObject(payment.getInvoiceStart(), timezone.get()).getDate() + " - " +
-                                    DateAndTimeUtils.getDateTimeObject(payment.getInvoiceEnd(), timezone.get()).getDate()
+                            DateAndTimeUtils.getFullMonthDate(payment.getInvoiceStart(), timezone.get()) + " - " +
+                                    DateAndTimeUtils.getFullMonthDate(payment.getInvoiceEnd(), timezone.get())
             );
-            response.setDueDate(DateAndTimeUtils.getDateTimeObject(payment.getDueDate(), timezone.get()).getDate());
-            response.setPaymentDate(payment.getPaymentDate() == null ? "-" : DateAndTimeUtils.getDateTimeObject(payment.getPaymentDate(), timezone.get()).getDate());
+            response.setDueDate(DateAndTimeUtils.getFullMonthDateWithTime(payment.getDueDate(), timezone.get()));
+            response.setPaymentDate(payment.getPaymentDate() == null ? "-" : DateAndTimeUtils.getFullMonthDate(payment.getPaymentDate(), timezone.get()));
             return response;
         });
     }
@@ -330,13 +328,13 @@ public class PaymentsService {
                 .build();
         String[] messageArgs;
         if (payment.getTransactionType().equals(TransactionType.PLATFORM_FEE)) {
-            messageArgs = new String[] {
+            messageArgs = new String[]{
                     payment.getInvoiceId(),
                     String.format("%s %s", payment.getTotalAmount(), payment.getCurrency()),
                     DateAndTimeUtils.getDateTimeObject(payment.getDueDate(), timezone).getDate()
             };
         } else {
-            messageArgs = new String[] {
+            messageArgs = new String[]{
                     payment.getInvoiceId(),
                     String.valueOf(payment.getQuantity()),
                     DateAndTimeUtils.getDateTimeObject(payment.getInvoiceStart(), timezone).getDate(),
