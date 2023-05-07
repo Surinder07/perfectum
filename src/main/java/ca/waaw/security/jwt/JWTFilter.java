@@ -73,7 +73,7 @@ public class JWTFilter extends OncePerRequestFilter {
             case PAYMENT_PENDING:
                 if (!request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.confirmPayment"))) &&
                         !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.createPaymentIntent"))) &&
-                        !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.getPendingInvoice"))) &&
+                        !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.getPendingPayment"))) &&
                         !request.getRequestURI().equals(String.format("/api%s", env.getProperty("api.endpoints.payment-apis.createSetupIntent"))))
                     return ErrorCodes.WE_003;
                 break;

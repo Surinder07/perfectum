@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -322,7 +321,7 @@ public class DashboardService {
     }
 
     public Map<String, String> getNextShift(UserOrganization loggedUser) {
-        Shifts nextShift = shiftsRepository.findAllByUserIdAndStartAfterOrderByCreatedDateAsc(loggedUser.getId(), Instant.now())
+        Shifts nextShift = shiftsRepository.findAllByUserIdAndStartAfterOrderByStartAsc(loggedUser.getId(), Instant.now())
                 .stream().filter(shift -> shift.getShiftStatus().equals(ShiftStatus.RELEASED)).findFirst().orElse(null);
         Map<String, String> response = new HashMap<>();
         Instant[] todayRange = DateAndTimeUtils.getTodayInstantRange(loggedUser.getLocation().getTimezone());
@@ -331,7 +330,7 @@ public class DashboardService {
             response.put("day", "-");
             response.put("time", "-");
         } else {
-            DateTimeDto dateTime = DateAndTimeUtils.getDateTimeObject(nextShift.getStart(), loggedUser.getLocation().getTimezone());
+            DateTimeDto dateTime = DateAndTimeUtils.getDateTimeObjectWithFullDate(nextShift.getStart(), loggedUser.getLocation().getTimezone());
             response.put("time", dateTime.getTime());
             if (!(nextShift.getStart().isBefore(todayRange[0]) || nextShift.getStart().isAfter(todayRange[1]))) {
                 response.put("day", "Today");

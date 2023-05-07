@@ -48,6 +48,14 @@ public class PaymentsController {
 
     @SwaggerOk
     @SwaggerAuthenticated
+    @Operation(description = "${api.description.payment-apis.updateDefaultCard}")
+    @PutMapping("${api.endpoints.payment-apis.updateDefaultCard}")
+    public void updateDefaultCard(@RequestParam String cardId) {
+        paymentsService.updateDefaultCard(cardId);
+    }
+
+    @SwaggerOk
+    @SwaggerAuthenticated
     @Operation(description = "${api.description.payment-apis.deleteCard}")
     @DeleteMapping("${api.endpoints.payment-apis.deleteCard}")
     public void deleteCard(@RequestParam String cardId) {
@@ -64,18 +72,18 @@ public class PaymentsController {
 
     @SwaggerOk
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.payment-apis.createPaymentIntent}")
-    @GetMapping("${api.endpoints.payment-apis.createPaymentIntent}")
-    public ResponseEntity<Map<String, String>> createNewPaymentIntent(@RequestParam String invoiceId) {
-        return ResponseEntity.ok(paymentsService.createNewPaymentIntent(invoiceId));
+    @Operation(description = "${api.description.payment-apis.getPendingPayment}")
+    @GetMapping("${api.endpoints.payment-apis.getPendingPayment}")
+    public ResponseEntity<PaymentsDto> getPendingPayment() {
+        return ResponseEntity.ok(paymentsService.getPendingPayment());
     }
 
     @SwaggerOk
     @SwaggerAuthenticated
-    @Operation(description = "${api.description.payment-apis.updateDefaultCard}")
-    @PutMapping("${api.endpoints.payment-apis.updateDefaultCard}")
-    public void updateDefaultCard(@RequestParam String cardId) {
-        paymentsService.updateDefaultCard(cardId);
+    @Operation(description = "${api.description.payment-apis.createPaymentIntent}")
+    @GetMapping("${api.endpoints.payment-apis.createPaymentIntent}")
+    public ResponseEntity<Map<String, String>> createNewPaymentIntent(@RequestParam String paymentId) {
+        return ResponseEntity.ok(paymentsService.createNewPaymentIntent(paymentId));
     }
 
     @SwaggerBadRequest
@@ -114,14 +122,6 @@ public class PaymentsController {
             e.printStackTrace();
             throw e;
         }
-    }
-
-    @SwaggerOk
-    @SwaggerAuthenticated
-    @Operation(description = "${api.description.payment-apis.getPendingPayment}")
-    @GetMapping("${api.endpoints.payment-apis.getPendingPayment}")
-    public ResponseEntity<PaymentsDto> getPendingPayment() {
-        return ResponseEntity.ok(paymentsService.getPendingPayment());
     }
 
 }

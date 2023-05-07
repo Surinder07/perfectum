@@ -246,15 +246,13 @@ public class DateAndTimeUtils {
         return new Instant[]{weekStart, weekEnd};
     }
 
-    /**
+    /** TODO
      * @param timezone timezone for which dates are required
      * @return start and end for the today
      */
     public static Instant[] getTodayInstantRange(String timezone) {
-        ZonedDateTime now = LocalDateTime.now().atZone(ZoneId.of(timezone));
-        Instant dayStart = now.withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
-        Instant dayEnd = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999).toInstant();
-        return new Instant[]{dayStart, dayEnd};
+        String today = LocalDateTime.now().atZone(ZoneId.of(timezone)).toString().split("T")[0];
+        return getStartAndEndTimeForInstant(today, timezone);
     }
 
     /**

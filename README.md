@@ -37,5 +37,5 @@ While running the application for the first time, set `spring.liquibase.enabled=
 
 ### Project Structure
 
-- All Api Endpoints and swagger descriptions can be found in apiinfo.yml file.
+- All Api Endpoints and swagger descriptions can be found in api-info directory under resources.
 - All error messages can be found in the messages.properties bundle.

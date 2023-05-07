@@ -13,11 +13,11 @@ import java.util.Optional;
 @Repository
 public interface PaymentHistoryRepository extends JpaRepository<PaymentHistory, String> {
 
-    @Query(value = "SELECT invoice_id from invoices WHERE invoice_id IS NOT NULL ORDER BY invoice_id DESC LIMIT 1",
+    @Query(value = "SELECT invoice_id from payment_history WHERE invoice_id IS NOT NULL ORDER BY invoice_id DESC LIMIT 1",
             nativeQuery = true)
     Optional<String> getLastUsedInvoiceId();
 
-    @Query(value = "SELECT transaction_id from invoices WHERE transaction_id IS NOT NULL ORDER BY transaction_id DESC LIMIT 1",
+    @Query(value = "SELECT transaction_id from payment_history WHERE transaction_id IS NOT NULL ORDER BY transaction_id DESC LIMIT 1",
             nativeQuery = true)
     Optional<String> getLastUsedTransactionId();
 

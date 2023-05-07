@@ -25,6 +25,7 @@ import javax.sql.DataSource;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * This service is used in {@link WaawApplication} for the initialization of needed entities or triggers
@@ -72,13 +73,14 @@ public class ApplicationStartupSqlService {
         userRepository.findOneByAuthority(Authority.SUPER_USER)
                 .ifPresentOrElse(user -> log.info("A super-user is already present in the database: {}", user),
                         () -> {
-                            String organizationId = createNewOrganization(null);
+                            String userId = UUID.randomUUID().toString();
+                            String organizationId = createNewOrganization(null, userId);
                             String currentCustomId = userRepository.getLastUsedCustomId()
                                     .orElse(appCustomIdConfig.getUserPrefix() + "000000000");
                             User superUser = saveNewUser(appSuperUserConfig.getFirstName(), appSuperUserConfig.getLastName(),
                                     appSuperUserConfig.getUsername(), appSuperUserConfig.getEmail(), appSuperUserConfig.getPassword(),
                                     CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()),
-                                    Authority.SUPER_USER, organizationId, null, null);
+                                    Authority.SUPER_USER, organizationId, null, null, userId);
                             createDemoUsersAndLocations(superUser.getWaawId());
                         }
                 );
@@ -122,11 +124,12 @@ public class ApplicationStartupSqlService {
 
     public void createDemoUsersAndLocations(String currentCustomId) {
         if (Boolean.parseBoolean(env.getProperty("application.create-dummy-data-on-startup"))) {
-            String organizationId = createNewOrganization("WAAW TEST");
+            String userId = UUID.randomUUID().toString();
+            String organizationId = createNewOrganization("WAAW TEST", userId);
             // Create an organization admin
             User admin = saveNewUser("Global", "Admin", "gAdmin", "gadmin@waaw.ca", "Admin123$",
                     CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()),
-                    Authority.ADMIN, organizationId, null, null);
+                    Authority.ADMIN, organizationId, null, null, userId);
             // Create a new location
             String locationId = createNewLocation(organizationId, admin.getId());
             // Create a new location role
@@ -134,15 +137,15 @@ public class ApplicationStartupSqlService {
             // Create a location admin
             User manager = saveNewUser("Location", "Admin", "lAdmin", "ladmin@waaw.ca", "Admin123$",
                     CommonUtils.getNextCustomId(admin.getWaawId(), appCustomIdConfig.getLength()),
-                    Authority.MANAGER, organizationId, locationId, locationRoleAdminId);
+                    Authority.MANAGER, organizationId, locationId, locationRoleAdminId, null);
             String locationRoleId = createNewLocationRole(organizationId, locationId, manager.getId(), false);
             // Create new Employees
             User employee1 = saveNewUser("First", "Employee", "employee1", "employee1@waaw.ca",
                     "Empl123$", CommonUtils.getNextCustomId(manager.getWaawId(), appCustomIdConfig.getLength()),
-                    Authority.EMPLOYEE, organizationId, locationId, locationRoleId);
+                    Authority.EMPLOYEE, organizationId, locationId, locationRoleId, null);
             User employee2 = saveNewUser("Second", "Employee", "employee2", "employee2@waaw.ca",
                     "Empl123$", CommonUtils.getNextCustomId(employee1.getWaawId(), appCustomIdConfig.getLength()),
-                    Authority.EMPLOYEE, organizationId, locationId, locationRoleId);
+                    Authority.EMPLOYEE, organizationId, locationId, locationRoleId, null);
             // Create Employee Preferences
             createEmployeePreferences(manager.getId());
             createEmployeePreferences(employee1.getId());
@@ -150,7 +153,7 @@ public class ApplicationStartupSqlService {
         }
     }
 
-    private String createNewOrganization(String name) {
+    private String createNewOrganization(String name, String userId) {
         String currentOrgCustomId = organizationRepository.getLastUsedCustomId()
                 .orElse(appCustomIdConfig.getOrganizationPrefix() + "000000000");
         Organization organization = new Organization();
@@ -160,21 +163,22 @@ public class ApplicationStartupSqlService {
         organization.setTrialEndDate(Instant.now());
         organization.setNextPaymentOn(Instant.now().plus(300, ChronoUnit.DAYS));
         organization.setPlatformFeePaid(true);
-        organization.setCreatedBy("SYSTEM");
+        organization.setCreatedBy(userId);
         organizationRepository.save(organization);
         log.info("Created a new organization: {}", organization);
         return organization.getId();
     }
 
     private User saveNewUser(String fName, String lName, String username, String email, String password, String customId,
-                             Authority role, String organizationId, String locationId, String locationRoleId) {
+                             Authority role, String organizationId, String locationId, String locationRoleId, String userId) {
         User user = new User();
+        if (userId != null) user.setId(userId);
         user.setFirstName(fName);
         user.setLastName(lName);
         user.setEmail(email);
         user.setUsername(username);
         user.setWaawId(customId);
-        if (user.getAuthority().equals(Authority.ADMIN)) user.setStripeId("cus_NpW3H7xDkEi1Vi");
+        if (role.equals(Authority.ADMIN)) user.setStripeId("cus_NpW3H7xDkEi1Vi");
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setAccountStatus((role.equals(Authority.SUPER_USER) || role.equals(Authority.ADMIN)) ?
                 AccountStatus.PAID_AND_ACTIVE : AccountStatus.DISABLED);
@@ -218,6 +222,7 @@ public class ApplicationStartupSqlService {
 
     /**
      * Create employee preferences for a dummy user
+     *
      * @param userId userId for the employee
      */
     private void createEmployeePreferences(String userId) {

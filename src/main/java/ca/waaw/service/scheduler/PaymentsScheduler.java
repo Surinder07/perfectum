@@ -131,6 +131,7 @@ public class PaymentsScheduler {
                                 .receiverUuid(user.getId())
                                 .receiverMail(user.getEmail())
                                 .receiverUsername(user.getUsername())
+                                .receiverName(user.getFullName())
                                 .language(user.getLangKey())
                                 .type(NotificationType.PAYMENT)
                                 .build();

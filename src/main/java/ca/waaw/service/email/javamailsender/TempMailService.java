@@ -56,7 +56,7 @@ public class TempMailService {
                 message.getLinkedinUrl()
         );
         try {
-            String action = messageConstant[2] == null ? "login" : messageSource.getMessage(messageConstant[2], null, locale);
+            String action = messageConstant.length < 3 ? "login" : messageSource.getMessage(messageConstant[2], null, locale);
             String subject = messageSource.getMessage(messageConstant[0], titleArgs, locale);
             String content = messageSource.getMessage(messageConstant[1], contentArgs, locale);
             if (message.getActionUrl() == null) message.setActionUrl(message.getWebsiteUrl());
