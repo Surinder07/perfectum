@@ -1,18 +1,34 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.Location;
-import ca.waaw.domain.OrganizationHolidays;
-import ca.waaw.domain.Shifts;
-import ca.waaw.domain.User;
-import ca.waaw.domain.joined.DetailedTimesheet;
-import ca.waaw.domain.joined.ShiftDetailsWithBatch;
-import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.domain.locationandroles.Location;
+import ca.waaw.domain.organization.OrganizationHolidays;
+import ca.waaw.domain.shifts.ShiftDetails;
+import ca.waaw.domain.shifts.Shifts;
+import ca.waaw.domain.user.User;
+import ca.waaw.domain.timesheet.DetailedTimesheet;
+//import ca.waaw.domain.joined.ShiftDetailsWithBatch;
+import ca.waaw.domain.user.UserOrganization;
 import ca.waaw.dto.DateTimeDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.enumration.*;
+//import ca.waaw.mapper.ShiftsMapper;
+import ca.waaw.enumration.request.RequestStatus;
+import ca.waaw.enumration.shift.ShiftStatus;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.mapper.ShiftsMapper;
-import ca.waaw.repository.*;
-import ca.waaw.repository.joined.*;
+import ca.waaw.repository.locationandroles.LocationRepository;
+import ca.waaw.repository.locationandroles.LocationRoleUsersRepository;
+import ca.waaw.repository.locationandroles.LocationUsersRepository;
+import ca.waaw.repository.organization.OrganizationHolidayRepository;
+import ca.waaw.repository.requests.DetailedRequestsRepository;
+import ca.waaw.repository.requests.RequestsRepository;
+import ca.waaw.repository.shifts.ShiftDetailsRepository;
+import ca.waaw.repository.shifts.ShiftsRepository;
+import ca.waaw.repository.timesheet.DetailedTimesheetRepository;
+import ca.waaw.repository.timesheet.TimesheetRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
+import ca.waaw.repository.user.UserRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.utils.CommonUtils;
@@ -48,7 +64,7 @@ public class DashboardService {
 
     private final LocationRoleUsersRepository locationRoleUsersRepository;
 
-    private final ShiftDetailsWithBatchRepository shiftDetailsWithBatchRepository;
+    private final ShiftDetailsRepository shiftDetailsRepository;
 
     private final TimesheetRepository timesheetRepository;
 
@@ -73,7 +89,7 @@ public class DashboardService {
                     if (loggedUser.getAuthority().equals(Authority.ADMIN)) {
                         tilesInfo.put("activeEmployees", getActiveEmployees(loggedUser));
                         tilesInfo.put("activeLocations", getActiveLocations(loggedUser));
-                        response.put("invoiceTrends", getInvoiceTrends(loggedUser));
+                        response.put("invoiceTrends", getPaymentTrends(loggedUser));
                         response.put("employeeTrends", getEmployeeTrends(loggedUser));
                     } else if (loggedUser.getAuthority().equals(Authority.MANAGER)) {
                         tilesInfo.put("activeEmployees", getActiveEmployees(loggedUser));
@@ -105,13 +121,13 @@ public class DashboardService {
         String userId = (loggedUser.getAuthority().equals(Authority.EMPLOYEE) || loggedUser.getAuthority().equals(Authority.CONTRACTOR)) ?
                 loggedUser.getId() : null;
         Pageable getSortedByCreatedDate = PageRequest.of(pageNo, pageSize);
-        Page<ShiftDetailsWithBatch> shiftsPage = shiftDetailsWithBatchRepository.getShiftsForDashboard(startEnd[0], startEnd[1],
+        Page<ShiftDetails> shiftsPage = shiftDetailsRepository.getShiftsForDashboard(startEnd[0], startEnd[1],
                 loggedUser.getAuthority().equals(Authority.ADMIN), loggedUser.getOrganizationId(), loggedUser.getLocationId(),
                 userId, getSortedByCreatedDate);
         return CommonUtils.getPaginationResponse(shiftsPage, ShiftsMapper::entityToShiftDto, timezone);
     }
 
-    private Map<String, Object> getInvoiceTrends(UserOrganization loggedUser) {
+    private Map<String, Object> getPaymentTrends(UserOrganization loggedUser) {
         // TODO Add data
         Map<String, Object> currentYear = new HashMap<>();
         Map<String, Object> previousYear = new HashMap<>();
@@ -217,7 +233,6 @@ public class DashboardService {
     }
 
     private int getOnlineEmployees(UserOrganization loggedUser) {
-        // todo exclude admin roles
         try {
             return detailedTimesheetRepository.getOnlineEmployeeCount(loggedUser.getOrganizationId(), loggedUser.getLocationId(),
                     loggedUser.getAuthority().equals(Authority.MANAGER));

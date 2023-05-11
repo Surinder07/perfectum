@@ -1,12 +1,15 @@
 package ca.waaw.mapper;
 
-import ca.waaw.domain.EmployeePreferences;
-import ca.waaw.domain.Organization;
-import ca.waaw.domain.User;
-import ca.waaw.domain.joined.UserOrganization;
-import ca.waaw.dto.EmployeePreferencesDto;
+import ca.waaw.domain.user.EmployeePreferences;
+import ca.waaw.domain.organization.Organization;
+import ca.waaw.domain.user.User;
+import ca.waaw.domain.user.UserOrganization;
+import ca.waaw.dto.userdtos.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.*;
 import ca.waaw.enumration.*;
+import ca.waaw.enumration.report.PayrollGenerationType;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;

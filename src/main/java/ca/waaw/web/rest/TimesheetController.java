@@ -1,7 +1,7 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.TimesheetDto;
+import ca.waaw.dto.timesheet.TimesheetDto;
 import ca.waaw.dto.timesheet.ActiveTimesheetDto;
 import ca.waaw.dto.timesheet.TimesheetDetailsDto;
 import ca.waaw.enumration.TimeSheetType;

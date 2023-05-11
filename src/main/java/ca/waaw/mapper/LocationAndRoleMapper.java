@@ -1,9 +1,9 @@
 package ca.waaw.mapper;
 
-import ca.waaw.domain.Location;
-import ca.waaw.domain.LocationRole;
-import ca.waaw.domain.User;
-import ca.waaw.domain.joined.LocationUsers;
+import ca.waaw.domain.locationandroles.Location;
+import ca.waaw.domain.locationandroles.LocationRole;
+import ca.waaw.domain.user.User;
+import ca.waaw.domain.locationandroles.LocationUsers;
 import ca.waaw.dto.locationandroledtos.*;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;

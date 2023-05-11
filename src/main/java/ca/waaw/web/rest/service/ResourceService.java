@@ -1,10 +1,10 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.Organization;
-import ca.waaw.domain.User;
+import ca.waaw.domain.organization.Organization;
+import ca.waaw.domain.user.User;
 import ca.waaw.enumration.FileType;
-import ca.waaw.repository.OrganizationRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.repository.organization.OrganizationRepository;
+import ca.waaw.repository.user.UserRepository;
 import ca.waaw.storage.AzureStorage;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import lombok.AllArgsConstructor;

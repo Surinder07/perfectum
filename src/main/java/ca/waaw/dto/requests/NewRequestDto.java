@@ -1,8 +1,8 @@
 package ca.waaw.dto.requests;
 
 import ca.waaw.dto.DateTimeDto;
-import ca.waaw.enumration.RequestSubType;
-import ca.waaw.enumration.RequestType;
+import ca.waaw.enumration.request.RequestSubType;
+import ca.waaw.enumration.request.RequestType;
 import ca.waaw.web.rest.utils.customannotations.ToUppercase;
 import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
 import lombok.AllArgsConstructor;

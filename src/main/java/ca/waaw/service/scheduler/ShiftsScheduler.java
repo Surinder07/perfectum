@@ -1,19 +1,21 @@
 package ca.waaw.service.scheduler;
 
-import ca.waaw.domain.Organization;
-import ca.waaw.domain.Shifts;
-import ca.waaw.domain.Timesheet;
-import ca.waaw.domain.User;
-import ca.waaw.dto.NotificationInfoDto;
-import ca.waaw.enumration.Authority;
+import ca.waaw.domain.organization.Organization;
+import ca.waaw.domain.shifts.Shifts;
+import ca.waaw.domain.timesheet.Timesheet;
+import ca.waaw.domain.user.User;
+import ca.waaw.dto.appnotifications.MultipleNotificationDto;
+import ca.waaw.dto.appnotifications.NotificationInfoDto;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.enumration.NotificationType;
-import ca.waaw.enumration.ShiftStatus;
-import ca.waaw.repository.OrganizationRepository;
-import ca.waaw.repository.ShiftsRepository;
-import ca.waaw.repository.TimesheetRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.enumration.shift.ShiftStatus;
+import ca.waaw.repository.organization.OrganizationRepository;
+import ca.waaw.repository.shifts.ShiftsRepository;
+import ca.waaw.repository.timesheet.TimesheetRepository;
+import ca.waaw.repository.user.UserRepository;
 import ca.waaw.service.AppNotificationService;
 import ca.waaw.service.WebSocketService;
+import ca.waaw.web.rest.utils.MessageConstants;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -105,39 +107,59 @@ public class ShiftsScheduler {
         List<User> lAdmins = userRepository.findAllByLocationIdInAndAuthorityAndDeleteFlag(locationIds,
                 Authority.MANAGER, false);
         List<User> users = userRepository.findAllByIdInAndDeleteFlag(userIds, false);
-        notifyAdminsForShifts(shiftsToNotifyFor, gAdmin, lAdmins, users);
+        notifyAdminsAndUsersForShifts(shiftsToNotifyFor, gAdmin, lAdmins, users);
     }
 
-    private void notifyAdminsForShifts(List<Shifts> shiftToNotifyFor, List<User> gAdmin, List<User> lAdmins,
-                                       List<User> users) {
-        try {
-            shiftToNotifyFor.forEach(shift -> {
-                log.info("Sending notification for missed shift: {}", shift);
-                User user = users.stream().filter(user1 -> user1.getId().equals(shift.getUserId())).findFirst().orElse(null);
-                assert user != null;
-                List<User> admins = gAdmin.stream().filter(admin -> admin.getOrganizationId().equals(shift.getOrganizationId()))
-                        .collect(Collectors.toList());
-                if (!user.getAuthority().equals(Authority.MANAGER)) {
-                    admins.addAll(lAdmins.stream().filter(admin -> admin.getOrganizationId().equals(shift.getOrganizationId()))
-                            .collect(Collectors.toList()));
-                }
-                admins.forEach(admin -> {
-                    NotificationInfoDto notificationInfo = NotificationInfoDto
-                            .builder()
-                            .receiverUuid(admin.getId())
-                            .receiverName(admin.getFullName())
-                            .receiverUsername(admin.getUsername())
-                            .receiverMail(admin.getEmail())
-                            .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
-                            .language(admin.getLangKey() == null ? null : admin.getLangKey())
-                            .type(NotificationType.REQUEST)
-                            .build();
-                    appNotificationService.sendNotification("notification.shift.missed", notificationInfo, user.getFullName());
-                });
-                log.info("Sending notification for missed shift successful");
+    private void notifyAdminsAndUsersForShifts(List<Shifts> shiftToNotifyFor, List<User> gAdmin, List<User> lAdmins,
+                                               List<User> users) {
+        List<MultipleNotificationDto> notifications = new ArrayList<>();
+        shiftToNotifyFor.forEach(shift -> {
+            log.info("Sending notification for missed shift: {}", shift);
+            User user = users.stream().filter(user1 -> user1.getId().equals(shift.getUserId())).findFirst().orElse(null);
+            assert user != null;
+            List<User> admins = gAdmin.stream().filter(admin -> admin.getOrganizationId().equals(shift.getOrganizationId()))
+                    .collect(Collectors.toList());
+            if (!user.getAuthority().equals(Authority.MANAGER)) {
+                admins.addAll(lAdmins.stream().filter(admin -> admin.getOrganizationId().equals(shift.getOrganizationId()))
+                        .collect(Collectors.toList()));
+            }
+            admins.forEach(admin -> {
+                MultipleNotificationDto notification = MultipleNotificationDto.builder()
+                        .messageConstant(MessageConstants.shiftMissed)
+                        .messageArguments(new String[]{user.getFullName()})
+                        .notificationInfo(
+                                NotificationInfoDto
+                                        .builder()
+                                        .receiverUuid(admin.getId())
+                                        .receiverName(admin.getFullName())
+                                        .receiverUsername(admin.getUsername())
+                                        .receiverMail(admin.getEmail())
+                                        .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
+                                        .language(admin.getLangKey() == null ? null : admin.getLangKey())
+                                        .type(NotificationType.SHIFT)
+                                        .build()
+                        ).build();
+                notifications.add(notification);
             });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            // Adding notification for user
+            MultipleNotificationDto notification = MultipleNotificationDto.builder()
+                    .messageConstant(MessageConstants.shiftMissedUser)
+                    .messageArguments(new String[]{shift.getWaawShiftId()})
+                    .notificationInfo(
+                            NotificationInfoDto
+                                    .builder()
+                                    .receiverUuid(user.getId())
+                                    .receiverName(user.getFullName())
+                                    .receiverUsername(user.getUsername())
+                                    .receiverMail(user.getEmail())
+                                    .receiverMobile(user.getMobile() == null ? null : user.getCountryCode() + user.getMobile())
+                                    .language(user.getLangKey() == null ? null : user.getLangKey())
+                                    .type(NotificationType.SHIFT)
+                                    .build()
+                    ).build();
+            notifications.add(notification);
+            log.info("Sending notification for missed shift successful");
+        });
+        appNotificationService.sendMultipleApplicationNotification(notifications);
     }
 }

@@ -1,9 +1,9 @@
 package ca.waaw.web.rest.utils;
 
-import ca.waaw.domain.User;
+import ca.waaw.domain.user.User;
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.enumration.AccountStatus;
-import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 import ca.waaw.web.rest.errors.exceptions.UnauthorizedException;
@@ -20,7 +20,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.security.SecureRandom;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -41,33 +44,6 @@ public class CommonUtils {
     }
 
     /**
-     * Will fetch the property from {@code messages.properties} resource bundle
-     *
-     * @param property property key
-     * @param locale   language needed for property
-     * @return Value for the property key
-     */
-    public static String getPropertyFromMessagesResourceBundle(String property, String locale) {
-        Locale finalLocale = locale == null ? Locale.ENGLISH : new Locale(locale);
-        ResourceBundle bundle = ResourceBundle.getBundle("i18n/messages", finalLocale);
-        return bundle.getString(property);
-    }
-
-    /**
-     * Will fetch the property from {@code messages.properties} resource bundle
-     *
-     * @param property property key
-     * @param locale   language needed for property
-     * @return Value Map for the property key
-     */
-    public static Map<String, String> getPropertyMapFromMessagesResourceBundle(String property, String locale) {
-        String propertyValue = getPropertyFromMessagesResourceBundle(property, locale);
-        return Arrays.stream(propertyValue.split(","))
-                .map(s -> s.split("="))
-                .collect(Collectors.toMap(s -> s[0], s -> s[1]));
-    }
-
-    /**
      * @param source String to change
      * @return split string form underscore and capitalize first alphabet of each word
      */
@@ -80,21 +56,12 @@ public class CommonUtils {
     }
 
     /**
-     * @param firstname firstname
-     * @param lastname  lastname
-     * @return combined string without any white spaces
-     */
-    public static String combineFirstAndLastName(String firstname, String lastname) {
-        assert (StringUtils.isNotEmpty(firstname));
-        return StringUtils.isNotEmpty(lastname) ? firstname + " " + lastname : firstname;
-    }
-
-    /**
      * @param enumClass Enum class to match string with
      * @param value     value to be matched with enum
      * @param field     field that will be shown in exception thrown
      */
     public static void validateStringInEnum(Class<? extends Enum<?>> enumClass, String value, String field) {
+        if (value == null) return;
         if (Stream.of(enumClass.getEnumConstants()).map(Enum::name).noneMatch(name -> name.equalsIgnoreCase(value))) {
             throw new BadRequestException("Invalid value for the field", field);
         }
@@ -116,8 +83,22 @@ public class CommonUtils {
      * @return List containing all comma separated values
      */
     public static List<String> commaSeparatedStringToList(String commaSeparatedString) {
-        return Arrays.asList(commaSeparatedString.replace("[", "").replace("]", "")
-                .replaceAll(", ", ",").split(","));
+        if (commaSeparatedString == null) return null;
+        return Arrays.asList(commaSeparatedString.replaceAll(", ", ",").split(","));
+    }
+
+    /**
+     * @param existingString existing string if any
+     * @param stringToAdd    list of string to add
+     * @return comma separated string for all values
+     */
+    public static String combineListToCommaSeparatedString(String existingString, List<String> stringToAdd) {
+        StringJoiner joiner = new StringJoiner(",");
+        if (existingString != null) {
+            joiner.add(existingString);
+        }
+        stringToAdd.forEach(joiner::add);
+        return joiner.toString();
     }
 
     /**
@@ -233,6 +214,39 @@ public class CommonUtils {
         return (int) users.stream()
                 .filter(user -> !user.getAuthority().equals(Authority.ADMIN))
                 .filter(user -> user.getAccountStatus().equals(AccountStatus.PAID_AND_ACTIVE)).count();
+    }
+
+    /**
+     * Throws exception if date is not yyyy-MM-dd format
+     *
+     * @param dates All dates that require verifying
+     */
+    public static void validateDateFormat(String[]... dates) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        AtomicBoolean error = new AtomicBoolean(false);
+        List<String> errorFields = new ArrayList<>();
+        Arrays.stream(dates).forEach(date -> {
+            try {
+                sdf.parse(date[0]);
+            } catch (ParseException e) {
+                error.set(true);
+                errorFields.add(date[1]);
+            }
+        });
+        if (error.get()) {
+            throw new BadRequestException("Please enter valid date values (yyyy-MM-dd)", errorFields.toArray(new String[0]));
+        }
+    }
+
+    /**
+     * @param value         the value we need validated
+     * @param field         field name to be sent in error
+     * @param valuesToMatch allowed values for the validating value
+     */
+    public static void matchAndValidateStringValues(String value, String field, String... valuesToMatch) {
+        if (Arrays.stream(valuesToMatch).noneMatch(val -> val.equalsIgnoreCase(value))) {
+            throw new BadRequestException("Invalid value", field);
+        }
     }
 
     /**

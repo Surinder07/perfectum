@@ -1,13 +1,21 @@
 package ca.waaw.web.rest.utils;
 
-import ca.waaw.domain.*;
-import ca.waaw.domain.joined.EmployeePreferencesWithUser;
-import ca.waaw.dto.EmployeePreferencesDto;
-import ca.waaw.dto.ShiftSchedulingPreferences;
-import ca.waaw.enumration.ShiftStatus;
-import ca.waaw.enumration.ShiftType;
+import ca.waaw.domain.locationandroles.LocationRole;
+import ca.waaw.domain.organization.OrganizationHolidays;
+import ca.waaw.domain.requests.Requests;
+import ca.waaw.domain.shifts.Shifts;
+import ca.waaw.domain.user.EmployeePreferencesWithUser;
+import ca.waaw.domain.user.UserOrganization;
+import ca.waaw.dto.*;
+import ca.waaw.dto.appnotifications.MultipleNotificationDto;
+import ca.waaw.dto.appnotifications.NotificationInfoDto;
+import ca.waaw.dto.shifts.NewShiftDto;
+import ca.waaw.dto.shifts.ShiftSchedulingPreferences;
+import ca.waaw.dto.userdtos.EmployeePreferencesDto;
+import ca.waaw.enumration.NotificationType;
+import ca.waaw.enumration.shift.ShiftStatus;
+import ca.waaw.enumration.shift.ShiftType;
 import ca.waaw.web.rest.errors.exceptions.application.ShiftOverlappingException;
-import ca.waaw.web.rest.service.ShiftSchedulingService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -55,8 +63,9 @@ public class ShiftSchedulingUtils {
             // Check for minimum gap in two shifts
             validateGapBetweenTwoShifts(shiftsToCheck, shift, conflictReasons, shiftSchedulingPreferences);
         } catch (ShiftOverlappingException e) {
+            log.error("There is an existing overlapping shift for the shift {}", shift);
             shift.setShiftStatus(ShiftStatus.FAILED);
-            shift.setNotes("An existing shift overlaps with this shift.");
+            shift.setFailureReason("An existing shift overlaps with this shift.");
         }
         return conflictReasons;
     }
@@ -125,7 +134,7 @@ public class ShiftSchedulingUtils {
      */
     public static void validateMaximumConsecutiveWorkDays(List<Shifts> shiftsToCheck, Shifts shift, List<String> conflictReasons,
                                                           ShiftSchedulingPreferences shiftSchedulingPreferences) {
-                if (shiftsToCheck.size() > shiftSchedulingPreferences.getMaxConsecutiveWorkDays()) {
+        if (shiftsToCheck.size() > shiftSchedulingPreferences.getMaxConsecutiveWorkDays()) {
             AtomicReference<Instant> startCompareDate = new AtomicReference<>(shift.getStart()
                     .minus(shiftSchedulingPreferences.getMaxConsecutiveWorkDays(), ChronoUnit.DAYS));
             MutableBoolean conflict = new MutableBoolean(false);
@@ -174,7 +183,7 @@ public class ShiftSchedulingUtils {
     }
 
     /**
-     * @param dto               employee preferences to be updated
+     * @param dto                  employee preferences to be updated
      * @param minMinutesDifference min difference between two shifts required
      * @return true if min difference between two shifts is not followed
      */
@@ -189,9 +198,9 @@ public class ShiftSchedulingUtils {
     }
 
     /**
-     * @param firstDayStart     first day start time (24:00 hours pattern)
-     * @param firstDayEnd       working hours for first day
-     * @param secondDayStart    second day start time (24:00 hours pattern)
+     * @param firstDayStart       first day start time (24:00 hours pattern)
+     * @param firstDayEnd         working hours for first day
+     * @param secondDayStart      second day start time (24:00 hours pattern)
      * @param minMinuteDifference min difference between two shifts required
      * @return true if min difference between two shifts is not followed
      */
@@ -257,23 +266,33 @@ public class ShiftSchedulingUtils {
     }
 
     /**
-     * Will create shifts for all employees between batch dates based on employee preferences
-     *
-     * @param batch                       batch details
-     * @param existingShifts              list of existing shifts
-     * @param holidays                    list of organization holidays
-     * @param preferences                 all shift preferences for this location
-     * @param employeePreferenceWithUsers all employees list with preferences
-     * @param timezone                    timezone for this location
+     * @param shiftDetails                DTO containing all shift details
+     * @param loggedUser                  {@link UserOrganization object for logged-in user}
+     * @param batchId                     Batch uuid generated for this batch
+     * @param customBatchId               WaaW batch id generated for this batch
+     * @param timezone                    Timezone for the logged-in user
+     * @param existingShifts              List of existing shifts in this date range
+     * @param holidays                    List of organization holidays
+     * @param preferences                 All shift preferences for target employees
+     * @param employeePreferenceWithUsers All employees list with preferences
+     * @param timeOff                     List of all allowed time off requests within this date range
+     * @param startEndDates               Start and End date Instants converted to logged-in user's timezone
+     * @param notifications               An empty list of notifications to add notifications to (They will be saved in bulk later)
+     * @param currentWaawShiftId          Last used Shift id for WAAW
+     * @param customIdLength              Allowed length for the custom id
+     * @return A list of new Shift objects created for this batch
      */
-    public static List<Shifts> validateAndCreateShiftsForBatch(ShiftsBatch batch, List<Shifts> existingShifts, List<OrganizationHolidays> holidays,
-                                                               List<ShiftSchedulingPreferences> preferences, List<EmployeePreferencesWithUser> employeePreferenceWithUsers,
-                                                               String timezone, List<String> employeeWithoutPreferences,
-                                                               List<Requests> timeOff) {
+    public static List<Shifts> validateAndCreateShiftsForBatch(
+            NewShiftDto shiftDetails, UserOrganization loggedUser, String batchId, String customBatchId, String timezone,
+            List<Shifts> existingShifts, List<OrganizationHolidays> holidays, List<ShiftSchedulingPreferences> preferences,
+            List<EmployeePreferencesWithUser> employeePreferenceWithUsers, List<Requests> timeOff, Instant[] startEndDates,
+            List<MultipleNotificationDto> notifications, String currentWaawShiftId, int customIdLength
+    ) {
         List<Shifts> newShifts = new ArrayList<>();
         try {
-            Instant startDate = batch.getStartDate();
-            while (startDate.isBefore(batch.getEndDate())) {
+            Instant startDate = startEndDates[0];
+            AtomicReference<String> customId = new AtomicReference<>(currentWaawShiftId);
+            while (startDate.isBefore(startEndDates[1])) {
                 // Check if today is a holiday and create shifts if it isn't
                 Instant finalStartDate = startDate;
                 boolean isHoliday = holidays.stream().anyMatch(tempHoliday -> {
@@ -282,19 +301,21 @@ public class ShiftSchedulingUtils {
                             Integer.parseInt(splitDate[1]) && tempHoliday.getDate() == Integer.parseInt(splitDate[2]);
                 });
                 if (!isHoliday) {
-                    // Create a list of new shifts for this day
-                    List<Shifts> newShiftsForOneDay = createShiftsForOneDayOfBatch(startDate, existingShifts, preferences,
-                            employeePreferenceWithUsers, timezone, batch.getCreatedBy(), employeeWithoutPreferences,
-                            batch.isReleased(), batch.getId(), timeOff);
+                    List<Shifts> newShiftsForOneDay = createShiftsForOneDayOfBatch(startEndDates, startDate, existingShifts,
+                            preferences, employeePreferenceWithUsers, timeOff, timezone, loggedUser, notifications,
+                            shiftDetails.isInstantRelease(), batchId, customBatchId, shiftDetails.getShiftName(),
+                            customId, customIdLength);
                     newShifts.addAll(newShiftsForOneDay);
                 } else {
-                    // TODO add notification for holiday
-                    log.info("Shifts for date {} are being skipped as there is a holiday on that date", startDate);
+                    addNewNotificationForShift(notifications, null, null, loggedUser,
+                            "HOLIDAY_CONFLICT", customBatchId, null);
+                    log.info("Shifts for date {} are being skipped as there is a holiday on that date",
+                            DateAndTimeUtils.getDateTimeObjectWithFullDate(startDate, timezone).getDate());
                 }
                 startDate = startDate.plus(1, ChronoUnit.DAYS);
             }
         } catch (Exception e) {
-            log.error("Exception while saving shifts for batch: {}", batch.getId(), e);
+            log.error("Exception while saving shifts for batch: {}", batchId, e);
         }
         return newShifts;
     }
@@ -302,81 +323,107 @@ public class ShiftSchedulingUtils {
     /**
      * For any employee for whom preferences are not set, a notification will be sent to the admin.
      *
-     * @param date                        date for which shifts are being created
-     * @param existingShifts              list of existing shifts
-     * @param preferences                 all shift preferences for this location
-     * @param employeePreferenceWithUsers all employees list with preferences
-     * @param timezone                    timezone for this location
+     * @param startEndDate                Date range for the entire batch
+     * @param date                        Date for which shifts are being created
+     * @param existingShifts              List of existing shifts
+     * @param preferences                 All shift preferences for this location
+     * @param employeePreferenceWithUsers All employees list with preferences
+     * @param timeOff                     List of all allowed time off requests within this date range
+     * @param timezone                    Timezone for the logged-in user
+     * @param loggedUser                  {@link UserOrganization object for logged-in user}
+     * @param notifications               An empty list of notifications to add notifications to (They will be saved in bulk later)
+     * @param instantRelease              Boolean value for if we should instantly release shift to the user
+     * @param batchId                     Batch uuid generated for this batch
+     * @param customBatchId               WaaW batch id generated for this batch
+     * @param batchName                   Batch name provided in the DTO
+     * @param currentWaawShiftId          Last used Shift id for WAAW
+     * @param customIdLength              Allowed length for the custom id
      * @return List of new shifts created for this single date
      */
-    private static List<Shifts> createShiftsForOneDayOfBatch(Instant date, List<Shifts> existingShifts, List<ShiftSchedulingPreferences> preferences,
-                                                             List<EmployeePreferencesWithUser> employeePreferenceWithUsers, String timezone,
-                                                             String adminId, List<String> employeeWithoutPreferences, boolean instantRelease,
-                                                             String batchId, List<Requests> timeOff) {
+    private static List<Shifts> createShiftsForOneDayOfBatch(
+            Instant[] startEndDate, Instant date, List<Shifts> existingShifts, List<ShiftSchedulingPreferences> preferences,
+            List<EmployeePreferencesWithUser> employeePreferenceWithUsers, List<Requests> timeOff, String timezone,
+            UserOrganization loggedUser, List<MultipleNotificationDto> notifications, boolean instantRelease,
+            String batchId, String customBatchId, String batchName, AtomicReference<String> currentWaawShiftId, int customIdLength
+    ) {
         List<Shifts> newShifts = new ArrayList<>();
         Map<String, List<ShiftSchedulingPreferences>> locationRolePreference = preferences.stream()
                 .collect(Collectors.groupingBy(ShiftSchedulingPreferences::getLocationRoleId, Collectors.toList()));
         Map<String, List<Shifts>> shiftsToCheckPerLocationRole = getShiftsToCheckPerLocationRole(date, existingShifts,
                 locationRolePreference);
-        employeePreferenceWithUsers.parallelStream()
-                .forEach(preference -> {
-                    // id belongs to Employee preference table, if it is empty preferences are not set
-                    if (StringUtils.isEmpty(preference.getId())) {
-                        employeeWithoutPreferences.add(preference.getUserId());
-                        log.info("User: {} found with no preferences.", preference.getUserId());
-                    } else {
-                        try {
-                            Instant[] shiftDuration = ShiftSchedulingUtils.getStartEndFromEmployeePreference(date, preference, timezone);
-                            boolean sameDayExistingShit = existingShifts.stream()
-                                    .anyMatch(shift -> DateAndTimeUtils.isInstantSameDayAsAnotherInstant(date, shift.getStart()));
-                            if (shiftDuration != null) {
-                                Shifts newShift = new Shifts();
-                                newShift.setBatchId(batchId);
-                                newShift.setUserId(preference.getUserId());
-                                newShift.setStart(shiftDuration[0]);
-                                newShift.setEnd(shiftDuration[1]);
-                                newShift.setShiftType(ShiftType.RECURRING);
-                                newShift.setShiftStatus(instantRelease ? ShiftStatus.RELEASED : ShiftStatus.ASSIGNED);
-                                newShift.setOrganizationId(preference.getOrganizationId());
-                                newShift.setLocationId(preference.getLocationId());
-                                newShift.setLocationRoleId(preference.getLocationRoleId());
-                                newShift.setCreatedBy(adminId);
-                                boolean isTimeoff = timeOff.stream()
-                                        .filter(request -> request.getUserId().equals(preference.getUserId()))
-                                        .anyMatch(request -> (shiftDuration[0].isAfter(request.getStart()) && shiftDuration[0].isBefore(request.getEnd())) ||
-                                                (shiftDuration[1].isAfter(request.getStart()) && shiftDuration[1].isBefore(request.getEnd())) ||
-                                                (request.getStart().isAfter(shiftDuration[0]) && request.getStart().isBefore(shiftDuration[1])) ||
-                                                (request.getEnd().isAfter(shiftDuration[0]) && request.getEnd().isBefore(shiftDuration[1])));
-                                List<Shifts> checkShifts = shiftsToCheckPerLocationRole.get(preference.getLocationRoleId())
-                                        .stream().filter(shifts -> shifts.getUserId().equalsIgnoreCase(preference.getUserId()))
-                                        .collect(Collectors.toList());
-                                List<String> conflicts = validateShift(newShift, locationRolePreference.get(preference
-                                        .getLocationRoleId()).get(0), checkShifts);
-                                // TODO Send notifications for conflicts
-                                if (conflicts.size() > 0) {
-                                }
-                                if (sameDayExistingShit) {
-                                    newShift.setShiftStatus(ShiftStatus.FAILED);
-                                    newShift.setNotes("An existing shift overlaps with this shift.");
-                                    log.warn("A shift already exist on same day. " +
-                                            "Skipping shift for user {}, on date {}", preference.getUserId(), date);
-                                }
-                                if (isTimeoff) {
-                                    newShift.setShiftStatus(ShiftStatus.FAILED);
-                                    newShift.setNotes("A time off request is already approved for this time.");
-                                }
-                                newShifts.add(newShift);
-                                log.info("New shift entity created for user {}: {}", preference.getUserId(), newShift);
-                            } else {
-                                log.warn("Skipping shift for user {} on date {} as preference is not set for this day.",
-                                        preference.getUserId(), date);
-                            }
-                        } catch (Exception e) {
-                            log.error("Exception while creating shift for user: {} at date {}",
-                                    preference.getUserId(), date, e);
+        employeePreferenceWithUsers.forEach(preference -> {
+            // id belongs to Employee preference table, if it is empty preferences are not set
+            if (StringUtils.isEmpty(preference.getId())) {
+                addNewNotificationForShift(notifications, null, null, loggedUser,
+                        "MISSING_PREFERENCE", customBatchId, preference);
+                log.info("User: {} found with no preferences.", preference.getUserId());
+            } else {
+                try {
+                    Instant[] shiftDuration = ShiftSchedulingUtils.getStartEndFromEmployeePreference(date, preference, timezone);
+                    boolean sameDayExistingShit = existingShifts.stream()
+                            .anyMatch(shift -> DateAndTimeUtils.isInstantSameDayAsAnotherInstant(date, shift.getStart()));
+                    if (shiftDuration != null) {
+                        Shifts newShift = new Shifts();
+                        newShift.setBatchId(batchId);
+                        newShift.setWaawBatchId(customBatchId);
+                        newShift.setWaawShiftId(CommonUtils.getNextCustomId(currentWaawShiftId.get(), customIdLength));
+                        newShift.setBatchName(batchName);
+                        newShift.setBatchStart(startEndDate[0]);
+                        newShift.setBatchEnd(startEndDate[1]);
+                        newShift.setUserId(preference.getUserId());
+                        newShift.setStart(shiftDuration[0]);
+                        newShift.setEnd(shiftDuration[1]);
+                        newShift.setShiftType(ShiftType.RECURRING);
+                        newShift.setShiftStatus(instantRelease ? ShiftStatus.RELEASED : ShiftStatus.ASSIGNED);
+                        newShift.setOrganizationId(preference.getOrganizationId());
+                        newShift.setLocationId(preference.getLocationId());
+                        newShift.setLocationRoleId(preference.getLocationRoleId());
+                        newShift.setCreatedBy(loggedUser.getId());
+                        currentWaawShiftId.set(newShift.getWaawShiftId());
+                        boolean isTimeoff = timeOff.stream()
+                                .filter(request -> request.getUserId().equals(preference.getUserId()))
+                                .anyMatch(request -> (shiftDuration[0].isAfter(request.getStart()) && shiftDuration[0].isBefore(request.getEnd())) ||
+                                        (shiftDuration[1].isAfter(request.getStart()) && shiftDuration[1].isBefore(request.getEnd())) ||
+                                        (request.getStart().isAfter(shiftDuration[0]) && request.getStart().isBefore(shiftDuration[1])) ||
+                                        (request.getEnd().isAfter(shiftDuration[0]) && request.getEnd().isBefore(shiftDuration[1])));
+                        List<Shifts> checkShifts = shiftsToCheckPerLocationRole.get(preference.getLocationRoleId())
+                                .stream().filter(shifts -> shifts.getUserId().equalsIgnoreCase(preference.getUserId()))
+                                .collect(Collectors.toList());
+                        List<String> conflicts = validateShift(newShift, locationRolePreference.get(preference
+                                .getLocationRoleId()).get(0), checkShifts);
+                        if (conflicts.size() > 0) {
+                            newShift.setConflicts(CommonUtils.combineListToCommaSeparatedString(newShift.getConflicts(), conflicts));
+                            addNewNotificationForShift(notifications, newShift, null, loggedUser,
+                                    "CONFLICTING_SHIFTS", null, preference);
                         }
+                        if (sameDayExistingShit) {
+                            newShift.setShiftStatus(ShiftStatus.FAILED);
+                            newShift.setFailureReason("An existing shift overlaps with this shift.");
+                            log.warn("A shift already exist on same day. " +
+                                    "Skipping shift for user {}, on date {}", preference.getUserId(), date);
+                        }
+                        if (isTimeoff) {
+                            newShift.setShiftStatus(ShiftStatus.FAILED);
+                            newShift.setFailureReason("A time off request is already approved for this time.");
+                            addNewNotificationForShift(notifications, newShift, null, loggedUser,
+                                    "TIMEOFF_CONFLICT", null, preference);
+                        }
+                        if (newShift.getShiftStatus().equals(ShiftStatus.RELEASED)) {
+                            ShiftSchedulingUtils.addNewNotificationForShift(notifications, newShift, null, loggedUser,
+                                    "SHIFT_CREATED_USER", null, preference);
+                        }
+                        newShifts.add(newShift);
+                        log.info("New shift entity created for user {}: {}", preference.getUserId(), newShift);
+                    } else {
+                        log.warn("Skipping shift for user {} on date {} as preference is not set for this day.",
+                                preference.getUserId(), date);
                     }
-                });
+                } catch (Exception e) {
+                    log.error("Exception while creating shift for user: {} at date {}",
+                            preference.getUserId(), date, e);
+                }
+            }
+        });
         return newShifts;
     }
 
@@ -412,12 +459,12 @@ public class ShiftSchedulingUtils {
     }
 
     /**
-     * Mainly used in {@link ShiftSchedulingService} method getAllPreferencesForALocationOrUser
+     * Mainly used in {@link ca.waaw.web.rest.service.ShiftsService} method getAllPreferencesForALocationOrUser
      *
      * @param locationRole location role info
      * @return Shift scheduling preferences for this role
      */
-    public static ShiftSchedulingPreferences mappingFunction(LocationRole locationRole) {
+    public static ShiftSchedulingPreferences preferenceMappingFunction(LocationRole locationRole) {
         if (locationRole == null) return null;
         ShiftSchedulingPreferences preferences = new ShiftSchedulingPreferences();
         preferences.setLocationRoleId(locationRole.getId());
@@ -429,17 +476,81 @@ public class ShiftSchedulingUtils {
     }
 
     /**
-     * Mainly used in {@link ShiftSchedulingService} method getAllPreferencesForALocationOrUser
+     * Mainly used in {@link ca.waaw.web.rest.service.ShiftsService} method getAllPreferencesForALocationOrUser
      *
      * @param locationRole location role info
      * @param userId       userId for which preference is fetched
      * @return Shift scheduling preferences for this role
      */
-    public static ShiftSchedulingPreferences mappingFunction(LocationRole locationRole, String userId) {
+    public static ShiftSchedulingPreferences preferenceMappingFunction(LocationRole locationRole, String userId) {
         if (locationRole == null) return null;
-        ShiftSchedulingPreferences preferences = mappingFunction(locationRole);
+        ShiftSchedulingPreferences preferences = preferenceMappingFunction(locationRole);
         preferences.setUserId(userId);
         return preferences;
+    }
+
+    public static void addNewNotificationForShift(List<MultipleNotificationDto> notifications, Shifts newShift, UserOrganization user,
+                                                  UserOrganization admin, String notificationType, String batchId,
+                                                  EmployeePreferencesWithUser preference) {
+        String[] messageConstant;
+        String[] messageArguments;
+        UserOrganization receiver;
+        switch (notificationType.toUpperCase()) {
+            case "TIMEOFF_CONFLICT":
+                receiver = admin;
+                messageConstant = MessageConstants.shiftTimeoffOverlap;
+                messageArguments = new String[]{newShift.getWaawShiftId(), user == null ?
+                        preference.getFullName() : user.getFullName()};
+                break;
+            case "SHIFT_CREATED_USER":
+                receiver = user;
+                DateTimeDto shiftDate = DateAndTimeUtils.getDateTimeObjectWithFullDate(newShift.getStart(), user.getLocation().getTimezone());
+                messageConstant = MessageConstants.shiftAssigned;
+                messageArguments = new String[]{shiftDate.getDate(), shiftDate.getTime()};
+                break;
+            case "SHIFT_CREATED":
+                receiver = admin;
+                messageConstant = MessageConstants.shiftCreated;
+                messageArguments = new String[]{batchId};
+                break;
+            case "CONFLICTING_SHIFTS":
+                receiver = admin;
+                messageConstant = MessageConstants.shiftConflicted;
+                messageArguments = new String[]{newShift.getWaawShiftId(), user == null ?
+                        preference.getFullName() : user.getFullName()};
+                break;
+            case "HOLIDAY_CONFLICT":
+                receiver = admin;
+                messageConstant = MessageConstants.shiftHolidayOverlap;
+                messageArguments = new String[]{batchId};
+                break;
+            case "MISSING_PREFERENCE":
+                receiver = admin;
+                messageConstant = MessageConstants.missingEmployeePreference;
+                messageArguments = new String[]{batchId, preference.getFullName()};
+                break;
+            case "NO_SHIFTS":
+                receiver = admin;
+                messageConstant = MessageConstants.noShiftsCreated;
+                messageArguments = new String[]{batchId};
+                break;
+            default:
+                return;
+        }
+        MultipleNotificationDto notification = MultipleNotificationDto.builder()
+                .messageConstant(messageConstant)
+                .messageArguments(messageArguments)
+                .notificationInfo(
+                        NotificationInfoDto.builder()
+                                .receiverName(receiver == null ? preference.getFullName() : receiver.getFullName())
+                                .type(NotificationType.SHIFT)
+                                .language(receiver == null ? preference.getLangKey() : receiver.getLangKey())
+                                .receiverUsername(receiver == null ? preference.getUsername() : receiver.getUsername())
+                                .receiverUuid(receiver == null ? preference.getUserId() : receiver.getId())
+                                .build()
+                )
+                .build();
+        notifications.add(notification);
     }
 
 }

@@ -1,11 +1,11 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.PromotionCode;
+import ca.waaw.domain.payments.PromotionCode;
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.PromotionCodeDto;
-import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.PromoCodeType;
-import ca.waaw.repository.PromotionCodeRepository;
+import ca.waaw.dto.payments.PromotionCodeDto;
+import ca.waaw.enumration.user.Authority;
+import ca.waaw.enumration.payment.PromoCodeType;
+import ca.waaw.repository.payments.PromotionCodeRepository;
 import ca.waaw.web.rest.errors.exceptions.EntityAlreadyExistsException;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.utils.CommonUtils;

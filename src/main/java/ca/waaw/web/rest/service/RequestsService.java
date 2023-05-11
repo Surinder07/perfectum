@@ -1,18 +1,33 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppCustomIdConfig;
-import ca.waaw.domain.*;
-import ca.waaw.domain.joined.DetailedRequests;
-import ca.waaw.domain.joined.UserOrganization;
-import ca.waaw.dto.NotificationInfoDto;
+import ca.waaw.domain.locationandroles.Location;
+import ca.waaw.domain.organization.Organization;
+import ca.waaw.domain.requests.DetailedRequests;
+import ca.waaw.domain.requests.Requests;
+import ca.waaw.domain.requests.RequestsHistory;
+import ca.waaw.domain.shifts.Shifts;
+import ca.waaw.domain.user.User;
+import ca.waaw.domain.user.UserOrganization;
+import ca.waaw.dto.appnotifications.NotificationInfoDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.requests.NewRequestDto;
 import ca.waaw.dto.requests.UpdateRequestDto;
 import ca.waaw.enumration.*;
+import ca.waaw.enumration.request.RequestStatus;
+import ca.waaw.enumration.request.RequestSubType;
+import ca.waaw.enumration.shift.ShiftStatus;
+import ca.waaw.enumration.shift.ShiftType;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.mapper.RequestsMapper;
-import ca.waaw.repository.*;
-import ca.waaw.repository.joined.DetailedRequestsRepository;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.repository.requests.DetailedRequestsRepository;
+import ca.waaw.repository.locationandroles.LocationRepository;
+import ca.waaw.repository.organization.OrganizationRepository;
+import ca.waaw.repository.requests.RequestsHistoryRepository;
+import ca.waaw.repository.requests.RequestsRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
+import ca.waaw.repository.shifts.ShiftsRepository;
+import ca.waaw.repository.user.UserRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.AppNotificationService;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
@@ -21,6 +36,7 @@ import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.errors.exceptions.application.ShiftOverlappingException;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
+import ca.waaw.web.rest.utils.MessageConstants;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -54,11 +70,7 @@ public class RequestsService {
 
     private final ShiftsRepository shiftsRepository;
 
-    private final ShiftsBatchRepository shiftsBatchRepository;
-
-    private final ShiftBatchMappedUserAndRoleRepository mappedUserAndRoleRepository;
-
-    private final ShiftSchedulingService shiftSchedulingService;
+    private final ShiftsService shiftsService;
 
     private final OrganizationRepository organizationRepository;
 
@@ -208,9 +220,9 @@ public class RequestsService {
                             newShift1.setStart(shift.getStart());
                             newShift1.setEnd(request.getStart());
                             newShift1.setCreatedBy(loggedUser.getId());
-                            String currentCustomId = shiftsRepository.getLastUsedCustomId()
+                            String currentCustomId = shiftsRepository.getLastUsedShiftId()
                                     .orElse(appCustomIdConfig.getShiftPrefix() + "0000000000");
-                            newShift1.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
+                            newShift1.setWaawShiftId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
                             newShift1.setNotes("New shift created after half day timeoff request was approved.");
                             Shifts newShift2 = new Shifts();
                             BeanUtils.copyProperties(shift, newShift2);
@@ -218,9 +230,7 @@ public class RequestsService {
                             newShift2.setStart(request.getEnd());
                             newShift2.setEnd(shift.getEnd());
                             newShift2.setCreatedBy(loggedUser.getId());
-                            String currentCustomId2 = shiftsRepository.getLastUsedCustomId()
-                                    .orElse(appCustomIdConfig.getShiftPrefix() + "0000000000");
-                            newShift2.setWaawId(CommonUtils.getNextCustomId(currentCustomId2, appCustomIdConfig.getLength()));
+                            newShift2.setWaawShiftId(CommonUtils.getNextCustomId(newShift1.getWaawShiftId(), appCustomIdConfig.getLength()));
                             newShift2.setNotes("New shift created after half day timeoff request was approved.");
                             shift.setStart(request.getStart());
                             shift.setEnd(request.getEnd());
@@ -233,9 +243,9 @@ public class RequestsService {
                             newShift.setStart(shift.getStart());
                             newShift.setEnd(request.getStart());
                             newShift.setCreatedBy(loggedUser.getId());
-                            String currentCustomId = shiftsRepository.getLastUsedCustomId()
+                            String currentCustomId = shiftsRepository.getLastUsedShiftId()
                                     .orElse(appCustomIdConfig.getShiftPrefix() + "0000000000");
-                            newShift.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
+                            newShift.setWaawShiftId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
                             newShift.setNotes("New shift created after half day timeoff request was approved.");
                             shift.setStart(request.getStart());
                             shiftsRepository.save(newShift);
@@ -246,9 +256,9 @@ public class RequestsService {
                             newShift.setStart(request.getEnd());
                             newShift.setEnd(shift.getEnd());
                             newShift.setCreatedBy(loggedUser.getId());
-                            String currentCustomId = shiftsRepository.getLastUsedCustomId()
+                            String currentCustomId = shiftsRepository.getLastUsedShiftId()
                                     .orElse(appCustomIdConfig.getShiftPrefix() + "0000000000");
-                            newShift.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
+                            newShift.setWaawShiftId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
                             newShift.setNotes("New shift created after half day timeoff request was approved.");
                             shift.setEnd(request.getEnd());
                             shiftsRepository.save(newShift);
@@ -269,36 +279,25 @@ public class RequestsService {
         }
         Organization organization = organizationRepository.findOneByIdAndDeleteFlag(loggedUser.getOrganizationId(), false)
                 .orElseThrow(() -> new EntityNotFoundException("organization"));
-        ShiftsBatch batch = new ShiftsBatch();
-        batch.setName("Overtime");
-        batch.setWaawId(shiftSchedulingService.getNewBatchId(organization));
-        batch.setStatus(ShiftBatchStatus.RELEASED);
-        batch.setReleased(true);
-        batch.setOrganizationId(organization.getId());
-        batch.setLocationId(request.getUser().getLocationId());
-        batch.setStartDate(request.getStart());
-        batch.setEndDate(request.getEnd());
-        batch.setCreatedBy(loggedUser.getId());
-        ShiftBatchMapping mapping = new ShiftBatchMapping();
-        mapping.setBatchId(batch.getId());
-        mapping.setUserId(request.getUser().getId());
         Shifts shift = new Shifts();
         shift.setShiftStatus(ShiftStatus.RELEASED);
+        shift.setWaawBatchId(shiftsService.getNewBatchId(organization));
+        shift.setBatchName("Overtime");
         shift.setStart(request.getStart());
+        shift.setBatchStart(request.getStart());
         shift.setEnd(request.getEnd());
+        shift.setBatchEnd(request.getEnd());
         shift.setNotes("Overtime approved by " + loggedUser.getFullName());
         shift.setShiftType(ShiftType.OVERTIME);
-        shift.setBatchId(batch.getId());
+        shift.setBatchId(UUID.randomUUID().toString());
         shift.setCreatedBy(loggedUser.getId());
         shift.setOrganizationId(organization.getId());
         shift.setLocationId(request.getUser().getLocationId());
         shift.setLocationRoleId(request.getUser().getLocationRoleId());
         shift.setUserId(request.getUser().getId());
-        String currentCustomId = shiftsRepository.getLastUsedCustomId()
+        String currentCustomId = shiftsRepository.getLastUsedShiftId()
                 .orElse(appCustomIdConfig.getShiftPrefix() + "0000000000");
-        shift.setWaawId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
-        shiftsBatchRepository.save(batch);
-        mappedUserAndRoleRepository.save(mapping);
+        shift.setWaawShiftId(CommonUtils.getNextCustomId(currentCustomId, appCustomIdConfig.getLength()));
         shiftsRepository.save(shift);
     }
 
@@ -314,7 +313,8 @@ public class RequestsService {
                 .type(NotificationType.REQUEST)
                 .build();
         String requestType = request.getType().toString().toLowerCase().replaceAll("_", " ");
-        appNotificationService.sendNotification("notification.request.new", notificationInfo, actionTaker.getFullName(), requestType);
+        appNotificationService.sendApplicationNotification(MessageConstants.newRequest, notificationInfo, false,
+                actionTaker.getFullName(), requestType);
     }
 
     private void notifyUserOrAdmin(DetailedRequests request, User actionTaker, User sendTo, String type) {
@@ -328,12 +328,23 @@ public class RequestsService {
                 .language(sendTo.getLangKey() == null ? null : sendTo.getLangKey())
                 .type(NotificationType.REQUEST)
                 .build();
-        String property = null;
-        if (type.equals("reject")) property = "notification.request.reject";
-        if (type.equals("approve")) property = "notification.request.accept";
-        if (type.equals("respond")) property = "notification.request.respond";
+        String[] property;
+        switch (type.toLowerCase()) {
+            case "reject":
+                property = MessageConstants.rejectRequest;
+                break;
+            case "approve":
+                property = MessageConstants.acceptRequest;
+                break;
+            case "respond":
+                property = MessageConstants.respondToRequest;
+                break;
+            default:
+                return;
+        }
         String requestType = request.getType().toString().toLowerCase().replaceAll("_", " ");
-        appNotificationService.sendNotification(property, notificationInfo, actionTaker.getFullName(), requestType);
+        appNotificationService.sendApplicationNotification(property, notificationInfo, false,
+                actionTaker.getFullName(), requestType);
     }
 
 }

@@ -1,27 +1,27 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppUrlConfig;
-import ca.waaw.domain.Organization;
-import ca.waaw.domain.OrganizationHolidays;
-import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.domain.organization.Organization;
+import ca.waaw.domain.organization.OrganizationHolidays;
+import ca.waaw.domain.user.UserOrganization;
 import ca.waaw.dto.ApiResponseMessageDto;
 import ca.waaw.dto.DateTimeDto;
-import ca.waaw.dto.NotificationInfoDto;
+import ca.waaw.dto.appnotifications.NotificationInfoDto;
 import ca.waaw.dto.holiday.HolidayDto;
 import ca.waaw.dto.userdtos.OrganizationPreferences;
 import ca.waaw.dto.userdtos.UserDetailsDto;
-import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.enumration.FileType;
 import ca.waaw.enumration.NotificationType;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
 import ca.waaw.mapper.OrganizationHolidayMapper;
 import ca.waaw.mapper.UserMapper;
-import ca.waaw.repository.LocationRepository;
-import ca.waaw.repository.OrganizationHolidayRepository;
-import ca.waaw.repository.OrganizationRepository;
-import ca.waaw.repository.UserRepository;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.repository.locationandroles.LocationRepository;
+import ca.waaw.repository.organization.OrganizationHolidayRepository;
+import ca.waaw.repository.organization.OrganizationRepository;
+import ca.waaw.repository.user.UserRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.AppNotificationService;
 import ca.waaw.service.WebSocketService;
@@ -36,11 +36,13 @@ import ca.waaw.web.rest.errors.exceptions.application.PastValueNotDeletableExcep
 import ca.waaw.web.rest.utils.ApiResponseMessageKeys;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
+import ca.waaw.web.rest.utils.MessageConstants;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -77,6 +79,8 @@ public class OrganizationService {
     private final WebSocketService webSocketService;
 
     private final AppUrlConfig appUrlConfig;
+
+    private final MessageSource messageSource;
 
     /**
      * Updates the preferences of logged-in admins organization
@@ -166,15 +170,18 @@ public class OrganizationService {
                     .build();
             DateTimeDto now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
                     admin.getOrganization().getTimezone() : admin.getLocation().getTimezone());
-            appNotificationService.sendNotification("notification.upload.holidays", notificationInfo, now.getDate(), now.getTime());
+           appNotificationService.sendApplicationNotification(MessageConstants.holidaysUpload, notificationInfo,
+                   false, now.getDate(), now.getTime());
             if (pastDates.isTrue())
-                appNotificationService.sendNotification("notification.holiday.past", notificationInfo, now.getDate(), now.getTime());
+               appNotificationService.sendApplicationNotification(MessageConstants.pastHolidays, notificationInfo,
+                       false, now.getDate(), now.getTime());
             if (nextYearDates.isTrue())
-                appNotificationService.sendNotification("notification.holiday.nextYear", notificationInfo, now.getDate(), now.getTime());
+               appNotificationService.sendApplicationNotification(MessageConstants.futureHolidays, notificationInfo,
+                       false, now.getDate(), now.getTime());
             webSocketService.notifyUserAboutHolidayUploadComplete(admin.getUsername());
         });
-        return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
-                .fileUploadProcessing, admin.getLangKey()));
+       return new ApiResponseMessageDto(messageSource.getMessage(ApiResponseMessageKeys.fileUploadProcessing,
+               null, new Locale(admin.getLangKey())));
     }
 
     /**

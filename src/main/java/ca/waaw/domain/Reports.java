@@ -1,6 +1,7 @@
 package ca.waaw.domain;
 
-import ca.waaw.enumration.UserReport;
+import ca.waaw.domain.locationandroles.Location;
+import ca.waaw.enumration.report.UserReport;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

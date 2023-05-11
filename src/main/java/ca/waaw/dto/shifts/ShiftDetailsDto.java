@@ -1,11 +1,13 @@
 package ca.waaw.dto.shifts;
 
 import ca.waaw.dto.DateTimeDto;
-import ca.waaw.enumration.ShiftStatus;
-import ca.waaw.enumration.ShiftType;
+import ca.waaw.enumration.shift.ShiftStatus;
+import ca.waaw.enumration.shift.ShiftType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -32,7 +34,11 @@ public class ShiftDetailsDto {
 
     private DateTimeDto end;
 
-    private String notes;
+    private String comments;
+
+    private String failureReason;
+
+    private List<String> conflicts;
 
     private ShiftStatus shiftStatus;
 

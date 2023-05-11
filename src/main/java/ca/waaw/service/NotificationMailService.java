@@ -1,7 +1,7 @@
 package ca.waaw.service;
 
-import ca.waaw.dto.MailDto;
-import ca.waaw.dto.emailmessagedtos.InviteAcceptedMailDto;
+import ca.waaw.dto.appnotifications.MailDto;
+import ca.waaw.dto.appnotifications.InviteAcceptedMailDto;
 import ca.waaw.service.email.javamailsender.MailService;
 import ca.waaw.service.email.javamailsender.TempMailService;
 import ca.waaw.web.rest.utils.MessageConstants;

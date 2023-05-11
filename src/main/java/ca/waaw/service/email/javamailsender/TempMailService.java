@@ -1,7 +1,7 @@
 package ca.waaw.service.email.javamailsender;
 
 import ca.waaw.config.applicationconfig.AppMailConfig;
-import ca.waaw.dto.MailDto;
+import ca.waaw.dto.appnotifications.MailDto;
 import ca.waaw.web.rest.utils.HtmlTemplates;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

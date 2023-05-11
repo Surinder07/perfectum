@@ -1,6 +1,6 @@
 package ca.waaw.dto.userdtos;
 
-import ca.waaw.enumration.PayrollGenerationType;
+import ca.waaw.enumration.report.PayrollGenerationType;
 import ca.waaw.web.rest.utils.customannotations.ValueOfEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

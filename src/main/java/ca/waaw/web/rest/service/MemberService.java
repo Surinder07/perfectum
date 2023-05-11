@@ -1,36 +1,47 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppUrlConfig;
-import ca.waaw.domain.*;
-import ca.waaw.domain.joined.UserOrganization;
-import ca.waaw.dto.*;
-import ca.waaw.dto.emailmessagedtos.InviteUserMailDto;
+import ca.waaw.domain.locationandroles.Location;
+import ca.waaw.domain.locationandroles.LocationRole;
+import ca.waaw.domain.user.EmployeePreferences;
+import ca.waaw.domain.user.User;
+import ca.waaw.domain.user.UserOrganization;
+import ca.waaw.domain.user.UserTokens;
+import ca.waaw.dto.ApiResponseMessageDto;
+import ca.waaw.dto.DateTimeDto;
+import ca.waaw.dto.PaginationDto;
+import ca.waaw.dto.appnotifications.InviteUserMailDto;
+import ca.waaw.dto.appnotifications.NotificationInfoDto;
+import ca.waaw.dto.shifts.ShiftSchedulingPreferences;
+import ca.waaw.dto.userdtos.EmployeePreferencesDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UpdateUserDto;
 import ca.waaw.dto.userdtos.UserDetailsForAdminDto;
-import ca.waaw.enumration.AccountStatus;
-import ca.waaw.enumration.Authority;
 import ca.waaw.enumration.NotificationType;
-import ca.waaw.enumration.UserTokenType;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.Authority;
+import ca.waaw.enumration.user.UserTokenType;
 import ca.waaw.filehandler.FileHandler;
 import ca.waaw.filehandler.enumration.PojoToMap;
 import ca.waaw.mapper.UserMapper;
-import ca.waaw.repository.*;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.repository.locationandroles.LocationRepository;
+import ca.waaw.repository.locationandroles.LocationRoleRepository;
+import ca.waaw.repository.shifts.ShiftsRepository;
+import ca.waaw.repository.user.EmployeePreferencesRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
+import ca.waaw.repository.user.UserRepository;
+import ca.waaw.repository.user.UserTokenRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.service.AppNotificationService;
 import ca.waaw.service.UserMailService;
-import ca.waaw.service.WebSocketService;
 import ca.waaw.web.rest.errors.exceptions.*;
 import ca.waaw.web.rest.errors.exceptions.application.MissingRequiredFieldsException;
-import ca.waaw.web.rest.utils.ApiResponseMessageKeys;
-import ca.waaw.web.rest.utils.CommonUtils;
-import ca.waaw.web.rest.utils.DateAndTimeUtils;
-import ca.waaw.web.rest.utils.ShiftSchedulingUtils;
+import ca.waaw.web.rest.utils.*;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -75,7 +86,7 @@ public class MemberService {
 
     private final AppNotificationService appNotificationService;
 
-    private final WebSocketService webSocketService;
+    private final MessageSource messageSource;
 
     /**
      * Sends an invitation to user email
@@ -127,7 +138,6 @@ public class MemberService {
                                             InviteUserMailDto mailDto = new InviteUserMailDto();
                                             mailDto.setUser(user);
                                             mailDto.setInviteUrl(appUrlConfig.getInviteUserUrl(newToken.getToken()));
-                                            // TODO Change mail template
                                             userMailService.sendInvitationEmail(Collections.singletonList(mailDto),
                                                     loggedUser.getOrganization().getName());
                                             return newToken;
@@ -145,7 +155,6 @@ public class MemberService {
      * @return Generic message
      */
     @Transactional(rollbackFor = Exception.class)
-    // TODO collect data and notify admin for failed employees instead of throwing error.
     public ApiResponseMessageDto inviteNewUsersByUpload(MultipartFile file) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
         // Converting file to Input Stream so that it is available in the async process below
@@ -216,12 +225,11 @@ public class MemberService {
                     .build();
             DateTimeDto now = DateAndTimeUtils.getCurrentDateTime(admin.getAuthority().equals(Authority.ADMIN) ?
                     admin.getOrganization().getTimezone() : admin.getLocation().getTimezone());
-            appNotificationService.sendNotification("notification.upload.users", notificationInfo, now.getDate(), now.getTime());
-            webSocketService.notifyUserAboutHolidayUploadComplete(admin.getUsername());
+            appNotificationService.sendApplicationNotification(MessageConstants.usersUpload, notificationInfo, false,
+                    now.getDate(), now.getTime());
         });
-        return new ApiResponseMessageDto(CommonUtils.getPropertyFromMessagesResourceBundle(ApiResponseMessageKeys
-                .uploadNewEmployees, admin.getLangKey()));
-
+        return new ApiResponseMessageDto(messageSource.getMessage(ApiResponseMessageKeys.uploadNewEmployees,
+                null, new Locale(admin.getLangKey())));
     }
 
     /**
@@ -302,7 +310,7 @@ public class MemberService {
                                 })
                                 .map(locationRole -> {
                                     // These preferences will be used to validate Employee preferences
-                                    shiftSchedulingPreferences.set(ShiftSchedulingUtils.mappingFunction(locationRole));
+                                    shiftSchedulingPreferences.set(ShiftSchedulingUtils.preferenceMappingFunction(locationRole));
                                     return admin;
                                 })
                         )
@@ -471,7 +479,6 @@ public class MemberService {
         userTokenRepository.saveAll(tokenList);
         log.info("New User(s) added to database (pending for accepting invite): {}", users);
         CompletableFuture.runAsync(() -> {
-            // TODO change mail templates
             userMailService.sendInvitationEmail(mailDtoList, organizationName);
             log.info("Invitation successfully sent to the user(s)");
         });

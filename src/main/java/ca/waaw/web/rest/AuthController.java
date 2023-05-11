@@ -1,15 +1,15 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.domain.Organization;
-import ca.waaw.domain.User;
+import ca.waaw.domain.organization.Organization;
+import ca.waaw.domain.user.User;
 import ca.waaw.dto.userdtos.LoginDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
-import ca.waaw.enumration.AccountStatus;
-import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.PaymentStatus;
-import ca.waaw.repository.PaymentHistoryRepository;
-import ca.waaw.repository.OrganizationRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.Authority;
+import ca.waaw.enumration.payment.PaymentStatus;
+import ca.waaw.repository.organization.OrganizationRepository;
+import ca.waaw.repository.payments.PaymentHistoryRepository;
+import ca.waaw.repository.user.UserRepository;
 import ca.waaw.security.jwt.JWTFilter;
 import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.web.rest.errors.ErrorVM;

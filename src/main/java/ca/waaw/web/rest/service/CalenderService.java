@@ -1,15 +1,19 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.Shifts;
-import ca.waaw.domain.Timesheet;
-import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.domain.shifts.Shifts;
+import ca.waaw.domain.timesheet.Timesheet;
+import ca.waaw.domain.user.UserOrganization;
 import ca.waaw.dto.calender.EventsDto;
 import ca.waaw.dto.calender.TimesheetDto;
-import ca.waaw.enumration.*;
-import ca.waaw.repository.RequestsRepository;
-import ca.waaw.repository.ShiftsRepository;
-import ca.waaw.repository.TimesheetRepository;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.enumration.request.RequestStatus;
+import ca.waaw.enumration.request.RequestSubType;
+import ca.waaw.enumration.request.RequestType;
+import ca.waaw.enumration.shift.ShiftStatus;
+import ca.waaw.enumration.user.Authority;
+import ca.waaw.repository.requests.RequestsRepository;
+import ca.waaw.repository.shifts.ShiftsRepository;
+import ca.waaw.repository.timesheet.TimesheetRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;

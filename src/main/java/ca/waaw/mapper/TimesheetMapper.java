@@ -1,7 +1,7 @@
 package ca.waaw.mapper;
 
-import ca.waaw.domain.Timesheet;
-import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.domain.timesheet.Timesheet;
+import ca.waaw.domain.user.UserOrganization;
 import ca.waaw.dto.timesheet.TimesheetDetailsDto;
 import ca.waaw.enumration.TimeSheetType;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;

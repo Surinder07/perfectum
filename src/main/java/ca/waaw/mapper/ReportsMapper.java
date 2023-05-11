@@ -1,10 +1,16 @@
 package ca.waaw.mapper;
 
 import ca.waaw.domain.*;
-import ca.waaw.domain.joined.EmployeePreferencesWithUser;
-import ca.waaw.dto.GenerateReportDto;
-import ca.waaw.dto.ReportListingDto;
-import ca.waaw.enumration.RequestSubType;
+import ca.waaw.domain.locationandroles.Location;
+import ca.waaw.domain.locationandroles.LocationRole;
+import ca.waaw.domain.organization.OrganizationHolidays;
+import ca.waaw.domain.requests.Requests;
+import ca.waaw.domain.shifts.Shifts;
+import ca.waaw.domain.timesheet.Timesheet;
+import ca.waaw.domain.user.EmployeePreferencesWithUser;
+import ca.waaw.dto.reports.GenerateReportDto;
+import ca.waaw.dto.reports.ReportListingDto;
+import ca.waaw.enumration.request.RequestSubType;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -19,6 +25,12 @@ import java.util.stream.Collectors;
 
 public class ReportsMapper {
 
+    /**
+     * Maps report entity to dto for listing
+     * @param source {@link Reports} entity containing data
+     * @param timezone timezone for the logged-in user
+     * @return Data mapped to a {@link ReportListingDto} object
+     */
     public static ReportListingDto entityToDto(Reports source, String timezone) {
         ReportListingDto target = new ReportListingDto();
         target.setId(source.getId());
@@ -156,11 +168,11 @@ public class ReportsMapper {
             long holidayTime = holidayList.stream()
                     .mapToLong(holiday -> validateHolidayAndGetTime(holiday, employee))
                     .sum();
-            row[7] = minutesToTime(shiftsAssigned);
-            row[8] = minutesToTime(vacation);
-            row[9] = minutesToTime(sickLeave);
-            row[10] = minutesToTime(hoursWorked);
-            row[11] = minutesToTime(holidayTime);
+            row[7] = DateAndTimeUtils.getHourMinuteTimeFromMinutes(shiftsAssigned).toString();
+            row[8] = DateAndTimeUtils.getHourMinuteTimeFromMinutes(vacation).toString();
+            row[9] = DateAndTimeUtils.getHourMinuteTimeFromMinutes(sickLeave).toString();
+            row[10] = DateAndTimeUtils.getHourMinuteTimeFromMinutes(hoursWorked).toString();
+            row[11] = DateAndTimeUtils.getHourMinuteTimeFromMinutes(holidayTime).toString();
             row[12] = employee.getWagesCurrency() != null ? employee.getWagesPerHour() + " " + employee.getWagesCurrency().toString() : "-";
             response.add(row);
         });
@@ -204,11 +216,6 @@ public class ReportsMapper {
                     return allowed;
                 })
                 .collect(Collectors.toList());
-    }
-
-    private static String minutesToTime(long minutes) {
-        return StringUtils.leftPad(String.valueOf((int) (minutes / 60)), 2, "0") +
-                ":" + StringUtils.leftPad(String.valueOf(minutes % 60), 2, "0");
     }
 
     private static long validateHolidayAndGetTime(OrganizationHolidays holiday, EmployeePreferencesWithUser employee) {

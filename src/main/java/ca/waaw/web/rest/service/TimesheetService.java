@@ -1,19 +1,19 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.Shifts;
-import ca.waaw.domain.Timesheet;
-import ca.waaw.domain.joined.UserOrganization;
+import ca.waaw.domain.shifts.Shifts;
+import ca.waaw.domain.timesheet.Timesheet;
+import ca.waaw.domain.user.UserOrganization;
 import ca.waaw.dto.DateTimeDto;
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.TimesheetDto;
+import ca.waaw.dto.timesheet.TimesheetDto;
 import ca.waaw.dto.timesheet.ActiveTimesheetDto;
 import ca.waaw.dto.timesheet.TimesheetDetailsDto;
-import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.mapper.TimesheetMapper;
-import ca.waaw.repository.ShiftsRepository;
-import ca.waaw.repository.TimesheetRepository;
-import ca.waaw.repository.UserRepository;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.repository.shifts.ShiftsRepository;
+import ca.waaw.repository.timesheet.TimesheetRepository;
+import ca.waaw.repository.user.UserRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.AuthenticationException;
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
@@ -50,7 +50,6 @@ public class TimesheetService {
      * Start timesheet recording for logged-in user
      */
     public void startTimesheetRecording() {
-        // todo add shift mapping
         CommonUtils.checkRoleAuthorization(Authority.EMPLOYEE, Authority.MANAGER);
         SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false)
@@ -103,7 +102,6 @@ public class TimesheetService {
         UserOrganization loggedUser = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
                 .orElseThrow(AuthenticationException::new);
-        //TODO add total hours worked today
         ActiveTimesheetDto response = timesheetRepository.getActiveTimesheet(loggedUser.getId())
                 .map(timesheet -> mapActiveTimesheet(timesheet, loggedUser.getLocation().getTimezone()))
                 .orElse(new ActiveTimesheetDto());
@@ -151,7 +149,7 @@ public class TimesheetService {
      * @param type      type of added timesheet
      * @return pagination list of all time sheets
      */
-    // todo add shift info and comments in response
+    // todo add shift info in response
     public PaginationDto getAllTimeSheet(int pageNo, int pageSize, String startDate, String endDate, String type, String userId) {
         UserOrganization loggedUser = SecurityUtils.getCurrentUserLogin()
                 .flatMap(username -> userOrganizationRepository.findOneByUsernameAndDeleteFlag(username, false))
@@ -187,7 +185,7 @@ public class TimesheetService {
                 ).orElseThrow(AuthenticationException::new);
     }
 
-    // Add timesheet (admin)
+    // Add timesheet (admin) TODO
     public void addNewTimesheet(TimesheetDto timesheetDto) {
 //        CommonUtils.checkRoleAuthorization(Authority.ADMIN, Authority.MANAGER);
 //        if (StringUtils.isEmpty(timesheetDto.getUserId()))

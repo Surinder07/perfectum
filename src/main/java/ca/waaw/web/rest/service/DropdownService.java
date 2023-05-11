@@ -1,13 +1,19 @@
 package ca.waaw.web.rest.service;
 
-import ca.waaw.domain.Location;
-import ca.waaw.domain.LocationRole;
+import ca.waaw.domain.locationandroles.Location;
+import ca.waaw.domain.locationandroles.LocationRole;
 import ca.waaw.enumration.Currency;
 import ca.waaw.enumration.*;
-import ca.waaw.repository.LocationRepository;
-import ca.waaw.repository.LocationRoleRepository;
-import ca.waaw.repository.joined.UserOrganizationRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.enumration.payment.PromoCodeType;
+import ca.waaw.enumration.report.PayrollGenerationType;
+import ca.waaw.enumration.shift.ShiftStatus;
+import ca.waaw.enumration.shift.ShiftType;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.Authority;
+import ca.waaw.repository.locationandroles.LocationRepository;
+import ca.waaw.repository.locationandroles.LocationRoleRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
+import ca.waaw.repository.user.UserRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.errors.exceptions.ForDevelopmentOnlyException;

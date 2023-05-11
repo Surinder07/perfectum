@@ -1,6 +1,6 @@
 package ca.waaw.mapper;
 
-import ca.waaw.domain.OrganizationHolidays;
+import ca.waaw.domain.organization.OrganizationHolidays;
 import ca.waaw.dto.holiday.HolidayDto;
 import ca.waaw.enumration.HolidayType;
 import org.apache.commons.lang3.StringUtils;

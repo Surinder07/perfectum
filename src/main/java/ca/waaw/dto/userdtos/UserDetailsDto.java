@@ -59,6 +59,6 @@ public class UserDetailsDto {
 
     private String status;
 
-    private int trialDaysPending; // TODO send timestamp to ui and calculate time there to update properly
+    private int trialDaysPending; // TODO send seconds to ui and calculate time there to update properly
 
 }

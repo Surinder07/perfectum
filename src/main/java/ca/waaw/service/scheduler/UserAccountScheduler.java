@@ -1,12 +1,12 @@
 package ca.waaw.service.scheduler;
 
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
-import ca.waaw.domain.User;
-import ca.waaw.domain.UserTokens;
-import ca.waaw.enumration.AccountStatus;
-import ca.waaw.enumration.UserTokenType;
-import ca.waaw.repository.UserRepository;
-import ca.waaw.repository.UserTokenRepository;
+import ca.waaw.domain.user.User;
+import ca.waaw.domain.user.UserTokens;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.UserTokenType;
+import ca.waaw.repository.user.UserRepository;
+import ca.waaw.repository.user.UserTokenRepository;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

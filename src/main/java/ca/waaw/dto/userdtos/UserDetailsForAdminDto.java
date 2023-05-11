@@ -1,6 +1,5 @@
 package ca.waaw.dto.userdtos;
 
-import ca.waaw.dto.EmployeePreferencesDto;
 import lombok.*;
 
 @Data

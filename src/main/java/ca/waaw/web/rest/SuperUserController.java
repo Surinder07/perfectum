@@ -1,7 +1,7 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.PromotionCodeDto;
+import ca.waaw.dto.payments.PromotionCodeDto;
 import ca.waaw.web.rest.service.SuperUserService;
 import ca.waaw.web.rest.utils.customannotations.swagger.*;
 import io.swagger.v3.oas.annotations.Operation;

@@ -4,23 +4,38 @@ import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.config.applicationconfig.AppRegexConfig;
 import ca.waaw.config.applicationconfig.AppUrlConfig;
 import ca.waaw.config.applicationconfig.AppValidityTimeConfig;
-import ca.waaw.domain.*;
-import ca.waaw.domain.joined.UserOrganization;
-import ca.waaw.dto.invoices.NewPaymentDto;
+import ca.waaw.domain.organization.Organization;
+import ca.waaw.domain.payments.PromotionCode;
+import ca.waaw.domain.user.EmployeePreferences;
+import ca.waaw.domain.user.User;
+import ca.waaw.domain.user.UserOrganization;
+import ca.waaw.domain.user.UserTokens;
+import ca.waaw.dto.payments.NewPaymentDto;
 import ca.waaw.dto.userdtos.*;
-import ca.waaw.enumration.*;
+import ca.waaw.enumration.Currency;
+import ca.waaw.enumration.DaysOfWeek;
+import ca.waaw.enumration.FileType;
+import ca.waaw.enumration.payment.PromoCodeType;
+import ca.waaw.enumration.payment.TransactionType;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.Authority;
+import ca.waaw.enumration.user.UserTokenType;
 import ca.waaw.mapper.UserMapper;
 import ca.waaw.payment.stripe.StripeService;
-import ca.waaw.repository.*;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.repository.organization.OrganizationRepository;
+import ca.waaw.repository.payments.PromotionCodeRepository;
+import ca.waaw.repository.user.EmployeePreferencesRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
+import ca.waaw.repository.user.UserRepository;
+import ca.waaw.repository.user.UserTokenRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.service.AppNotificationService;
 import ca.waaw.service.UserMailService;
 import ca.waaw.service.WebSocketService;
-import ca.waaw.service.email.javamailsender.MailService;
 import ca.waaw.storage.AzureStorage;
 import ca.waaw.web.rest.errors.exceptions.*;
+import ca.waaw.web.rest.errors.exceptions.application.StripeCustomerException;
 import ca.waaw.web.rest.utils.CommonUtils;
 import com.stripe.exception.StripeException;
 import lombok.AllArgsConstructor;
@@ -65,8 +80,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final UserMailService userMailService;
-
-    private final MailService mailService;
 
     private final AppNotificationService appNotificationService;
 
@@ -220,7 +233,7 @@ public class UserService {
                                 stripeService.createNewCard(stripeTokenId, user.getStripeId());
                             } catch (StripeException e) {
                                 e.printStackTrace();
-                                throw new BadRequestException(""); //todo
+                                throw new StripeCustomerException();
                             }
                             if (user.getOrganization().getTrialEndDate() != null && user.getOrganization().getTrialEndDate().isBefore(Instant.now())) {
                                 user.setAccountStatus(AccountStatus.PAYMENT_PENDING);
@@ -368,7 +381,6 @@ public class UserService {
                     token.setCreatedBy("SYSTEM");
                     userTokenRepository.save(token);
                     String resetUrl = appUrlConfig.getResetPasswordUrl(token.getToken());
-                    // @todo change mail update url
                     userMailService.sendPasswordResetMail(user, resetUrl);
                     return user;
                 })
@@ -569,7 +581,7 @@ public class UserService {
                     user.getMobile() != null ? user.getCountryCode() + user.getMobile() : null);
         } catch (StripeException e) {
             e.printStackTrace();
-            throw new BadRequestException(""); //todo
+            throw new StripeCustomerException();
         }
         user.setStripeId(stripeCustomerId);
     }

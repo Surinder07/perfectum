@@ -1,6 +1,6 @@
 package ca.waaw.service;
 
-import ca.waaw.repository.OrganizationRepository;
+import ca.waaw.repository.organization.OrganizationRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;

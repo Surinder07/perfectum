@@ -1,6 +1,6 @@
 package ca.waaw.web.rest.errors.exceptions.application;
 
-import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.user.Authority;
 import lombok.Getter;
 
 @Getter

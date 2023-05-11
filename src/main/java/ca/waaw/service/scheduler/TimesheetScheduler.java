@@ -1,7 +1,7 @@
 package ca.waaw.service.scheduler;
 
-import ca.waaw.domain.joined.DetailedTimesheet;
-import ca.waaw.repository.joined.DetailedTimesheetRepository;
+import ca.waaw.domain.timesheet.DetailedTimesheet;
+import ca.waaw.repository.timesheet.DetailedTimesheetRepository;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

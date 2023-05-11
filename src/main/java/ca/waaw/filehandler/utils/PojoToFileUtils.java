@@ -2,6 +2,7 @@ package ca.waaw.filehandler.utils;
 
 import ca.waaw.web.rest.errors.exceptions.BadRequestException;
 //import ca.waaw.mapper.ReportsMapper;
+import ca.waaw.web.rest.errors.exceptions.application.FileParsingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -37,7 +38,7 @@ public class PojoToFileUtils {
             byte[] dataArray = out.toByteArray();
             return new ByteArrayResource(dataArray);
         } catch (Exception e) {
-            throw new BadRequestException(""); //TODO change exception type
+            throw new FileParsingException();
         }
     }
 

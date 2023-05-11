@@ -1,7 +1,7 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.dto.ApiResponseMessageDto;
-import ca.waaw.dto.EmployeePreferencesDto;
+import ca.waaw.dto.userdtos.EmployeePreferencesDto;
 import ca.waaw.dto.PaginationDto;
 import ca.waaw.dto.userdtos.InviteUserDto;
 import ca.waaw.dto.userdtos.UpdateUserDto;

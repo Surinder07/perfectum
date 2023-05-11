@@ -1,8 +1,8 @@
 package ca.waaw.service;
 
-import ca.waaw.domain.User;
-import ca.waaw.dto.MailDto;
-import ca.waaw.dto.emailmessagedtos.InviteUserMailDto;
+import ca.waaw.domain.user.User;
+import ca.waaw.dto.appnotifications.MailDto;
+import ca.waaw.dto.appnotifications.InviteUserMailDto;
 import ca.waaw.service.email.javamailsender.MailService;
 import ca.waaw.service.email.javamailsender.TempMailService;
 import ca.waaw.web.rest.utils.MessageConstants;

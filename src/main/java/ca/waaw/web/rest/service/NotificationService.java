@@ -1,13 +1,13 @@
 package ca.waaw.web.rest.service;
 
 import ca.waaw.domain.Notification;
-import ca.waaw.domain.User;
+import ca.waaw.domain.user.User;
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.mapper.NotificationMapper;
 import ca.waaw.repository.NotificationRepository;
-import ca.waaw.repository.UserRepository;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.repository.user.UserRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.errors.exceptions.EntityNotFoundException;
 import ca.waaw.web.rest.utils.CommonUtils;

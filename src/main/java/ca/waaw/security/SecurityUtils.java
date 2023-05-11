@@ -1,6 +1,6 @@
 package ca.waaw.security;
 
-import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.user.Authority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;

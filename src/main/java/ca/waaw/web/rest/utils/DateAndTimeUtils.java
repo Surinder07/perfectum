@@ -246,7 +246,7 @@ public class DateAndTimeUtils {
         return new Instant[]{weekStart, weekEnd};
     }
 
-    /** TODO
+    /**
      * @param timezone timezone for which dates are required
      * @return start and end for the today
      */
@@ -346,15 +346,25 @@ public class DateAndTimeUtils {
         return (dto.getHours() * 60) + dto.getMinutes();
     }
 
-    public static TimeDto getHourMinuteTimeFromMinutes(int minutes) {
+    public static TimeDto getHourMinuteTimeFromMinutes(long minutes) {
         return TimeDto.builder()
-                .hours(minutes / 60)
-                .minutes(minutes % 60)
+                .hours((int) (minutes / 60))
+                .minutes((int) (minutes % 60))
                 .build();
     }
 
     public static boolean isSameDay(Instant date1, Instant date2, String timezone) {
         return getDateTimeObject(date1, timezone).getDate().equals(getDateTimeObject(date2, timezone).getDate());
+    }
+
+    /**
+     * @param date     date to check year for (Format: yyyy-MM-dd)
+     * @param timezone timezone for user
+     * @return checks if the date is same year as today's date
+     */
+    public static boolean isSameYear(String date, String timezone) {
+        String today = LocalDateTime.now().atZone(ZoneId.of(timezone)).toString().split("T")[0];
+        return today.split("-")[0].equals(date.split("-")[0]);
     }
 
 }

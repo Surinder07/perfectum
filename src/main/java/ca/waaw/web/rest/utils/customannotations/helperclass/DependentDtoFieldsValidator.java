@@ -1,8 +1,8 @@
 package ca.waaw.web.rest.utils.customannotations.helperclass;
 
-import ca.waaw.dto.EmployeePreferencesDto;
+import ca.waaw.dto.userdtos.EmployeePreferencesDto;
 import ca.waaw.dto.shifts.NewShiftDto;
-import ca.waaw.enumration.Authority;
+import ca.waaw.enumration.user.Authority;
 import ca.waaw.enumration.Currency;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.web.rest.utils.customannotations.ValidateDependentDtoField;
@@ -57,21 +57,12 @@ public class DependentDtoFieldsValidator implements ConstraintValidator<Validate
                         !(shiftType.equalsIgnoreCase("SINGLE") || shiftType.equalsIgnoreCase("BATCH"))) {
                     return false;
                 }
-                if (SecurityUtils.isCurrentUserInRole(Authority.ADMIN) && shiftType.equalsIgnoreCase("single")) {
-                    List<String> userIds = null;
-                    String locationId = null;
-                    List<String> locationRoleIds = null;
-                    if (PARSER.parseExpression("locationId").getValue(value) != null &&
-                            !String.valueOf(PARSER.parseExpression("locationId").getValue(value)).equals(""))
-                        locationId = String.valueOf(PARSER.parseExpression("locationId").getValue(value));
-                    if (PARSER.parseExpression("locationRoleIds").getValue(value) != null)
-                        locationRoleIds = ((List<?>) Objects.requireNonNull(PARSER.parseExpression("locationRoleIds")
-                                .getValue(value))).stream().map(Objects::toString).collect(Collectors.toList());
-                    if (PARSER.parseExpression("userIds").getValue(value) != null)
-                        userIds = ((List<?>) Objects.requireNonNull(PARSER.parseExpression("userIds")
-                                .getValue(value))).stream().map(Objects::toString).collect(Collectors.toList());
-                    return (StringUtils.isNotEmpty(locationId) && (locationRoleIds != null && locationRoleIds.size() > 0)) ||
-                            (userIds != null && userIds.size() > 0);
+                List<String> userIds = null;
+                if (PARSER.parseExpression("userIds").getValue(value) != null)
+                    userIds = ((List<?>) Objects.requireNonNull(PARSER.parseExpression("userIds")
+                            .getValue(value))).stream().map(Objects::toString).collect(Collectors.toList());
+                if (shiftType.equalsIgnoreCase("single")) {
+                    return userIds != null && userIds.size() > 0;
                 }
                 return true;
             case EMPLOYEE_PREFERENCES_WAGES:

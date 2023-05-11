@@ -1,6 +1,6 @@
 package ca.waaw.dto.userdtos;
 
-import ca.waaw.enumration.AccountStatus;
+import ca.waaw.enumration.user.AccountStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

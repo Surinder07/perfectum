@@ -1,7 +1,7 @@
 package ca.waaw.security.jwt;
 
 import ca.waaw.config.applicationconfig.AppSecurityConfig;
-import ca.waaw.enumration.AccountStatus;
+import ca.waaw.enumration.user.AccountStatus;
 import ca.waaw.security.SecurityUtils;
 import io.jsonwebtoken.*;
 import lombok.AllArgsConstructor;

@@ -1,8 +1,8 @@
 package ca.waaw.web.rest.utils;
 
-import ca.waaw.dto.MailDto;
+import ca.waaw.dto.appnotifications.MailDto;
 
-public class HtmlTemplates {
+public final class HtmlTemplates {
 
     private static final String commonTemplate = "<!DOCTYPE html>\n" +
             "<html>\n" +

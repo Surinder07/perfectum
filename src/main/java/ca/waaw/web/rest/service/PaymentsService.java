@@ -2,23 +2,23 @@ package ca.waaw.web.rest.service;
 
 import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.config.applicationconfig.AppInvoiceConfig;
-import ca.waaw.domain.PaymentHistory;
-import ca.waaw.domain.User;
-import ca.waaw.dto.CreditCardDto;
-import ca.waaw.dto.MailDto;
+import ca.waaw.domain.payments.PaymentHistory;
+import ca.waaw.domain.user.User;
+import ca.waaw.dto.payments.CreditCardDto;
+import ca.waaw.dto.appnotifications.MailDto;
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.invoices.NewPaymentDto;
-import ca.waaw.dto.invoices.PaymentsDto;
+import ca.waaw.dto.payments.NewPaymentDto;
+import ca.waaw.dto.payments.PaymentsDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
-import ca.waaw.enumration.AccountStatus;
-import ca.waaw.enumration.Authority;
-import ca.waaw.enumration.PaymentStatus;
-import ca.waaw.enumration.TransactionType;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.enumration.user.Authority;
+import ca.waaw.enumration.payment.PaymentStatus;
+import ca.waaw.enumration.payment.TransactionType;
 import ca.waaw.payment.stripe.StripeService;
-import ca.waaw.repository.OrganizationRepository;
-import ca.waaw.repository.PaymentHistoryRepository;
-import ca.waaw.repository.UserRepository;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.repository.organization.OrganizationRepository;
+import ca.waaw.repository.payments.PaymentHistoryRepository;
+import ca.waaw.repository.user.UserRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
 import ca.waaw.security.SecurityUtils;
 import ca.waaw.security.jwt.TokenProvider;
 import ca.waaw.service.email.javamailsender.TempMailService;
@@ -169,6 +169,7 @@ public class PaymentsService {
         paymentHistoryRepository.save(invoice);
     }
 
+    // TODO Add filters
     public PaginationDto getFullPaymentHistory(int pageNo, int pageSize, String status, String startDate, String endDate) {
         CommonUtils.checkRoleAuthorization(Authority.ADMIN);
         Pageable getSortedByCreatedDate = PageRequest.of(pageNo, pageSize, Sort.by("invoiceDate").descending());
@@ -302,7 +303,7 @@ public class PaymentsService {
                                                 });
                                             }
                                             // TODO change 1 days to month
-                                            // TODO if due date on payment has passed add time to now to create next payment date
+                                            // TODO if due date on payment has passed add time to now to create next payment date minus allowed buffer
                                             organization.setNextPaymentOn((payment.getDueDate().isBefore(Instant.now()) ?
                                                     Instant.now() : organization.getNextPaymentOn()).plus(1, ChronoUnit.DAYS));
                                             organizationRepository.save(organization);

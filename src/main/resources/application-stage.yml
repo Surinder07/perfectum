@@ -4,8 +4,8 @@ spring:
     username: waaw
     password: W@@WGl0b@l
   mail:
-    userName: akhil@pragra.io
-    password: AkAmSuHi9594
+    userName:
+    password: 
 
 logging:
   config: classpath:log4j2.yml

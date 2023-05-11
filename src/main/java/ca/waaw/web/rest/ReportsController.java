@@ -1,10 +1,10 @@
 package ca.waaw.web.rest;
 
 import ca.waaw.dto.ApiResponseMessageDto;
-import ca.waaw.dto.GenerateReportDto;
+import ca.waaw.dto.reports.GenerateReportDto;
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.ReportListingDto;
-import ca.waaw.enumration.UserReport;
+import ca.waaw.dto.reports.ReportListingDto;
+import ca.waaw.enumration.report.UserReport;
 import ca.waaw.web.rest.service.ReportsService;
 import ca.waaw.web.rest.utils.CommonUtils;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerAuthenticated;

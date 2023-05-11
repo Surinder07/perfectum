@@ -12,6 +12,8 @@ public class TimesheetDetailsDto {
 
     private String id;
 
+    private String shiftId;
+
     private DateTimeDto start;
 
     private DateTimeDto end;

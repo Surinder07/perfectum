@@ -1,14 +1,16 @@
 package ca.waaw.service.scheduler;
 
-import ca.waaw.domain.Requests;
-import ca.waaw.domain.User;
-import ca.waaw.dto.NotificationInfoDto;
-import ca.waaw.enumration.Authority;
+import ca.waaw.domain.requests.Requests;
+import ca.waaw.domain.user.User;
+import ca.waaw.dto.appnotifications.MultipleNotificationDto;
+import ca.waaw.dto.appnotifications.NotificationInfoDto;
 import ca.waaw.enumration.NotificationType;
-import ca.waaw.enumration.RequestStatus;
-import ca.waaw.repository.RequestsRepository;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.enumration.request.RequestStatus;
+import ca.waaw.enumration.user.Authority;
+import ca.waaw.repository.requests.RequestsRepository;
+import ca.waaw.repository.user.UserRepository;
 import ca.waaw.service.AppNotificationService;
+import ca.waaw.web.rest.utils.MessageConstants;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,24 +53,32 @@ public class RequestsScheduler {
     }
 
     private void sendNotification(Map<String, List<User>> organizationAdminUserMap, List<Requests> pendingRequests, List<User> users) {
+        List<MultipleNotificationDto> notifications = new ArrayList<>();
         pendingRequests.forEach(request -> users.stream().filter(user -> user.getId().equals(request.getUserId())).findFirst()
                 .ifPresent(requestor -> organizationAdminUserMap.get(request.getOrganizationId())
                         .forEach(admin -> {
                             if (!requestor.getAuthority().equals(Authority.MANAGER) || admin.getAuthority().equals(Authority.ADMIN)) {
-                                NotificationInfoDto notificationInfo = NotificationInfoDto
-                                        .builder()
-                                        .receiverUuid(admin.getId())
-                                        .receiverUsername(admin.getUsername())
-                                        .receiverName(admin.getFullName())
-                                        .receiverMail(admin.getEmail())
-                                        .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
-                                        .language(admin.getLangKey() == null ? null : admin.getLangKey())
-                                        .type(NotificationType.REQUEST)
-                                        .build();
                                 String requestType = request.getType().toString().toLowerCase().replaceAll("_", " ");
-                                appNotificationService.sendNotification("notification.request.pending", notificationInfo, requestType, requestor.getFullName());
+                                MultipleNotificationDto notification = MultipleNotificationDto.builder()
+                                        .messageConstant(MessageConstants.pendingRequest)
+                                        .messageArguments(new String[]{requestType, requestor.getFullName()})
+                                        .notificationInfo(
+                                                NotificationInfoDto
+                                                        .builder()
+                                                        .receiverUuid(admin.getId())
+                                                        .receiverUsername(admin.getUsername())
+                                                        .receiverName(admin.getFullName())
+                                                        .receiverMail(admin.getEmail())
+                                                        .receiverMobile(admin.getMobile() == null ? null : admin.getCountryCode() + admin.getMobile())
+                                                        .language(admin.getLangKey() == null ? null : admin.getLangKey())
+                                                        .type(NotificationType.REQUEST)
+                                                        .build()
+                                        )
+                                        .build();
+                                notifications.add(notification);
                             }
                         })));
+        appNotificationService.sendMultipleApplicationNotification(notifications);
     }
 
 }

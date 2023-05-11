@@ -1,18 +1,18 @@
 package ca.waaw.mapper;
 
-import ca.waaw.domain.Requests;
-import ca.waaw.domain.RequestsHistory;
-import ca.waaw.domain.User;
-import ca.waaw.domain.joined.DetailedRequests;
+import ca.waaw.domain.requests.Requests;
+import ca.waaw.domain.requests.RequestsHistory;
+import ca.waaw.domain.user.User;
+import ca.waaw.domain.requests.DetailedRequests;
 import ca.waaw.dto.DateTimeDto;
 import ca.waaw.dto.requests.DetailedRequestsDto;
 import ca.waaw.dto.requests.NewRequestDto;
 import ca.waaw.dto.requests.RequestHistoryDto;
 import ca.waaw.dto.requests.UpdateRequestDto;
-import ca.waaw.enumration.RequestResponse;
-import ca.waaw.enumration.RequestStatus;
-import ca.waaw.enumration.RequestSubType;
-import ca.waaw.enumration.RequestType;
+import ca.waaw.enumration.request.RequestResponse;
+import ca.waaw.enumration.request.RequestStatus;
+import ca.waaw.enumration.request.RequestSubType;
+import ca.waaw.enumration.request.RequestType;
 import ca.waaw.web.rest.utils.DateAndTimeUtils;
 import org.apache.commons.lang3.StringUtils;
 

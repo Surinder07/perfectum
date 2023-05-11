@@ -1,7 +1,7 @@
 package ca.waaw.payment.stripe;
 
 import ca.waaw.config.applicationconfig.AppPaymentConfig;
-import ca.waaw.dto.CreditCardDto;
+import ca.waaw.dto.payments.CreditCardDto;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.*;

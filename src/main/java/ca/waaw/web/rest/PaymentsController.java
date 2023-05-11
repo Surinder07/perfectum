@@ -1,8 +1,8 @@
 package ca.waaw.web.rest;
 
-import ca.waaw.dto.CreditCardDto;
+import ca.waaw.dto.payments.CreditCardDto;
 import ca.waaw.dto.PaginationDto;
-import ca.waaw.dto.invoices.PaymentsDto;
+import ca.waaw.dto.payments.PaymentsDto;
 import ca.waaw.dto.userdtos.LoginResponseDto;
 import ca.waaw.web.rest.service.PaymentsService;
 import ca.waaw.web.rest.utils.customannotations.swagger.SwaggerAuthenticated;

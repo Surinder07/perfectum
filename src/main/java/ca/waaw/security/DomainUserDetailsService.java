@@ -1,8 +1,8 @@
 package ca.waaw.security;
 
-import ca.waaw.domain.User;
-import ca.waaw.enumration.AccountStatus;
-import ca.waaw.repository.UserRepository;
+import ca.waaw.domain.user.User;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.repository.user.UserRepository;
 import ca.waaw.web.rest.errors.exceptions.EmailNotVerifiedException;
 import ca.waaw.web.rest.errors.exceptions.UserAccountDisabledException;
 import ca.waaw.web.rest.errors.exceptions.UsernameNotFoundException;

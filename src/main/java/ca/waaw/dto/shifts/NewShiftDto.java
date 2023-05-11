@@ -18,7 +18,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.NEW_SHIFT_REQUIRED_FIELD, message = "Pass all required values")
+@ValidateDependentDtoField(type = DependentDtoFieldsValidatorType.NEW_SHIFT_REQUIRED_FIELD,
+        message = "Pass all required values")
 public class NewShiftDto {
 
     @NotEmpty

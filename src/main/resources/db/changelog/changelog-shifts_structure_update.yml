@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: dropTable-shifts_batch
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          tableExists:
+            tableName: shifts_batch
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: shifts
+            baseColumnNames: batch_id
+            constraintName: fk_shifts_batch_id
+            referencedColumnNames: uuid
+            referencedTableName: shifts_batch
+        - dropForeignKeyConstraint:
+            baseTableName: shifts_batch_mapping
+            baseColumnNames: batch_id
+            constraintName: fk_shifts_batch_mapping_batch_id
+            referencedColumnNames: uuid
+            referencedTableName: shifts_batch
+        - dropTable:
+            cascadeConstraints: true
+            tableName: shifts_batch
+  - changeSet:
+      id: include_batch_information_in_shift
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: shifts
+              columnName: batch_start
+      changes:
+        - dropColumn:
+            tableName:  shifts
+            columnName: batch_id
+        - addColumn:
+            tableName: shifts
+            columns:
+              - column:
+                  name: batch_id
+                  type: VARCHAR(100)
+                  afterColumn: uuid
+              - column:
+                  name: waaw_batch_id
+                  type: VARCHAR(25)
+                  afterColumn: batch_id
+              - column:
+                  name: batch_name
+                  type: VARCHAR(50)
+                  afterColumn: user_id
+              - column:
+                  name: batch_start
+                  type: TIMESTAMP
+                  afterColumn: batch_name
+              - column:
+                  name: batch_end
+                  type: TIMESTAMP
+                  afterColumn: batch_start
+              - column:
+                  name: failure_reason
+                  type: VARCHAR(2000)
+                  afterColumn: conflicts
+        - renameColumn:
+            columnDataType: VARCHAR(25)
+            newColumnName: waaw_shift_id
+            oldColumnName: waaw_id
+            tableName: shifts
+  - changeSet:
+      id: dropTable-shifts_batch_mapping
+      author: ${author1}
+      preConditions:
+        - onFail: MARK_RAN
+          tableExists:
+            tableName: shifts_batch_mapping
+      changes:
+        - dropTable:
+            cascadeConstraints: true
+            tableName: shifts_batch_mapping

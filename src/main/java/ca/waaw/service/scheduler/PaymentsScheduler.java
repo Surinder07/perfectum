@@ -2,17 +2,20 @@ package ca.waaw.service.scheduler;
 
 import ca.waaw.config.applicationconfig.AppCustomIdConfig;
 import ca.waaw.config.applicationconfig.AppInvoiceConfig;
-import ca.waaw.domain.Organization;
-import ca.waaw.domain.PaymentHistory;
-import ca.waaw.domain.User;
+import ca.waaw.domain.organization.Organization;
+import ca.waaw.domain.payments.PaymentHistory;
+import ca.waaw.domain.user.User;
 import ca.waaw.dto.DateTimeDto;
-import ca.waaw.dto.NotificationInfoDto;
+import ca.waaw.dto.appnotifications.NotificationInfoDto;
 import ca.waaw.enumration.*;
-import ca.waaw.repository.OrganizationRepository;
-import ca.waaw.repository.PaymentHistoryRepository;
-import ca.waaw.repository.ShiftsRepository;
-import ca.waaw.repository.UserRepository;
-import ca.waaw.repository.joined.UserOrganizationRepository;
+import ca.waaw.enumration.payment.PaymentStatus;
+import ca.waaw.enumration.payment.TransactionType;
+import ca.waaw.enumration.user.AccountStatus;
+import ca.waaw.repository.organization.OrganizationRepository;
+import ca.waaw.repository.payments.PaymentHistoryRepository;
+import ca.waaw.repository.shifts.ShiftsRepository;
+import ca.waaw.repository.user.UserRepository;
+import ca.waaw.repository.user.UserOrganizationRepository;
 import ca.waaw.service.AppNotificationService;
 import ca.waaw.web.rest.service.PaymentsService;
 import ca.waaw.web.rest.utils.CommonUtils;
@@ -170,7 +173,6 @@ public class PaymentsScheduler {
         }
         notificationsInfo.forEach(notification -> {
             if (notification.containsKey("dueDate")) {
-                // TODO add email
                 appNotificationService.sendApplicationNotification(MessageConstants.newInvoice,
                         (NotificationInfoDto) notification.get("notification"), true, notification.get("start").toString(),
                         notification.get("end").toString(), notification.get("dueDate").toString());
