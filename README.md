@@ -35,7 +35,13 @@ While running the application for the first time, set `spring.liquibase.enabled=
 > All details about websockets are available in swagger doc description.
 
 
-### Project Structure
+### Developer Notes
 
 - All Api Endpoints and swagger descriptions can be found in api-info directory under resources.
-- All error messages can be found in the messages.properties bundle.
+- All error messages, Api Response and notification data can be found in the messages.properties bundle, mapped through `ca/waaw/web/rest/errors/ErrorMessageKeys`, `ca/waaw/web/rest/utils/ApiResponseMessageKeys` and `ca/waaw/web/rest/utils/MessageConstants` respectively.
+- All custom or native queries used in our repositories can be found in `ca/waaw/web/rest/utils/jpasqlqueries`.
+- Api endpoint `/test/**` is left open. So any testing can be done using this endpoint without jwt token.
+- Logs are configured to be created in a directory named **waaw/springLogs** in your base directory for dev profile, and **/home/site/wwwroot/springLogs** in base directory for other profiles to keep directory structure relevant for azure.
+- All empty strings in request body or request param are converted to null values using two classes:
+  - For request params, in `ca/waaw/web/rest/errors/RestExceptionHandler` (controller advice class) we have added a method initBinder.
+  - For request body we have added a class `GlobalDeserializeConfigurer`.
