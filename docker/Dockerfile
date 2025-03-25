@@ -5,7 +5,7 @@ FROM openjdk:11-jre-slim
 WORKDIR /app
 
 # Copy the application JAR file to the working directory
-COPY target/my-spring-boot-app.jar /app/my-spring-boot-app.jar
+COPY target/waaw-0.0.1-SNAPSHOT.jar /app/waaw-0.0.1-SNAPSHOT.jar
 
 # Expose the port the application runs on
 EXPOSE 8080
