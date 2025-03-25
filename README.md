@@ -27,7 +27,7 @@ While running the application for the first time, set `spring.liquibase.enabled=
 
 ### Resources
 
-- **Swagger Url** : http://localhost:8080/swagger-ui.html
+- **Swagger Url** : http://localhost:8085/swagger-ui.html
 - **Swagger Url (deployed on staging)** : https://staging-api.waaw.ca/swagger-ui.html
 
 > __Note__
